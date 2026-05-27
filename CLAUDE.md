@@ -84,7 +84,7 @@
 **Власне:** barpi.com.ua (Хорошоп) + Instagram @barpi.ua
 
 ## Brand Bible — цей repo
-**Live:** https://brand.barpi.com.ua (план) / https://dreamcarua.github.io/barpi-brand-book/ (тимчасово)
+**Live:** https://brand.barpi.ua (план) / https://dreamcarua.github.io/barpi-brand-book/ (тимчасово)
 **Repo:** github.com/dreamcarua/barpi-brand-book (public)
 **Поточна версія:** v0.1 (27.05.2026) bootstrap
 **Прототип:** dreamcarua/sneco-brand-book v2.26
