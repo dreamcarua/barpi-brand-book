@@ -86,8 +86,17 @@
 ## Brand Bible — цей repo
 **Live:** https://brand.barpi.ua (план) / https://dreamcarua.github.io/barpi-brand-book/ (тимчасово)
 **Repo:** github.com/dreamcarua/barpi-brand-book (public)
-**Поточна версія:** v0.1 (27.05.2026) bootstrap
+**Поточна версія:** v0.1.1 (27.05.2026)
 **Прототип:** dreamcarua/sneco-brand-book v2.26
+
+### Cloudflare інфраструктура (account: ab63a85bdfbf5894c28efe7076acbd82, Vg@abrisart.com)
+| Ресурс | Значення |
+|---|---|
+| **D1 database** | `barpi-bible` · uuid `45c93052-c82c-4d0c-901b-2999187643b9` · WEUR |
+| **KV namespace** | `barpi-bible-acl` · id `5d2685f414a14ff4ac050eea5b19bdcf` |
+| **Worker** (план) | `barpi-auth` — OTP-gate (форк sneco-auth), створюється у Фазі 2 |
+| **Zone** | `barpi.ua` (для домена `brand.barpi.ua`), вже доданий у CF |
+| **GitHub Pages target** | `dreamcarua.github.io` (CNAME → brand.barpi.ua) |
 
 ### Архітектура
 - Один `index.html` з 18 розділами (інтерактивний)
@@ -114,4 +123,4 @@
 - Мова: українська · Дати: DD.MM.YYYY · Час зона: CET/CEST
 - Структуровано, без води
 - Дій сам через MCP/git/bash коли можеш
-- Просити тільки при жорсткому обмеженні (DNS, OAuth, API key)
+- Просити тільки при жорсткому обмеженні (DNS у Cloudflare MCP відсутній, OAuth, API key)
