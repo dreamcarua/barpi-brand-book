@@ -31,7 +31,7 @@
 - [ ] 18 Архітектура бренду
 
 ## 🟠 Фаза 2 — Домен + Auth (1 сесія + DNS)
-- [ ] CNAME `brand.barpi.com.ua` → GitHub Pages (DNS — дія Вадима)
+- [ ] CNAME `brand.barpi.ua` → GitHub Pages (DNS — дія Вадима)
 - [ ] Cloudflare Worker `barpi-auth` (форк sneco-auth)
 - [ ] D1 `barpi-bible` + KV `barpi-bible-acl`
 - [ ] OTP-gate
