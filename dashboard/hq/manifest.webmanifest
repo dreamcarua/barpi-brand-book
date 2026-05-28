@@ -1,0 +1,34 @@
+{
+  "name": "Barpi HQ — Командний штаб",
+  "short_name": "Barpi HQ",
+  "description": "Контент-план + операційка SMM-команди Barpi.",
+  "start_url": "/dashboard/hq/",
+  "scope": "/dashboard/hq/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2F6FED",
+  "background_color": "#FAFAFA",
+  "lang": "uk-UA",
+  "icons": [
+    {
+      "src": "https://brand.barpi.ua/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Календар",
+      "short_name": "Календар",
+      "url": "/dashboard/hq/#calendar"
+    },
+    {
+      "name": "Дошка погоджень",
+      "short_name": "Дошка",
+      "url": "/dashboard/hq/#board"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "prefer_related_applications": false
+}
