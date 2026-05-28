@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Inventory Dashboard · Barpi</title>
+<style>:root{--bg:#FAFAFA;--ink:#1A1A1A;--blue:#2F6FED;--gray:#6b7280;--line:#e5e7eb;--radius:12px}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}header.top{border-bottom:1px solid var(--line);padding:16px 24px;background:white;position:sticky;top:0;z-index:50}header.top .wrap{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}.logo{font-weight:800;font-size:20px;letter-spacing:-0.02em}.logo .dot{color:var(--blue)}.crumb{color:var(--gray);font-size:13px}.crumb a{color:var(--gray);text-decoration:none}main{max-width:1100px;margin:0 auto;padding:32px 24px 80px}h1{font-size:32px;font-weight:800;letter-spacing:-0.02em;margin:0 0 8px}.sub{color:var(--gray);font-size:15px;margin:0 0 32px}.card{background:white;border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:16px}.card h3{margin:0 0 12px;font-size:16px;font-weight:700}table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;padding:10px 12px;font-weight:600;font-size:11px;text-transform:uppercase;color:var(--gray);background:#f3f4f6}td{padding:10px 12px;border-bottom:1px solid #f3f4f6}.status{display:inline-block;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;text-transform:uppercase;background:#fef3c7;color:#92400e;margin-left:8px}.banner{background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;padding:16px 20px;color:#1e40af;font-size:14px;margin-bottom:24px}code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px}</style></head>
+<body>
+<header class="top"><div class="wrap"><div class="logo">Barpi<span class="dot">.</span></div><div class="crumb"><a href="../../">Brand Bible</a> / <a href="../">Dashboards</a> / <strong style="color:var(--ink)">Inventory</strong></div></div></header>
+<main>
+<h1>📦 Inventory Dashboard <span class="status">PLANNED · Фаза 4</span></h1>
+<p class="sub">Залишки по SKU, оборотність, мінімальні запаси. Дані з МойСклад.</p>
+<div class="banner">🚧 <strong>Дашборд у розробці.</strong> Структура майбутнього UI нижче.</div>
+<div class="card"><h3>Залишки SKU (всі формати)</h3><table><thead><tr><th>SKU</th><th>Формат</th><th>Залишок</th><th>Мін. поріг</th><th>Покриття днів</th><th>Статус</th></tr></thead><tbody>
+<tr><td>Курячі пупочки</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+<tr><td>Крекер яловичий (рубець)</td><td>15г / 60г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+<tr><td>Зефір яловичий (легені)</td><td>15г / 60г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+<tr><td>Безе яловиче (вим'я)</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+<tr><td>Печінка яловича</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+<tr><td>Хрустики яловичі (трахея)</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+<tr><td>Довгожуйка (станова)</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+<tr><td>Серденька курячі</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+<tr><td>Сир кульки (Гауда)</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+<tr><td>Сир стіки (Сулугуні)</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+<tr><td>Апетайзери (рубець/печінка/легені)</td><td>80–120г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
+</tbody></table></div>
+<div class="card"><h3>Інтеграція</h3>
+<p style="font-size:14px;color:var(--gray);margin:0 0 8px">GitHub Action <code>inventory-sync.yml</code> щодня о 06:00 UTC → <code>moysklad_sync.py</code> тягне <code>/stock/all</code> → D1 <code>barpi-bible.inventory</code>.</p>
+</div>
+</main></body></html>
