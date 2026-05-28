@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sales Dashboard · Barpi</title>
+<style>:root{--bg:#FAFAFA;--ink:#1A1A1A;--blue:#2F6FED;--gray:#6b7280;--line:#e5e7eb;--radius:12px}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}header.top{border-bottom:1px solid var(--line);padding:16px 24px;background:white;position:sticky;top:0;z-index:50}header.top .wrap{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}.logo{font-weight:800;font-size:20px;letter-spacing:-0.02em}.logo .dot{color:var(--blue)}.crumb{color:var(--gray);font-size:13px}.crumb a{color:var(--gray);text-decoration:none}main{max-width:1100px;margin:0 auto;padding:32px 24px 80px}h1{font-size:32px;font-weight:800;letter-spacing:-0.02em;margin:0 0 8px}.sub{color:var(--gray);font-size:15px;margin:0 0 32px}.card{background:white;border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:16px}.card h3{margin:0 0 12px;font-size:16px;font-weight:700}.card h4{margin:18px 0 8px;font-size:14px;font-weight:700}table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}th{text-align:left;padding:10px 12px;font-weight:600;font-size:11px;text-transform:uppercase;color:var(--gray);background:#f3f4f6;border-bottom:1px solid var(--line)}td{padding:10px 12px;border-bottom:1px solid #f3f4f6}.pill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0}.pill{background:#f9fafb;border:1px solid var(--line);border-radius:10px;padding:14px}.pill .name{font-size:11px;color:var(--gray);text-transform:uppercase;font-weight:600}.pill .count{font-size:20px;font-weight:800;margin-top:4px}.status{display:inline-block;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;text-transform:uppercase;background:#fef3c7;color:#92400e;margin-left:8px}code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px;font-family:'SF Mono',monospace}.banner{background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;padding:16px 20px;color:#1e40af;font-size:14px;margin-bottom:24px}.banner strong{color:#1e3a8a}</style></head>
+<body>
+<header class="top"><div class="wrap"><div class="logo">Barpi<span class="dot">.</span></div><div class="crumb"><a href="../../">Brand Bible</a> / <a href="../">Dashboards</a> / <strong style="color:var(--ink)">Sales</strong></div></div></header>
+<main>
+<h1>💰 Sales Dashboard <span class="status">PLANNED · Фаза 4</span></h1>
+<p class="sub">Продажі по SKU, каналах, мережах. Джерело даних — МойСклад API.</p>
+<div class="banner">🚧 <strong>Дашборд у розробці.</strong> Зараз показано структуру майбутнього UI. Підключення до МойСклад через GitHub Actions cron + Cloudflare D1 — у Фазі 4.</div>
+<div class="card"><h3>KPI (планові)</h3><div class="pill-grid">
+<div class="pill"><div class="name">Виручка місяць</div><div class="count">— грн</div></div>
+<div class="pill"><div class="name">Кількість замовлень</div><div class="count">—</div></div>
+<div class="pill"><div class="name">Середній чек</div><div class="count">— грн</div></div>
+<div class="pill"><div class="name">% повторних</div><div class="count">—%</div></div>
+<div class="pill"><div class="name">Топ-канал</div><div class="count">—</div></div>
+<div class="pill"><div class="name">Топ-SKU</div><div class="count">—</div></div>
+</div></div>
+<div class="card"><h3>Продажі по каналах</h3><table><thead><tr><th>Канал</th><th>Виручка</th><th>Замовлень</th><th>Чек</th><th>Δ м/м</th></tr></thead><tbody>
+<tr><td>barpi.com.ua (Хорошоп)</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
+<tr><td>E-ZOO</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
+<tr><td>MasterZoo</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
+<tr><td>PetHouse</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
+<tr><td>GooDwine</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
+<tr><td>Локальні / маркетплейси</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
+<tr><td>Опт</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
+</tbody></table></div>
+<div class="card"><h3>Топ-SKU за місяць</h3><table><thead><tr><th>#</th><th>SKU</th><th>Формат</th><th>Шт.</th><th>Виручка</th></tr></thead><tbody><tr><td colspan="5" style="color:var(--gray);font-style:italic;text-align:center;padding:24px">Підключення до МойСклад API дасть автоматичний топ.</td></tr></tbody></table></div>
+<div class="card"><h3>Інтеграція з МойСклад</h3>
+<p style="font-size:14px;color:var(--gray);margin:0 0 8px">Архітектура (форк зі snEco):</p>
+<ol style="font-size:14px"><li>GitHub Action <code>sales-sync.yml</code> запускається щодня о 06:00 UTC</li><li>Скрипт <code>moysklad_sync.py</code> тягне demand, customerorder, invoiceout з API</li><li>Зберігає у Cloudflare D1 <code>barpi-bible</code> (таблиці <code>sales_*</code>)</li><li>Цей HTML підвантажує дані через <code>fetch('/api/dashboard/sales/data')</code> з Worker <code>barpi-auth</code></li><li>OTP-gate перевіряє JWT перед видачею</li></ol>
+<p style="font-size:13px;color:var(--gray);margin-top:12px">Потрібно (від тебе у Q3 2026): <strong>MoySklad API token</strong> → GitHub Secret <code>MOYSKLAD_TOKEN</code>.</p>
+</div>
+</main></body></html>
