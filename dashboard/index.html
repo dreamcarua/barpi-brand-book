@@ -38,26 +38,40 @@
     <span class="chapter-num">16 · <span data-lang="uk">Сервіс</span><span data-lang="en">Service</span></span>
     <h1>📊 <span data-lang="uk">Дашборди</span><span data-lang="en">Dashboards</span></h1>
     <p class="lead">
-      <span data-lang="uk">Внутрішні інструменти команди Barpi. Brand Bible + операційні дашборди МойСклад + SMM.</span>
-      <span data-lang="en">Internal Barpi team tools. Brand Bible + MoySklad operational dashboards + SMM.</span>
+      <span data-lang="uk">Внутрішні інструменти команди Barpi. 9 дашбордів — Sales, Customer 360, Financial P&L, Production, Inventory, SMM HQ.</span>
+      <span data-lang="en">Internal Barpi team tools. 9 dashboards.</span>
     </p>
 
     <div class="dash-section-title"><span data-lang="uk">🏢 Sales Intelligence (МойСклад)</span><span data-lang="en">🏢 Sales Intelligence (MoySklad)</span></div>
     <div class="dash-grid">
       <a class="dash-card featured" href="customer-360/">
         <h3>👥 Customer 360 v4 <span class="status">NEW</span></h3>
-        <p><span data-lang="uk">Повноцінний CRM-аналітичний дашборд з 30+ блоками: Health Score, RFM Heatmap, Лост-когорти, AR Aging, Прострочена дебіторка, Cross-sell, Auto-insights, Promo response, Контактні особи. Period chips (30/90/180/365/Все).</span><span data-lang="en">Full CRM analytics dashboard with 30+ blocks: Health Score, RFM Heatmap, Lost cohorts, AR Aging, Overdue AR, Cross-sell, Auto-insights, Promo response, Contacts. Period chips (30/90/180/365/All).</span></p>
+        <p><span data-lang="uk">CRM-аналітика з 30+ блоками: Health Score, RFM, Лост-когорти, AR Aging, Дебіторка, Cross-sell, Auto-insights, Promo response, Контактні особи. Period chips (30/90/180/365/Все).</span><span data-lang="en">Full CRM analytics with 30+ blocks.</span></p>
         <div class="meta"><strong>Дані:</strong> 9203 транзакції · 1109 платежів · 1516 рахунків · 614 клієнтів · 28 повернень · <strong>Sync:</strong> 06:00 UTC щодня</div>
       </a>
+
       <a class="dash-card" href="sales-performance/">
         <h3>📈 Sales Performance <span class="status live">LIVE</span></h3>
-        <p><span data-lang="uk">Виручка та динаміка продажів: 4 вкладки (Огляд / Динаміка / Продукти / Канали). KPI, графіки, ТОП-SKU, ABC-аналіз. Period chips, client-side агрегація з sales_extended.</span><span data-lang="en">Revenue and sales dynamics: 4 tabs. KPIs, charts, TOP SKU, ABC analysis.</span></p>
-        <div class="meta"><strong>Дані:</strong> МойСклад (з 06.01.2025) · <strong>Сегментація:</strong> по тегах + price types</div>
+        <p><span data-lang="uk">Виручка та динаміка продажів: 4 вкладки (Огляд / Динаміка / Продукти / Канали). KPI, графіки, ТОП-SKU, ABC-аналіз.</span><span data-lang="en">Revenue dynamics.</span></p>
+        <div class="meta"><strong>Дані:</strong> МС demand (06.01.2025+)</div>
       </a>
+
       <a class="dash-card" href="financial/">
-        <h3>💵 Financial <span class="status live">LIVE</span></h3>
-        <p><span data-lang="uk">Маржинальність / ABC / P&L по SKU. 3 вкладки з фінансовою аналітикою. Готова сировина для звітів Пилипу.</span><span data-lang="en">Margin / ABC / P&L by SKU. 3 tabs with financial analytics.</span></p>
-        <div class="meta"><strong>Дані:</strong> sales_with_margin · cost_uah з МойСклад</div>
+        <h3>💵 Financial v3 — Real P&L <span class="status new">NEW</span></h3>
+        <p><span data-lang="uk">Повний P&L: Revenue − Supplies (COGS) − OpEx − Losses = Net Profit. Cash Flow, витрати по статтях, постачальники, Purchase Orders pipeline.</span><span data-lang="en">Full P&L with real МС data.</span></p>
+        <div class="meta"><strong>Дані:</strong> 5.32M ₴ виплат · 1.79M ₴ закупок · 11 статей · 163 supply · 162 PO</div>
+      </a>
+
+      <a class="dash-card" href="production/">
+        <h3>🏭 Production <span class="status new">NEW</span></h3>
+        <p><span data-lang="uk">Виробництво: 39 тех.карт, 1822 виробничих актів, ефективність по плану, місячна динаміка, списання, ТОП сировини. Markup материали → готова продукція.</span><span data-lang="en">Production: tech cards, acts, efficiency.</span></p>
+        <div class="meta"><strong>Дані:</strong> МС processing + processingplan · 45 списань · 274K ₴ losses</div>
+      </a>
+
+      <a class="dash-card" href="inventory/">
+        <h3>📦 Inventory <span class="status new">NEW</span></h3>
+        <p><span data-lang="uk">Залишки на складах: stock_level (critical/low/normal/high), retail value, cost value, по категоріях. Auto-flag критичних позицій.</span><span data-lang="en">Stock levels by SKU and category.</span></p>
+        <div class="meta"><strong>Дані:</strong> МС /report/stock/all · 27 SKU live · щоденний sync</div>
       </a>
     </div>
 
@@ -65,47 +79,46 @@
     <div class="dash-grid">
       <a class="dash-card" href="hq/">
         <h3>🚀 Barpi HQ — Стіл SMM <span class="status beta">BETA</span></h3>
-        <p><span data-lang="uk">SMM-платформа: календар публікацій (Місяць/Тиждень/День/Список) · Картка публікації з 16 полями · Дошка погоджень · Бібліотека креативів · Запуски · Глобальний пошук · Шорткати.</span><span data-lang="en">Full SMM platform: publication calendar, post cards with 16 fields, approvals board, creatives library, launches, global search, shortcuts.</span></p>
-        <div class="meta"><strong>Стек:</strong> Supabase (Postgres + Auth + RLS + Realtime) · <strong>Доступ:</strong> Вадим / Пилип / Аксьонов / Альона / Мар'яна</div>
+        <p><span data-lang="uk">SMM-платформа: календар, картка з 16 полями, дошка погоджень, креативи, запуски.</span><span data-lang="en">SMM platform.</span></p>
+        <div class="meta"><strong>Стек:</strong> Supabase Postgres + Auth + RLS + Realtime</div>
       </a>
       <a class="dash-card" href="smm/">
         <h3>📊 SMM Dashboard (v1) <span class="status live">LIVE</span></h3>
-        <p><span data-lang="uk">Звітність: Content Log, Weekly/Monthly, Stories, Reels, Direct, UGC, Pillars. Простіший за HQ — для швидкого ведення.</span><span data-lang="en">Reports: Content Log, Weekly/Monthly, Stories, Reels, Direct, UGC, Pillars.</span></p>
-        <div class="meta"><strong>Доступ:</strong> публічний · <strong>Дані:</strong> localStorage</div>
+        <p><span data-lang="uk">Content Log, Weekly/Monthly, Stories, Reels, Direct, UGC, Pillars.</span><span data-lang="en">SMM reports.</span></p>
+        <div class="meta"><strong>Дані:</strong> localStorage</div>
       </a>
       <a class="dash-card" href="events/">
         <h3>🎪 Events Dashboard <span class="status live">LIVE</span></h3>
-        <p><span data-lang="uk">Фестивалі, дегустації, ROI. 17 подій у 2026. Бюджет, зразки, UGC, ROI tracking.</span><span data-lang="en">Festivals, tastings, ROI. 17 events in 2026. Budget, samples, UGC, ROI tracking.</span></p>
+        <p><span data-lang="uk">Фестивалі, дегустації, ROI. 17 подій у 2026.</span><span data-lang="en">Events, ROI.</span></p>
         <div class="meta"><strong>Доступ:</strong> Альона + Мар'яна + Вадим</div>
       </a>
     </div>
 
-    <div class="dash-section-title"><span data-lang="uk">📦 Заплановано</span><span data-lang="en">📦 Planned</span></div>
+    <div class="dash-section-title"><span data-lang="uk">📦 Заплановано (P3)</span><span data-lang="en">📦 Planned (P3)</span></div>
     <div class="dash-grid">
-      <a class="dash-card" href="inventory/">
-        <h3>📦 Inventory Dashboard <span class="status planned">PLANNED</span></h3>
-        <p><span data-lang="uk">Залишки по SKU, оборотність, мінімальні запаси, покриття днів. Stock sync з МойСклад вже готовий — треба тільки UI.</span><span data-lang="en">SKU stock, turnover, minimum levels, days coverage. Stock sync from MoySklad ready.</span></p>
-        <div class="meta"><strong>Джерело:</strong> МойСклад /report/stock/all</div>
+      <a class="dash-card" href="#" onclick="alert('Procurement pipeline: 162 PO + 163 supply вже в БД, треба тільки UI');return false">
+        <h3>🤝 Procurement <span class="status planned">PLANNED</span></h3>
+        <p><span data-lang="uk">Pipeline закупок: replan з фактом, lead time на сировину, alert якщо PO ще не приїхав.</span><span data-lang="en">Purchase pipeline.</span></p>
+        <div class="meta"><strong>Дані готові:</strong> 162 purchase_orders + 163 supplies</div>
       </a>
-      <a class="dash-card" href="partners/">
-        <h3>🤝 Partner Pipeline <span class="status planned">PLANNED</span></h3>
-        <p><span data-lang="uk">B2B-вирва: переговори, статус, нові точки продажу. Win rate, активні переговори. Дозбираємо з МС states.</span><span data-lang="en">B2B funnel: negotiations, status, new POS. Win rate.</span></p>
-        <div class="meta"><strong>Доступ:</strong> Олександр + Мар'яна + Вадим</div>
+      <a class="dash-card" href="#" onclick="alert('B2B Partners pipeline');return false">
+        <h3>📞 Partner Pipeline <span class="status planned">PLANNED</span></h3>
+        <p><span data-lang="uk">B2B-вирва: 1488 customer_orders (Status / Funnel chart). Win rate, conversion stages.</span><span data-lang="en">B2B funnel.</span></p>
+        <div class="meta"><strong>Дані готові:</strong> 1488 customer_orders</div>
       </a>
     </div>
 
     <div class="dash-legend">
       <strong><span data-lang="uk">Архітектура:</span><span data-lang="en">Architecture:</span></strong>
-      <span data-lang="uk">Brand Bible (статичний HTML на GitHub Pages) + Supabase (Postgres + Edge Functions + pg_cron) + МойСклад API.</span>
-      <span data-lang="en">Brand Bible (static HTML on GitHub Pages) + Supabase (Postgres + Edge Functions + pg_cron) + MoySklad API.</span>
-      <br><br>
+      <span data-lang="uk">Brand Bible (статичний HTML на GitHub Pages) + Supabase (Postgres + Edge Functions + pg_cron) + МойСклад API.</span><br><br>
       <strong><span data-lang="uk">Daily sync 06:00 UTC:</span><span data-lang="en">Daily sync 06:00 UTC:</span></strong>
-      products / counterparties / demand / paymentin / invoiceout / salesreturn → 50k+
-      <span data-lang="uk">записів. Live дані для всіх Sales-дашбордів.</span>
-      <span data-lang="en">records. Live data for all Sales dashboards.</span>
+      products · counterparties · demand · paymentin · invoiceout · salesreturn · paymentout · supply · processing · loss · customer_orders · purchase_orders · stock
+      → <strong>30K+ документів</strong> у БД. Live дані для всіх дашбордів.<br><br>
+      <strong>v9 Edge Function:</strong> 24 endpoints (P0+P1+P2 повністю). Manual sync доступний через
+      <code>POST /functions/v1/moysklad-sync?action={type}</code>.
     </div>
 
-    <div class="page-foot"><div>© ТОВ «ПЕТ КОРП» · v2.3</div></div>
+    <div class="page-foot"><div>© ТОВ «ПЕТ КОРП» · v2.5 · 2026</div></div>
   </main>
 </div>
 <script src="/assets/bb.js"></script>
