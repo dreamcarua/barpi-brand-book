@@ -1,5 +1,5 @@
 /* ============================================================
-   Barpi Brand Bible v2.4 — Global JS
+   Barpi Brand Bible v2.5 — Global JS
    Стиль адаптовано під barpi.com.ua
    Логотип — inline base64 WebP (без зовнішніх запитів)
    ============================================================ */
@@ -18,8 +18,8 @@ BB.SIDEBAR_HTML = `
     <a class="sidebar-brand" href="/">
       <img src="${BB.LOGO_DATA}" alt="Barpi" width="200" height="96" loading="eager">
       <div class="brand-text-sub">
-        <span data-lang="uk">Brand Bible · v2.4</span>
-        <span data-lang="en">Brand Bible · v2.4</span>
+        <span data-lang="uk">Brand Bible · v2.5</span>
+        <span data-lang="en">Brand Bible · v2.5</span>
       </div>
     </a>
     <div class="sidebar-search" style="position:relative">
@@ -130,7 +130,7 @@ BB.SEARCH_INDEX = [
   { id: 'touchpoints', uk: 'Touchpoints', en: 'Touchpoints', url: '/touchpoints/', words: 'touchpoints сайт instagram полиця магазин фестивалі' },
   { id: 'documents', uk: 'Документи', en: 'Documents', url: '/documents/', words: 'ТМ ТУ патент сертифікат лабораторний 383307 160558' },
   { id: 'roadmap', uk: 'Roadmap', en: 'Roadmap', url: '/roadmap/', words: 'roadmap Q3 пріоритети strategy 2026' },
-  { id: 'dashboards', uk: 'Дашборди', en: 'Dashboards', url: '/dashboard/', words: 'dashboards SMM Sales Inventory Partners Events HQ Customer 360 Financial' },
+  { id: 'dashboards', uk: 'Дашборди', en: 'Dashboards', url: '/dashboard/', words: 'dashboards SMM Sales Inventory Partners Events HQ Customer 360 Financial Production' },
   { id: 'architecture', uk: 'Архітектура бренду', en: 'Brand architecture', url: '/architecture/', words: 'architecture snEco SNECO brand hierarchy' },
   { id: 'ideas', uk: 'Ідеї та пропозиції', en: 'Ideas & proposals', url: '/ideas/', words: 'ideas propose suggest пропозиції' },
 ];
@@ -267,6 +267,8 @@ BB.DASHBOARD_LINKS = [
   {href:'/dashboard/customer-360/', label:'👥 Customer 360', match:'customer-360'},
   {href:'/dashboard/financial/', label:'💵 Financial', match:'financial'},
   {href:'/dashboard/sales-performance/', label:'📈 Sales', match:'sales-performance'},
+  {href:'/dashboard/production/', label:'🏭 Production', match:'production'},
+  {href:'/dashboard/inventory/', label:'📦 Inventory', match:'inventory'},
   {href:'/dashboard/hq/', label:'🚀 HQ SMM', match:'/hq'},
   {href:'/dashboard/events/', label:'🎪 Events', match:'events'},
   {href:'/dashboard/smm/', label:'📊 SMM v1', match:'/smm'},
