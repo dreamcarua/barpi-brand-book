@@ -10,13 +10,9 @@
 .font-sample{padding:24px 18px;background:#f9f9f6;border-radius:10px;margin:10px 0;text-align:left}
 .font-sample .lbl{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:block}
 .font-sample .preview{font-size:32px;line-height:1.1;color:#1A1A1A;font-family:Rubik,sans-serif}
-.font-sample .preview.t0{font-weight:300}
 .font-sample .preview.t1{font-weight:400}
-.font-sample .preview.t2{font-weight:500}
-.font-sample .preview.t3{font-weight:600}
 .font-sample .preview.t4{font-weight:700}
 .font-sample .preview.t5{font-weight:800}
-.font-sample .preview.italic{font-style:italic}
 .font-weight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:16px}
 .weight-card{padding:14px 16px;background:#f9f9f6;border:1px solid var(--border, #e5e7eb);border-radius:10px}
 .weight-card .name{font-size:13px;font-weight:700;color:#1A1A1A;margin-bottom:4px}
@@ -39,31 +35,32 @@
     <h1>🔤 <span data-lang="uk">Шрифти</span><span data-lang="en">Typography</span></h1>
     <p class="lead">
       <span data-lang="uk">Фірмовий шрифт Barpi — <strong>Qanelas Soft</strong>. Геометричний sans-serif з округленими кутами. 11 weights × 3 формати + Italic.</span>
-      <span data-lang="en">Brand typeface — <strong>Qanelas Soft</strong>. Geometric sans-serif.</span>
+      <span data-lang="en">Barpi brand typeface — <strong>Qanelas Soft</strong>. Geometric sans-serif with rounded corners. 11 weights × 3 formats + Italic.</span>
     </p>
 
     <div class="tip-box blue">
-      <strong>📂 <span data-lang="uk">Джерело:</span></strong>
+      <strong>📂 <span data-lang="uk">Джерело:</span><span data-lang="en">Source:</span></strong>
       <span data-lang="uk">Усі файли шрифту в Google Drive · <a href="https://drive.google.com/drive/folders/1Kc7taw5wwoUkJFO3KiYCwcNBhnxsi-__" target="_blank">Папка «Qanelas шрифт»</a>. 11 weights (Thin → Black) × 3 формати (TTF/WOFF/EOT). Italic версії доступні. CSS приклад нижче.</span>
+      <span data-lang="en">All font files on Google Drive · <a href="https://drive.google.com/drive/folders/1Kc7taw5wwoUkJFO3KiYCwcNBhnxsi-__" target="_blank">«Qanelas font» folder</a>. 11 weights (Thin → Black) × 3 formats (TTF/WOFF/EOT). Italic versions available. CSS example below.</span>
     </div>
 
     <h2>📐 <span data-lang="uk">Sample — звичайний текст</span><span data-lang="en">Sample — regular text</span></h2>
     <div class="font-spec">
       <div class="font-sample">
         <span class="lbl">Qanelas Regular · 16-24 px</span>
-        <div class="preview t1">Barpi — натуральні смаколики для тварин. Один інгредієнт = один продукт.</div>
+        <div class="preview t1"><span data-lang="uk">Barpi — натуральні смаколики для тварин. Один інгредієнт = один продукт.</span><span data-lang="en">Barpi — natural treats for pets. One ingredient = one product.</span></div>
       </div>
       <div class="font-sample">
         <span class="lbl">Qanelas Bold · headlines 24-48 px</span>
-        <div class="preview t4">ХРУСТКІ СМАКОЛИКИ ДЛЯ ТВАРИН BARPI</div>
+        <div class="preview t4"><span data-lang="uk">ХРУСТКІ СМАКОЛИКИ ДЛЯ ТВАРИН BARPI</span><span data-lang="en">CRUNCHY TREATS FOR PETS BARPI</span></div>
       </div>
       <div class="font-sample">
         <span class="lbl">Qanelas Black · campaign banners 64+ px</span>
-        <div class="preview t5">100% М'ЯСО</div>
+        <div class="preview t5"><span data-lang="uk">100% М'ЯСО</span><span data-lang="en">100% MEAT</span></div>
       </div>
     </div>
 
-    <h2 style="margin-top:32px">⚖ <span data-lang="uk">Усі weights (11 × 3 формати)</span><span data-lang="en">All weights</span></h2>
+    <h2 style="margin-top:32px">⚖ <span data-lang="uk">Усі weights (11 × 3 формати)</span><span data-lang="en">All weights (11 × 3 formats)</span></h2>
     <div class="font-weight-grid">
       <div class="weight-card">
         <div class="name">Qanelas Thin</div>
@@ -167,9 +164,9 @@
       </div>
     </div>
 
-    <h2 style="margin-top:32px">💻 <span data-lang="uk">CSS приклад використання</span><span data-lang="en">CSS usage</span></h2>
+    <h2 style="margin-top:32px">💻 <span data-lang="uk">CSS приклад використання</span><span data-lang="en">CSS usage example</span></h2>
     <div class="code-block">
-<span class="comment">/* Підключення шрифту Qanelas через @font-face */</span><br>
+<span class="comment">/* <span data-lang="uk">Підключення шрифту Qanelas через @font-face</span><span data-lang="en">Loading Qanelas via @font-face</span> */</span><br>
 @font-face {<br>
 &nbsp;&nbsp;font-family: 'Qanelas';<br>
 &nbsp;&nbsp;src: url('/assets/fonts/qanelas/Qanelas-Regular.woff') format('woff');<br>
@@ -182,24 +179,25 @@
 &nbsp;&nbsp;font-weight: 700;<br>
 }<br>
 <br>
-<span class="comment">/* Використання */</span><br>
+<span class="comment">/* <span data-lang="uk">Використання</span><span data-lang="en">Usage</span> */</span><br>
 body { font-family: 'Qanelas', 'Rubik', sans-serif; }<br>
 h1, h2 { font-weight: 700; }
     </div>
 
     <div class="tip-box">
-      <strong>⚠ <span data-lang="uk">Поточне використання:</span></strong>
+      <strong>⚠ <span data-lang="uk">Поточне використання:</span><span data-lang="en">Current usage:</span></strong>
       <span data-lang="uk">У Brand Bible зараз тимчасово використовується <strong>Rubik</strong> (Google Fonts) як заміна Qanelas. Для production-сайту і друкованих матеріалів — використовуйте Qanelas (комерційна ліцензія).</span>
+      <span data-lang="en">Brand Bible currently uses <strong>Rubik</strong> (Google Fonts) as a Qanelas fallback. For production website and print — use Qanelas (commercial license).</span>
     </div>
 
     <h2 style="margin-top:32px">📦 <span data-lang="uk">Альтернативні шрифти</span><span data-lang="en">Fallback fonts</span></h2>
     <ul>
-      <li><strong>Rubik</strong> (Google Fonts) — поточна альтернатива у Brand Bible, безкоштовна</li>
-      <li><strong>Montserrat</strong> — також geometric sans-serif</li>
-      <li><strong>system-ui / -apple-system</strong> — для нативного UI</li>
+      <li><strong>Rubik</strong> (Google Fonts) — <span data-lang="uk">поточна альтернатива у Brand Bible, безкоштовна</span><span data-lang="en">current Brand Bible fallback, free</span></li>
+      <li><strong>Montserrat</strong> — <span data-lang="uk">також geometric sans-serif</span><span data-lang="en">also geometric sans-serif</span></li>
+      <li><strong>system-ui / -apple-system</strong> — <span data-lang="uk">для нативного UI</span><span data-lang="en">for native UI</span></li>
     </ul>
 
-    <div class="page-foot"><div>© ТОВ «ПЕТ КОРП» · 2026 · v1.0 розділу «Шрифти»</div></div>
+    <div class="page-foot"><div>© ТОВ «ПЕТ КОРП» · 2026 · v1.1 <span data-lang="uk">розділу «Шрифти»</span><span data-lang="en">«Typography» section</span></div></div>
   </main>
 </div>
 <script src="/assets/bb.js"></script>
