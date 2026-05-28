@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Financial Dashboard · Barpi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/bb.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  .fin-hero{background:linear-gradient(135deg,#001154 0%,#162d80 100%);color:#fff;padding:48px 32px;border-radius:24px;margin-bottom:32px;position:relative;overflow:hidden}
+  .fin-hero::before{content:"";position:absolute;top:-50%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(186,217,244,.2),transparent 70%);pointer-events:none}
+  .fin-hero h1{font-size:clamp(28px,4vw,42px);font-weight:800;margin:0 0 12px;letter-spacing:-.02em}
+  .fin-hero .lead{font-size:16px;opacity:.85;max-width:640px;margin:0}
+  .fin-hero .badges{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+  .fin-hero .badge{background:rgba(255,255,255,.15);border:1px solid rgba(186,217,244,.3);padding:6px 14px;border-radius:999px;font-size:12px;font-weight:500}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px}
+  .kpi{background:#fff;border:1px solid #eee;border-radius:16px;padding:20px}
+  .kpi:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,17,84,.08);transition:all .2s}
+  .kpi .label{font-size:11px;font-weight:600;text-transform:uppercase;color:#888;letter-spacing:.05em;margin-bottom:8px}
+  .kpi .val{font-size:26px;font-weight:800;color:#001154;line-height:1}
+  .kpi .sub{font-size:12px;color:#666;margin-top:6px;min-height:16px}
+  .kpi.accent{background:linear-gradient(135deg,#BAD9F4 0%,#d4e7f7 100%);border-color:#001154}
+  .kpi.success{background:linear-gradient(135deg,#e0f7e8 0%,#c4ecd0 100%);border-color:#1f7a00}
+  .kpi.success .val{color:#1f7a00}
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px;padding:16px 20px;background:#fff;border:1px solid #eee;border-radius:14px}
+  .controls label{font-size:12px;font-weight:600;color:#555}
+  .controls select{font-family:inherit;font-size:13px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333}
+  .controls .spacer{flex:1}
+  .btn{font-family:inherit;font-size:13px;font-weight:600;padding:9px 16px;border-radius:8px;border:none;cursor:pointer;background:#001154;color:#fff}
+  .btn.ghost{background:transparent;border:1px solid #ddd;color:#333}
+  .btn.ghost:hover{background:#f5f5f5;border-color:#001154}
+  .panel{background:#fff;border:1px solid #eee;border-radius:16px;padding:24px;margin-bottom:20px}
+  .panel h3{margin:0 0 16px;font-size:18px;font-weight:700;color:#001154;display:flex;align-items:center;gap:10px}
+  .panel h3 .pill{font-size:11px;font-weight:600;background:#BAD9F4;color:#001154;padding:3px 10px;border-radius:999px}
+  table.data{width:100%;border-collapse:collapse;font-size:13px}
+  table.data th{text-align:left;padding:10px 14px;font-weight:600;font-size:11px;text-transform:uppercase;color:#666;background:#FAF7F7;border-bottom:1px solid #eee;letter-spacing:.04em}
+  table.data td{padding:11px 14px;border-bottom:1px solid #f5f5f5;color:#333}
+  table.data tbody tr:hover{background:#FAF7F7}
+  table.data td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+  .abc-badge{display:inline-block;width:24px;height:24px;border-radius:6px;text-align:center;font-weight:800;font-size:12px;line-height:24px;color:#fff}
+  .abc-A{background:#1f7a00}
+  .abc-B{background:#f59e0b}
+  .abc-C{background:#94a3b8}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+  .chart-wrap{position:relative;height:340px}
+  .chart-wrap.tall{height:420px}
+  .empty{padding:40px;text-align:center;color:#888;font-style:italic;font-size:14px}
+  .toast{position:fixed;bottom:24px;right:24px;background:#001154;color:#fff;padding:14px 22px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:all .25s;z-index:1000}
+  .toast.show{opacity:1}
+  .legend-row{display:flex;gap:14px;font-size:13px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+  .legend-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:6px;vertical-align:middle}
+  .margin-bar{display:inline-flex;align-items:center;gap:6px;font-size:12px}
+  .margin-bar .pct{font-weight:700}
+  .margin-bar.pos .pct{color:#1f7a00}
+  .margin-bar.neg .pct{color:#b91c1c}
+</style>
+</head>
+<body>
+<div id="bb-shell"></div>
+<main class="bb-main" id="bb-main">
+
+<div class="fin-hero">
+  <h1>💵 Financial Dashboard</h1>
+  <p class="lead">Виручка, собівартість, маржа, ABC-аналіз. Динаміка по місяцях. Все на основі sales_with_margin view.</p>
+  <div class="badges">
+    <span class="badge">🟢 Live</span>
+    <span class="badge">📈 ABC-аналіз</span>
+    <span class="badge">💰 Margin breakdown</span>
+    <span class="badge" id="badgeRows">0 транзакцій</span>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <label>Період:</label>
+  <select id="periodSel">
+    <option value="30">30 днів</option>
+    <option value="90" selected>90 днів</option>
+    <option value="180">6 місяців</option>
+    <option value="365">12 місяців</option>
+    <option value="all">Вся історія</option>
+  </select>
+  <label style="margin-left:12px">Категорія:</label>
+  <select id="catFilter">
+    <option value="">Всі</option>
+    <option value="meat">М'ясо</option>
+    <option value="cheese">Сир</option>
+    <option value="appetizer">Апетайзери</option>
+    <option value="cat">Котячі</option>
+  </select>
+  <div class="spacer"></div>
+  <button class="btn ghost" id="reloadBtn">⟳ Оновити</button>
+  <button class="btn" id="exportBtn">⬇ Excel-ready CSV</button>
+</div>
+
+<!-- KPI -->
+<div class="kpi-grid">
+  <div class="kpi accent"><div class="label">Виручка</div><div class="val" id="kpiRevenue">—</div><div class="sub" id="kpiRevenueSub">грн</div></div>
+  <div class="kpi"><div class="label">Собівартість</div><div class="val" id="kpiCogs">—</div><div class="sub">валова</div></div>
+  <div class="kpi success"><div class="label">Маржа</div><div class="val" id="kpiMargin">—</div><div class="sub" id="kpiMarginSub">% / грн</div></div>
+  <div class="kpi"><div class="label">Шт продано</div><div class="val" id="kpiQty">—</div><div class="sub">за період</div></div>
+  <div class="kpi"><div class="label">Активні SKU</div><div class="val" id="kpiSku">—</div><div class="sub">з продажами</div></div>
+  <div class="kpi"><div class="label">A-категорія</div><div class="val" id="kpiABC">—</div><div class="sub" id="kpiABCSub">SKU (80% виручки)</div></div>
+</div>
+
+<!-- Charts row -->
+<div class="grid-2">
+  <div class="panel">
+    <h3>📈 Виручка по місяцях</h3>
+    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+  </div>
+  <div class="panel">
+    <h3>💰 Маржа vs Виручка по місяцях</h3>
+    <div class="chart-wrap"><canvas id="marginChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ABC Analysis -->
+<div class="panel">
+  <h3>📊 ABC-аналіз асортименту <span class="pill" id="abcPill">—</span></h3>
+  <div class="legend-row">
+    <span><span class="legend-dot" style="background:#1f7a00"></span><strong>A</strong> — топ 80% виручки</span>
+    <span><span class="legend-dot" style="background:#f59e0b"></span><strong>B</strong> — наступні 15%</span>
+    <span><span class="legend-dot" style="background:#94a3b8"></span><strong>C</strong> — останні 5%</span>
+  </div>
+  <div class="chart-wrap tall"><canvas id="abcChart"></canvas></div>
+</div>
+
+<!-- ABC SKU table -->
+<div class="panel">
+  <h3>🏷️ SKU з категоріями A/B/C</h3>
+  <table class="data" id="skuTable">
+    <thead>
+      <tr>
+        <th>Кат.</th><th>SKU</th><th>Кат. продукту</th>
+        <th class="num">Шт</th><th class="num">Виручка</th><th class="num">% від загалом</th>
+        <th class="num">Маржа</th><th class="num">Маржа %</th>
+      </tr>
+    </thead>
+    <tbody><tr><td colspan="8" class="empty">Завантаження…</td></tr></tbody>
+  </table>
+</div>
+
+<!-- Channels P&L -->
+<div class="panel">
+  <h3>🏪 P&L по каналах</h3>
+  <table class="data" id="channelTable">
+    <thead>
+      <tr>
+        <th>Канал</th>
+        <th class="num">Виручка</th>
+        <th class="num">% від загалом</th>
+        <th class="num">Собівартість</th>
+        <th class="num">Маржа</th>
+        <th class="num">Маржа %</th>
+      </tr>
+    </thead>
+    <tbody><tr><td colspan="6" class="empty">Завантаження…</td></tr></tbody>
+  </table>
+</div>
+
+</main>
+<div id="toast" class="toast"></div>
+
+<script src="../../assets/bb.js"></script>
+<script>
+const SUPA_URL = 'https://zrcqmwlpsggiqgipvxhv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const $ = (id) => document.getElementById(id);
+const fmtUah = (n) => new Intl.NumberFormat('uk-UA').format(Math.round(n||0)) + ' ₴';
+const fmtNum = (n) => new Intl.NumberFormat('uk-UA').format(n||0);
+const fmtPct = (n) => (n||0).toFixed(1) + '%';
+
+let state = { rows: [] };
+let charts = {};
+
+function toast(msg, isErr=false){
+  const t = $('toast'); t.textContent = msg;
+  t.className = 'toast show' + (isErr?' err':'');
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+async function api(path){
+  const r = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY },
+  });
+  if(!r.ok) throw new Error('API ' + r.status);
+  return r.json();
+}
+
+async function loadAll(){
+  try {
+    const rows = await api('sales_with_margin?select=*&order=date.desc&limit=5000');
+    state.rows = rows;
+    render();
+  } catch(e){ console.error(e); toast('Помилка: ' + e.message, true); }
+}
+
+function getFiltered(){
+  const period = $('periodSel').value;
+  const cat = $('catFilter').value;
+  let from = null;
+  if(period !== 'all') from = new Date(Date.now() - parseInt(period)*86400000);
+  return state.rows.filter(r => {
+    if(from && new Date(r.date) < from) return false;
+    if(cat && r.sku_category !== cat) return false;
+    return true;
+  });
+}
+
+function calcABC(skuArr){
+  // Pareto: рахуємо cumulative % і присвоюємо A (80%), B (95%), C (100%)
+  const total = skuArr.reduce((s,x)=>s+x.rev, 0);
+  let cum = 0;
+  return skuArr.map(x => {
+    cum += x.rev;
+    const cumPct = total ? (cum/total*100) : 0;
+    const abc = cumPct <= 80 ? 'A' : (cumPct <= 95 ? 'B' : 'C');
+    return { ...x, cumPct, abc, sharePct: total ? (x.rev/total*100) : 0 };
+  });
+}
+
+function render(){
+  const rows = getFiltered();
+  $('badgeRows').textContent = `${rows.length} транзакцій`;
+
+  // KPI
+  const revenue = rows.reduce((s,r)=>s+Number(r.revenue_uah||0), 0);
+  const cogs = rows.reduce((s,r)=>s+Number(r.cost_uah||0), 0);
+  const margin = revenue - cogs;
+  const qty = rows.reduce((s,r)=>s+Number(r.quantity||0), 0);
+  const marginPct = revenue ? (margin/revenue*100) : 0;
+
+  $('kpiRevenue').textContent = fmtUah(revenue);
+  $('kpiRevenueSub').textContent = rows.length + ' транзакцій';
+  $('kpiCogs').textContent = fmtUah(cogs);
+  $('kpiMargin').textContent = fmtPct(marginPct);
+  $('kpiMarginSub').textContent = fmtUah(margin);
+  $('kpiQty').textContent = fmtNum(qty);
+
+  // Trend by month
+  const byMonth = {};
+  rows.forEach(r => {
+    const m = r.date.slice(0,7);
+    if(!byMonth[m]) byMonth[m] = { rev: 0, cogs: 0, margin: 0 };
+    byMonth[m].rev += Number(r.revenue_uah || 0);
+    byMonth[m].cogs += Number(r.cost_uah || 0);
+    byMonth[m].margin += Number(r.margin_uah || 0);
+  });
+  const months = Object.keys(byMonth).sort();
+  const monthLabels = months.map(m => {
+    const [y, mo] = m.split('-');
+    return new Date(parseInt(y), parseInt(mo)-1, 1).toLocaleDateString('uk-UA', { month: 'short', year: '2-digit' });
+  });
+
+  // Trend chart (line)
+  if(charts.trend) charts.trend.destroy();
+  charts.trend = new Chart($('trendChart'), {
+    type: 'line',
+    data: {
+      labels: monthLabels,
+      datasets: [{
+        label: 'Виручка',
+        data: months.map(m => byMonth[m].rev),
+        borderColor: '#001154', backgroundColor: 'rgba(0,17,84,.1)',
+        tension: 0.3, fill: true, borderWidth: 2.5, pointRadius: 4,
+      }],
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: (v) => fmtUah(v) } } },
+    },
+  });
+
+  // Margin vs Revenue chart (bars)
+  if(charts.margin) charts.margin.destroy();
+  charts.margin = new Chart($('marginChart'), {
+    type: 'bar',
+    data: {
+      labels: monthLabels,
+      datasets: [
+        { label: 'Виручка', data: months.map(m => byMonth[m].rev), backgroundColor: '#001154' },
+        { label: 'Маржа', data: months.map(m => byMonth[m].margin), backgroundColor: '#1f7a00' },
+      ],
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { ticks: { callback: (v) => fmtUah(v) } } },
+    },
+  });
+
+  // ABC analysis
+  const bySku = {};
+  rows.forEach(r => {
+    const k = r.sku_name || '—';
+    if(!bySku[k]) bySku[k] = { name: k, cat: r.sku_category || '—', rev: 0, qty: 0, margin: 0, cogs: 0 };
+    bySku[k].rev += Number(r.revenue_uah || 0);
+    bySku[k].qty += Number(r.quantity || 0);
+    bySku[k].margin += Number(r.margin_uah || 0);
+    bySku[k].cogs += Number(r.cost_uah || 0);
+  });
+  const skuArr = Object.values(bySku).sort((a,b)=>b.rev-a.rev);
+  const skuWithABC = calcABC(skuArr);
+  const aCount = skuWithABC.filter(s => s.abc === 'A').length;
+  $('kpiSku').textContent = skuArr.length;
+  $('kpiABC').textContent = aCount;
+  $('kpiABCSub').textContent = `${aCount} SKU дають 80% виручки`;
+  $('abcPill').textContent = `${skuArr.length} SKU`;
+
+  // ABC chart — Pareto
+  if(charts.abc) charts.abc.destroy();
+  charts.abc = new Chart($('abcChart'), {
+    type: 'bar',
+    data: {
+      labels: skuWithABC.map(s => s.name.length > 18 ? s.name.slice(0,18)+'…' : s.name),
+      datasets: [
+        {
+          label: 'Виручка', type: 'bar',
+          data: skuWithABC.map(s => s.rev),
+          backgroundColor: skuWithABC.map(s => s.abc === 'A' ? '#1f7a00' : (s.abc === 'B' ? '#f59e0b' : '#94a3b8')),
+          yAxisID: 'y',
+        },
+        {
+          label: 'Кумулятивний %', type: 'line',
+          data: skuWithABC.map(s => s.cumPct),
+          borderColor: '#001154', backgroundColor: 'transparent',
+          borderWidth: 2.5, pointRadius: 3, tension: 0.2, yAxisID: 'y1',
+        },
+      ],
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        y: { position: 'left', ticks: { callback: (v) => fmtUah(v) } },
+        y1: { position: 'right', max: 100, min: 0, ticks: { callback: (v) => v + '%' }, grid: { drawOnChartArea: false } },
+      },
+    },
+  });
+
+  // SKU table
+  $('skuTable').querySelector('tbody').innerHTML = skuWithABC.length === 0
+    ? '<tr><td colspan="8" class="empty">Немає даних</td></tr>'
+    : skuWithABC.map(s => {
+        const mpct = s.rev ? (s.margin/s.rev*100) : 0;
+        return `<tr>
+          <td><span class="abc-badge abc-${s.abc}">${s.abc}</span></td>
+          <td>${s.name}</td>
+          <td><span style="font-size:11px;background:#FAF7F7;color:#555;padding:2px 8px;border-radius:99px">${s.cat}</span></td>
+          <td class="num">${s.qty}</td>
+          <td class="num">${fmtUah(s.rev)}</td>
+          <td class="num">${fmtPct(s.sharePct)}</td>
+          <td class="num">${fmtUah(s.margin)}</td>
+          <td class="num" style="color:${mpct>30?'#1f7a00':(mpct<10?'#b91c1c':'#666')}">${fmtPct(mpct)}</td>
+        </tr>`;
+      }).join('');
+
+  // Channels P&L
+  const byChan = {};
+  rows.forEach(r => {
+    const k = r.channel_name || '—';
+    if(!byChan[k]) byChan[k] = { name: k, rev: 0, cogs: 0, margin: 0, color: r.channel_color };
+    byChan[k].rev += Number(r.revenue_uah || 0);
+    byChan[k].cogs += Number(r.cost_uah || 0);
+    byChan[k].margin += Number(r.margin_uah || 0);
+  });
+  const chanArr = Object.values(byChan).sort((a,b)=>b.rev-a.rev);
+  const totalRev = chanArr.reduce((s,c)=>s+c.rev, 0) || 1;
+  $('channelTable').querySelector('tbody').innerHTML = chanArr.length === 0
+    ? '<tr><td colspan="6" class="empty">Немає даних</td></tr>'
+    : chanArr.map(c => {
+        const sharePct = c.rev/totalRev*100;
+        const mpct = c.rev ? (c.margin/c.rev*100) : 0;
+        return `<tr>
+          <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.color||'#999'};margin-right:8px"></span>${c.name}</td>
+          <td class="num">${fmtUah(c.rev)}</td>
+          <td class="num">${fmtPct(sharePct)}</td>
+          <td class="num">${fmtUah(c.cogs)}</td>
+          <td class="num">${fmtUah(c.margin)}</td>
+          <td class="num" style="color:${mpct>30?'#1f7a00':(mpct<10?'#b91c1c':'#666')}">${fmtPct(mpct)}</td>
+        </tr>`;
+      }).join('');
+}
+
+['periodSel','catFilter'].forEach(id => $(id).addEventListener('change', render));
+$('reloadBtn').addEventListener('click', loadAll);
+$('exportBtn').addEventListener('click', () => {
+  const rows = getFiltered();
+  if(!rows.length) return toast('Немає даних', true);
+  const header = ['Дата','Канал','SKU','Категорія','Шт','Виручка','Собівартість','Маржа','Маржа%','ABC','Джерело'];
+  const lines = [header.join(';')];
+  rows.forEach(r => lines.push([
+    r.date, r.channel_name||'', r.sku_name||'', r.sku_category||'',
+    r.quantity, r.revenue_uah, r.cost_uah||0, r.margin_uah||0, r.margin_pct||0,
+    r.abc_category||'', r.source||'',
+  ].join(';')));
+  const blob = new Blob(['﻿'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'barpi-financial-' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('✓ Експортовано ' + rows.length + ' рядків');
+});
+
+loadAll();
+</script>
+</body>
+</html>
