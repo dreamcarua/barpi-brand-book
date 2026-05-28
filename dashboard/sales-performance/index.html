@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sales Performance · Barpi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/bb.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --y:#001154; --y-soft:rgba(0,17,84,.13);
+    --g:#39B44A; --g-soft:rgba(57,180,74,.13);
+    --r:#E84040; --r-soft:rgba(232,64,64,.10);
+    --bl:#3B82F6; --bl-soft:rgba(59,130,246,.10);
+    --d:#1A1A1A; --bg:#FAF7F7; --card:#fff;
+    --muted:#888; --border:#E5E5DC; --line:#EEE;
+  }
+  body{background:var(--bg);font-family:Rubik,-apple-system,sans-serif;color:var(--d)}
+  .sp-topbar{position:sticky;top:0;z-index:200;background:var(--d);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--y)}
+  .sp-topbar h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  .sp-topbar .sub{font-size:11px;opacity:.6;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+  .sp-topbar .spacer{flex:1}
+  .sp-topbar .sync{font-size:12px;opacity:.7;display:flex;align-items:center;gap:6px}
+  .sp-topbar .sync .dot{width:8px;height:8px;border-radius:50%;background:var(--g)}
+  .sp-filters{position:sticky;top:48px;z-index:150;background:#fff;border-bottom:1px solid var(--line);padding:14px 24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .sp-filters label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .chip{font-family:inherit;font-size:12px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--d);transition:all .15s}
+  .chip:hover{border-color:var(--y);color:var(--y)}
+  .chip.on{background:var(--y);color:#fff;border-color:var(--y)}
+  .chip.refresh{background:transparent;color:var(--muted);border:none;font-size:13px}
+  .sp-wrap{max-width:1440px;margin:0 auto;padding:20px 24px 40px}
+  .sec{margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+  .sec h2{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .sec::after{content:"";flex:1;height:1px;background:var(--line)}
+  .sec .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--y-soft);color:var(--y)}
+  .g1{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.g2{grid-template-columns:1fr}}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;position:relative;transition:all .2s}
+  .kpi:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,17,84,.06)}
+  .kpi .lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .kpi .val{font-size:24px;font-weight:800;color:var(--d);letter-spacing:-.02em;line-height:1.1}
+  .kpi .sub{font-size:11px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:6px}
+  .kpi.cy{border-bottom:3px solid var(--y)}
+  .kpi.cg{border-bottom:3px solid var(--g)}
+  .kpi.cr{border-bottom:3px solid var(--r)}
+  .kpi.cb{border-bottom:3px solid var(--bl)}
+  .kpi.dark{background:var(--d);color:#fff}
+  .kpi.dark .lbl,.kpi.dark .sub{color:rgba(255,255,255,.7)}
+  .kpi.dark .val{color:#fff}
+  .delta{display:inline-flex;align-items:center;gap:3px;font-weight:700;font-size:11px;padding:2px 7px;border-radius:99px}
+  .delta.up{background:var(--g-soft);color:var(--g)}
+  .delta.dn{background:var(--r-soft);color:var(--r)}
+  .delta.neu{background:#f3f3f3;color:#777}
+  .cc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .cc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .cc-head h3{margin:0;font-size:14px;font-weight:700;color:var(--d);letter-spacing:-.01em}
+  .cc-head .pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--y-soft);color:var(--y);text-transform:uppercase;letter-spacing:.04em}
+  .cc-head .spacer{flex:1}
+  .chart-wrap{position:relative;height:280px}
+  .chart-wrap.tall{height:360px}
+  table.dt{width:100%;border-collapse:collapse;font-size:13px}
+  table.dt th{text-align:left;padding:8px 12px;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--muted);background:#FAFAF5;border-bottom:1px solid var(--line);letter-spacing:.05em;position:sticky;top:0}
+  table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0;color:var(--d)}
+  table.dt tbody tr:hover{background:#FBFAF5}
+  table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+  .tbl-scroll{max-height:320px;overflow:auto;border-radius:8px;border:1px solid var(--line)}
+  .tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.04em;text-transform:uppercase}
+  .tag.ty{background:var(--y-soft);color:var(--y)}
+  .tag.tg{background:var(--g-soft);color:var(--g)}
+  .heat-tbl{width:100%;border-collapse:separate;border-spacing:2px;font-size:11px}
+  .heat-tbl th{padding:6px 4px;text-align:center;font-weight:600;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+  .heat-tbl th.lbl{text-align:left;padding-left:10px;background:#FAFAF5;position:sticky;left:0;z-index:2;width:140px}
+  .heat-tbl td.lbl{text-align:left;padding:6px 10px;background:#FAFAF5;font-weight:600;position:sticky;left:0;z-index:2;border-left:3px solid transparent}
+  .heat-tbl td{text-align:center;padding:6px 4px;border-radius:4px;font-weight:600;color:#fff;font-size:11px;min-width:48px}
+  .heat-tbl td.tot{background:#fff;color:var(--d);font-weight:700;font-size:12px;border:1px solid var(--line)}
+  .heat-tbl td.empty{background:#FBFBF8;color:#ccc;font-weight:400}
+  .alert{padding:12px 16px;border-radius:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:13px;border-left:4px solid}
+  .alert.red{background:#FEF2F2;border-color:var(--r);color:#7B1F1F}
+  .alert.yellow{background:#FFFBE6;border-color:#F59E0B;color:#7A5A00}
+  .alert.blue{background:#EFF6FF;border-color:var(--bl);color:#1E3A8A}
+  .alert .icon{font-size:18px}
+  .alert .body{flex:1}
+  .alert strong{display:block;font-weight:700;font-size:13px}
+  .alert small{font-size:11px;opacity:.8}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--d);color:#fff;padding:14px 22px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:all .25s;z-index:1000}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast.err{background:var(--r)}
+  .empty{padding:40px;text-align:center;color:var(--muted);font-size:13px}
+  .bars{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+  .br{display:grid;grid-template-columns:130px 1fr 140px;align-items:center;gap:10px;font-size:12px}
+  .br .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .br .tk{height:8px;background:#F4F4F0;border-radius:99px;overflow:hidden}
+  .br .fl{height:100%;border-radius:99px;transition:width .4s}
+  .br .vl{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--y);display:flex;justify-content:flex-end;align-items:center;gap:4px}
+  .abc{display:inline-block;width:20px;height:20px;border-radius:5px;text-align:center;font-weight:800;font-size:10px;line-height:20px;color:#fff;margin-right:6px}
+  .abc-A{background:var(--g)}.abc-B{background:#F59E0B}.abc-C{background:#94a3b8}
+  @media print{.sp-topbar,.sp-filters,.toast{display:none}.sp-wrap{max-width:none;padding:0}body{background:#fff}.cc{box-shadow:none;page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<div id="bb-shell"></div>
+<main class="bb-main" id="bb-main" style="padding:0">
+<header class="sp-topbar">
+  <h1>📈 Barpi · <span class="sub">Sales Performance</span></h1>
+  <span class="spacer"></span>
+  <span class="sync" id="syncBadge"><span class="dot"></span><span id="syncLabel">Завантаження…</span></span>
+</header>
+<div class="sp-filters">
+  <label>⚡ Період:</label>
+  <button class="chip" data-period="7">7 днів</button>
+  <button class="chip on" data-period="30">30 днів</button>
+  <button class="chip" data-period="90">90 днів</button>
+  <button class="chip" data-period="180">180 днів</button>
+  <button class="chip" data-period="365">1 рік</button>
+  <button class="chip" data-period="all">Усе</button>
+  <label style="margin-left:18px">📍 Канал:</label>
+  <select id="channelFilter" class="chip" style="font-weight:600;padding:7px 14px;background:#fff;border:1px solid var(--border)">
+    <option value="">Усі канали</option>
+  </select>
+  <span style="flex:1"></span>
+  <button class="chip refresh" id="reloadBtn">⟳ Оновити</button>
+  <button class="chip" id="printBtn">🖨 Друк</button>
+</div>
+<div class="sp-wrap">
+  <div id="alertsBlock"></div>
+  <div class="sec"><h2>📊 Основні показники</h2><span class="badge" id="kpiPeriodBadge">за 30 днів</span></div>
+  <div class="g1" id="kpiMain"></div>
+  <div class="sec"><h2>❤ Здоров'я бізнесу</h2></div>
+  <div class="g1" id="kpiHealth"></div>
+  <div class="sec"><h2>📈 Динаміка</h2></div>
+  <div class="cc" style="margin-bottom:16px">
+    <div class="cc-head">
+      <h3>Виручка та маржа за період</h3>
+      <span class="pill" id="trendPill">денно</span>
+      <span class="spacer"></span>
+      <button class="chip refresh" id="trendModeBtn">📅 День / 📆 Місяць</button>
+    </div>
+    <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="cc">
+      <div class="cc-head"><h3>🏪 Виручка по каналах</h3><span class="pill" id="chanPill">0</span></div>
+      <div id="channelBars" class="bars"></div>
+    </div>
+    <div class="cc">
+      <div class="cc-head"><h3>🏆 ТОП SKU за виручкою</h3><span class="pill" id="skuPill">0</span></div>
+      <div class="tbl-scroll">
+        <table class="dt" id="skuTable">
+          <thead><tr><th>#</th><th>SKU</th><th>Кат</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Δ%</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="sec"><h2>🔥 Heatmap: канал × тиждень (12 тижнів)</h2></div>
+  <div class="cc" style="margin-bottom:16px">
+    <div style="overflow:auto"><table class="heat-tbl" id="heatTable"></table></div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Інтенсивність кольору = частка від макс. виручки по каналу.</div>
+  </div>
+  <div class="sec"><h2>📚 Навігація</h2></div>
+  <div class="cc">
+    <p style="margin:0 0 8px;font-size:13px;color:#444;line-height:1.6">Live-агрегати з Supabase view <code style="background:#FAFAF5;padding:2px 6px;border-radius:4px">sales_extended</code>. Sync МойСклад API щодня 06:00 UTC.</p>
+    <p style="margin:0;font-size:12px;color:var(--muted)">
+      <a href="../customer-360/" style="color:var(--y);font-weight:600;text-decoration:none">👥 Customer 360 →</a>
+      &nbsp;·&nbsp; <a href="../sales/" style="color:var(--y);text-decoration:none">💰 Sales (legacy) →</a>
+      &nbsp;·&nbsp; <a href="../financial/" style="color:var(--y);text-decoration:none">💵 Financial / ABC →</a>
+      &nbsp;·&nbsp; <a href="../hq/" style="color:var(--y);text-decoration:none">🏢 HQ SMM →</a>
+    </p>
+  </div>
+</div>
+</main>
+<div id="toast" class="toast"></div>
+<script src="../../assets/bb.js"></script>
+<script>
+const SUPA_URL = 'https://zrcqmwlpsggiqgipvxhv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const $ = (id) => document.getElementById(id);
+const $$ = (sel) => document.querySelectorAll(sel);
+const fmt = {
+  uah: (n) => new Intl.NumberFormat('uk-UA').format(Math.round(n||0)) + ' ₴',
+  uahK: (n) => n >= 1e6 ? (n/1e6).toFixed(1)+'M ₴' : n >= 1e3 ? (n/1e3).toFixed(0)+'K ₴' : Math.round(n)+' ₴',
+  num: (n) => new Intl.NumberFormat('uk-UA').format(n||0),
+  pct: (n) => (n||0).toFixed(1) + '%',
+  date: (s) => { const d = new Date(s); return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit'}); },
+};
+function deltaPctTag(pct){
+  if (pct == null) return '<span class="delta neu">—</span>';
+  const cls = pct > 0.5 ? 'up' : pct < -0.5 ? 'dn' : 'neu';
+  const sign = pct > 0 ? '↑' : pct < 0 ? '↓' : '→';
+  return `<span class="delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}%</span>`;
+}
+function toast(msg, isErr=false){
+  const t = $('toast'); t.textContent = msg;
+  t.className = 'toast show' + (isErr?' err':'');
+  setTimeout(() => t.className = 'toast', 2800);
+}
+async function api(path){
+  const r = await fetch(SUPA_URL + '/rest/v1/' + path, { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } });
+  if(!r.ok) throw new Error('API ' + r.status);
+  return r.json();
+}
+let state = { period: 30, channel: '', trendMode: 'day', data: null, charts: {} };
+async function loadAll(){
+  try {
+    $('syncLabel').textContent = 'Завантаження…';
+    const [kpi, byDay, byMonth, byWeek, topSku, channels, channelsList, lastSync] = await Promise.all([
+      api('v_kpi_30d?select=*'),
+      api('v_sales_by_day?select=*'),
+      api('v_sales_by_month?select=*'),
+      api('v_sales_by_week?select=*&order=week_start.desc'),
+      api('v_top_sku?select=*'),
+      api('v_channel_summary?select=*'),
+      api('sales_channels?select=*&active=eq.true&order=sort_order'),
+      api('moysklad_sync_log?select=created_at,sync_type,status&order=created_at.desc&limit=1'),
+    ]);
+    state.data = { kpi: kpi[0] || {}, byDay, byMonth, byWeek, topSku, channels, channelsList };
+    if (lastSync[0]) {
+      const ago = Math.floor((Date.now() - new Date(lastSync[0].created_at).getTime())/3600000);
+      $('syncLabel').textContent = `Sync ${ago}h тому · ${lastSync[0].sync_type} · ${lastSync[0].status}`;
+    }
+    populateChannelFilter();
+    render();
+  } catch(e){ console.error(e); toast('Помилка: ' + e.message, true); $('syncLabel').textContent = 'Помилка'; }
+}
+function populateChannelFilter(){
+  const sel = $('channelFilter');
+  sel.innerHTML = '<option value="">Усі канали</option>' + state.data.channelsList.filter(c => c.id !== 'internal').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+function render(){ renderAlerts(); renderKpiMain(); renderKpiHealth(); renderTrendChart(); renderChannels(); renderTopSku(); renderHeatmap(); }
+function renderAlerts(){
+  const k = state.data.kpi;
+  const html = [];
+  if (k.revenue_change_pct != null && k.revenue_change_pct < -10) {
+    html.push(`<div class="alert red"><span class="icon">📉</span><div class="body"><strong>Виручка падає на ${Math.abs(k.revenue_change_pct)}%</strong><small>Поточні 30 днів проти попередніх 30.</small></div></div>`);
+  } else if (k.revenue_change_pct > 20) {
+    html.push(`<div class="alert blue"><span class="icon">🚀</span><div class="body"><strong>Виручка росте на ${k.revenue_change_pct}%</strong><small>Перевищено попередній період на чверть.</small></div></div>`);
+  }
+  const totalRev = state.data.channels.reduce((s,c)=>s+Number(c.revenue||0), 0);
+  if (totalRev > 0 && state.data.channels[0]) {
+    const topShare = state.data.channels[0].share_pct;
+    if (topShare > 70) {
+      html.push(`<div class="alert yellow"><span class="icon">⚠</span><div class="body"><strong>Концентрація: канал «${state.data.channels[0].channel_name}» = ${topShare}% виручки</strong><small>Високий ризик — диверсифікуйте канали.</small></div></div>`);
+    }
+  }
+  $('alertsBlock').innerHTML = html.join('');
+}
+function renderKpiMain(){
+  const k = state.data.kpi;
+  $('kpiPeriodBadge').textContent = `за ${state.period === 'all' ? 'весь час' : state.period + ' днів'}`;
+  $('kpiMain').innerHTML = `
+    <div class="kpi cy"><div class="lbl">💰 Виручка</div><div class="val">${fmt.uah(k.revenue)}</div><div class="sub">${deltaPctTag(k.revenue_change_pct)} vs попер. 30д</div></div>
+    <div class="kpi cg"><div class="lbl">📦 Шт продано</div><div class="val">${fmt.num(k.qty)}</div><div class="sub">${fmt.num(k.transactions)} транзакцій</div></div>
+    <div class="kpi cb"><div class="lbl">🛒 Сер. чек</div><div class="val">${fmt.uah(k.avg_order)}</div><div class="sub">грн / транзакція</div></div>
+    <div class="kpi"><div class="lbl">👥 Клієнти</div><div class="val">${fmt.num(k.customers)}</div><div class="sub">${deltaPctTag(k.customers && k.prev_customers ? ((k.customers - k.prev_customers)/k.prev_customers*100) : null)}</div></div>
+    <div class="kpi"><div class="lbl">🏷️ Активних SKU</div><div class="val">${fmt.num(k.skus)}</div><div class="sub">з 24 в каталозі</div></div>`;
+}
+function renderKpiHealth(){
+  const k = state.data.kpi;
+  const months = state.data.byMonth;
+  const lifetime = months.reduce((s,m)=>s+Number(m.revenue||0), 0);
+  const runRate = (Number(k.revenue || 0)) * 12;
+  const weeklyTotals = {};
+  state.data.byWeek.forEach(w => { weeklyTotals[w.week_start] = (weeklyTotals[w.week_start] || 0) + Number(w.revenue || 0); });
+  const wkKeys = Object.keys(weeklyTotals).sort().reverse();
+  let wowPct = null;
+  if (wkKeys.length >= 2) {
+    const w0 = weeklyTotals[wkKeys[0]] || 0;
+    const w1 = weeklyTotals[wkKeys[1]] || 0;
+    if (w1 > 0) wowPct = ((w0 - w1) / w1 * 100);
+  }
+  $('kpiHealth').innerHTML = `
+    <div class="kpi dark"><div class="lbl">📈 WoW</div><div class="val">${wowPct != null ? (wowPct > 0 ? '+' : '') + wowPct.toFixed(1) + '%' : '—'}</div><div class="sub">тиждень-до-тижня</div></div>
+    <div class="kpi"><div class="lbl">🎯 Маржа</div><div class="val">${fmt.pct(k.margin_pct)}</div><div class="sub">${fmt.uah(k.margin)} валової</div></div>
+    <div class="kpi"><div class="lbl">⚡ Run-rate (рік)</div><div class="val">${fmt.uahK(runRate)}</div><div class="sub">прогноз ×12</div></div>
+    <div class="kpi"><div class="lbl">💎 Lifetime</div><div class="val">${fmt.uahK(lifetime)}</div><div class="sub">з ${state.data.byMonth[0]?.month || '—'}</div></div>
+    <div class="kpi"><div class="lbl">🔄 Sync</div><div class="val" style="font-size:14px">МойСклад API</div><div class="sub">cron 06:00 UTC щодня</div></div>`;
+}
+function renderTrendChart(){
+  const data = state.trendMode === 'month' ? state.data.byMonth : filterByDay();
+  if (state.charts.trend) state.charts.trend.destroy();
+  const labels = data.map(r => state.trendMode === 'month' ? r.month : fmt.date(r.date));
+  state.charts.trend = new Chart($('trendChart'), {
+    type: state.trendMode === 'month' ? 'bar' : 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Виручка', data: data.map(r => Number(r.revenue || 0)), backgroundColor: state.trendMode === 'month' ? 'rgba(0,17,84,.9)' : 'rgba(0,17,84,.1)', borderColor: '#001154', borderWidth: 2.5, tension: 0.3, fill: state.trendMode !== 'month', pointRadius: state.trendMode === 'month' ? 0 : 3 },
+        { label: 'Маржа', data: data.map(r => Number(r.margin || 0)), type: 'line', borderColor: '#39B44A', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, pointRadius: 0 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'Rubik', size: 11 } } } },
+      scales: { y: { ticks: { font: { family: 'Rubik', size: 11 }, callback: (v) => fmt.uahK(v) } }, x: { ticks: { font: { family: 'Rubik', size: 11 } } } },
+      interaction: { intersect: false, mode: 'index' },
+    },
+  });
+  $('trendPill').textContent = state.trendMode === 'month' ? 'місячно' : 'денно';
+}
+function filterByDay(){
+  const days = state.period === 'all' ? 9999 : Number(state.period);
+  const from = new Date(Date.now() - days * 86400000);
+  return state.data.byDay.filter(r => new Date(r.date) >= from);
+}
+function renderChannels(){
+  let channels = state.data.channels.filter(c => c.channel_id !== 'internal');
+  if (state.channel) channels = channels.filter(c => c.channel_id === state.channel);
+  $('chanPill').textContent = `${channels.length} каналів`;
+  const max = Math.max(...channels.map(c => Number(c.revenue || 0)), 1);
+  $('channelBars').innerHTML = channels.length === 0
+    ? '<div class="empty">Немає даних</div>'
+    : channels.map(c => {
+        const w = (Number(c.revenue) / max * 100).toFixed(1);
+        const color = c.channel_color || '#001154';
+        return `<div class="br"><div class="nm" style="color:${color}">${c.channel_name}</div><div class="tk"><div class="fl" style="width:${w}%;background:linear-gradient(90deg,${color},${color}bb)"></div></div><div class="vl">${fmt.uahK(c.revenue)} ${deltaPctTag(c.growth_pct)}</div></div>`;
+      }).join('');
+}
+function renderTopSku(){
+  const skus = state.data.topSku.slice(0, 20);
+  $('skuPill').textContent = `${skus.length}`;
+  $('skuTable').querySelector('tbody').innerHTML = skus.length === 0
+    ? '<tr><td colspan="6" class="empty">Немає даних</td></tr>'
+    : skus.map((s,i) => `<tr><td><span class="abc abc-${s.abc}">${s.abc}</span>${i+1}</td><td title="${s.sku_name}">${(s.sku_name||'').length > 24 ? s.sku_name.slice(0,24)+'…' : s.sku_name}</td><td><span class="tag ty" style="font-size:9px">${s.sku_category || '—'}</span></td><td class="num">${s.qty}</td><td class="num">${fmt.uah(s.revenue)}</td><td class="num">${deltaPctTag(s.growth_pct)}</td></tr>`).join('');
+}
+function renderHeatmap(){
+  const weeks = [...new Set(state.data.byWeek.map(w => w.week_start))].sort().slice(-12);
+  const channelsInData = [...new Set(state.data.byWeek.map(w => `${w.channel_id}|${w.channel_name}|${w.channel_color}`))];
+  const grid = {};
+  const totalsPerChannel = {};
+  const maxPerChannel = {};
+  state.data.byWeek.forEach(w => {
+    if (!weeks.includes(w.week_start)) return;
+    grid[`${w.channel_id}|${w.week_start}`] = Number(w.revenue || 0);
+    totalsPerChannel[w.channel_id] = (totalsPerChannel[w.channel_id] || 0) + Number(w.revenue || 0);
+    maxPerChannel[w.channel_id] = Math.max(maxPerChannel[w.channel_id] || 0, Number(w.revenue || 0));
+  });
+  const sortedChans = channelsInData.map(s => s.split('|')).filter(([id]) => id !== 'internal').sort((a, b) => (totalsPerChannel[b[0]] || 0) - (totalsPerChannel[a[0]] || 0));
+  let html = '<thead><tr><th class="lbl">Канал \\ Тиждень</th>';
+  weeks.forEach(w => { const d = new Date(w); html += `<th>${('0'+d.getDate()).slice(-2)}.${('0'+(d.getMonth()+1)).slice(-2)}</th>`; });
+  html += '<th class="lbl" style="text-align:right;padding-right:10px">Разом</th></tr></thead><tbody>';
+  sortedChans.forEach(([cid, cname, ccolor]) => {
+    const max = maxPerChannel[cid] || 1;
+    html += `<tr><td class="lbl" style="border-left-color:${ccolor}">${cname}</td>`;
+    weeks.forEach(w => {
+      const v = grid[`${cid}|${w}`] || 0;
+      if (v === 0) { html += `<td class="empty">·</td>`; }
+      else {
+        const intensity = Math.min(0.95, 0.25 + (v / max) * 0.7);
+        const bgr = ccolor.startsWith('#') ? hexToRgba(ccolor, intensity) : ccolor;
+        html += `<td title="${cname} · тиждень ${w}: ${fmt.uah(v)}" style="background:${bgr}">${fmt.uahK(v)}</td>`;
+      }
+    });
+    html += `<td class="tot">${fmt.uahK(totalsPerChannel[cid] || 0)}</td></tr>`;
+  });
+  html += '</tbody>';
+  $('heatTable').innerHTML = html;
+}
+function hexToRgba(hex, alpha){
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+$$('.chip[data-period]').forEach(b => b.addEventListener('click', () => {
+  $$('.chip[data-period]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  state.period = b.dataset.period === 'all' ? 'all' : Number(b.dataset.period);
+  render();
+}));
+$('channelFilter').addEventListener('change', (e) => { state.channel = e.target.value; render(); });
+$('trendModeBtn').addEventListener('click', () => { state.trendMode = state.trendMode === 'day' ? 'month' : 'day'; renderTrendChart(); });
+$('reloadBtn').addEventListener('click', loadAll);
+$('printBtn').addEventListener('click', () => window.print());
+loadAll();
+</script>
+</body>
+</html>
