@@ -1,0 +1,16 @@
+{
+  "name": "barpi-auth",
+  "version": "1.0.0",
+  "description": "OTP gate + JWT auth for Barpi dashboards (Cloudflare Worker)",
+  "main": "src/index.js",
+  "private": true,
+  "scripts": {
+    "deploy": "npx wrangler deploy",
+    "dev": "npx wrangler dev",
+    "tail": "npx wrangler tail",
+    "secrets": "echo 'wrangler secret put JWT_SECRET && wrangler secret put RESEND_API_KEY'"
+  },
+  "devDependencies": {
+    "wrangler": "^3.99.0"
+  }
+}
