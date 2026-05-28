@@ -1,15 +1,81 @@
 /* ============================================================
    Barpi Brand Bible v2.0 — Global JS
-   - Lang switcher (uk/en) → body class + localStorage
-   - Sidebar active state (за поточним URL)
-   - Search (client-side по nav-link тексту)
-   - Ideas (Supabase REST)
    ============================================================ */
 
 const BB = window.BB = window.BB || {};
 
 BB.SUPABASE_URL = 'https://zrcqmwlpsggiqgipvxhv.supabase.co';
 BB.SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+
+/* ===== SIDEBAR HTML (one source of truth) ===== */
+BB.SIDEBAR_HTML = `
+<nav class="sidebar" id="bb-sidebar-nav">
+  <div class="sidebar-head">
+    <a class="sidebar-brand" href="/">
+      <div class="brand-mark">B</div>
+      <div class="brand-text">Barpi<span class="small" data-lang="uk">Brand Bible · v2.0</span><span class="small" data-lang="en">Brand Bible · v2.0</span></div>
+    </a>
+    <div class="sidebar-search" style="position:relative">
+      <input type="text" id="bb-search" placeholder="Шукати / Search…" autocomplete="off" />
+      <div id="bb-search-results" class="search-results"></div>
+    </div>
+    <div class="lang-switch">
+      <button data-lang="uk">UK</button>
+      <button data-lang="en">EN</button>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label"><span data-lang="uk">Вступ</span><span data-lang="en">Introduction</span></div>
+      <a class="nav-link" href="/"><span class="dot"></span><span data-lang="uk">Маніфест</span><span data-lang="en">Manifesto</span></a>
+      <a class="nav-link" href="/about/"><span class="dot"></span><span data-lang="uk">Про бренд</span><span data-lang="en">About</span></a>
+      <a class="nav-link" href="/team/"><span class="dot"></span><span data-lang="uk">Команда</span><span data-lang="en">Team</span></a>
+      <a class="nav-link" href="/tech/"><span class="dot"></span><span data-lang="uk">Історія & SNECO</span><span data-lang="en">History & SNECO</span></a>
+      <a class="nav-link" href="/messages/"><span class="dot"></span><span data-lang="uk">Меседжі & слогани</span><span data-lang="en">Messages & slogans</span></a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label"><span data-lang="uk">Ідентичність</span><span data-lang="en">Identity</span></div>
+      <a class="nav-link" href="/visual/"><span class="dot"></span><span data-lang="uk">Візуальна система</span><span data-lang="en">Visual system</span></a>
+      <a class="nav-link" href="/voice/"><span class="dot"></span><span data-lang="uk">Голос бренду</span><span data-lang="en">Voice</span></a>
+      <a class="nav-link" href="/photo/"><span class="dot"></span><span data-lang="uk">Фотографія</span><span data-lang="en">Photography</span></a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label"><span data-lang="uk">Застосування</span><span data-lang="en">Application</span></div>
+      <a class="nav-link" href="/digital/"><span class="dot"></span><span data-lang="uk">Digital · Instagram</span><span data-lang="en">Digital · Instagram</span></a>
+      <a class="nav-link" href="/packaging/"><span class="dot"></span><span data-lang="uk">Упаковка</span><span data-lang="en">Packaging</span></a>
+      <a class="nav-link" href="/partners/"><span class="dot"></span><span data-lang="uk">Партнери & Sales</span><span data-lang="en">Partners & Sales</span></a>
+      <a class="nav-link" href="/pr/"><span class="dot"></span><span data-lang="uk">PR & криза</span><span data-lang="en">PR & Crisis</span></a>
+      <a class="nav-link" href="/touchpoints/"><span class="dot"></span><span data-lang="uk">Touchpoints</span><span data-lang="en">Touchpoints</span></a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label"><span data-lang="uk">Сервіс</span><span data-lang="en">Service</span></div>
+      <a class="nav-link" href="/documents/"><span class="dot"></span><span data-lang="uk">Документи</span><span data-lang="en">Documents</span></a>
+      <a class="nav-link" href="/roadmap/"><span class="dot"></span><span data-lang="uk">Roadmap</span><span data-lang="en">Roadmap</span></a>
+      <a class="nav-link" href="/dashboard/"><span class="dot"></span><span data-lang="uk">Дашборди</span><span data-lang="en">Dashboards</span></a>
+      <a class="nav-link" href="/architecture/"><span class="dot"></span><span data-lang="uk">Архітектура бренду</span><span data-lang="en">Brand architecture</span></a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label"><span data-lang="uk">💡 Спільнота</span><span data-lang="en">💡 Community</span></div>
+      <a class="nav-link" href="/ideas/"><span class="dot" style="background:var(--blue)"></span><span data-lang="uk">Пропозиції & ідеї</span><span data-lang="en">Ideas & proposals</span></a>
+    </div>
+  </div>
+  <div class="sidebar-foot">
+    <span data-lang="uk">© ТОВ «ПЕТ КОРП» · <a href="mailto:office@barpi.com.ua">office@barpi.com.ua</a></span>
+    <span data-lang="en">© Pet Corp LLC · <a href="mailto:office@barpi.com.ua">office@barpi.com.ua</a></span>
+  </div>
+</nav>
+`;
+
+BB.injectSidebar = function() {
+  const placeholder = document.getElementById('bb-sidebar');
+  if (placeholder) {
+    placeholder.outerHTML = BB.SIDEBAR_HTML;
+  } else {
+    // fallback: insert at start of body
+    const app = document.querySelector('.app');
+    if (app) app.insertAdjacentHTML('afterbegin', BB.SIDEBAR_HTML);
+  }
+};
 
 /* ===== Lang switcher ===== */
 BB.setLang = function(lang) {
@@ -32,13 +98,14 @@ BB.initLang = function() {
 
 /* ===== Sidebar active state ===== */
 BB.markActiveNav = function() {
-  const path = location.pathname.replace(/\/index\.html$/, '/').replace(/\/$/, '/') || '/';
+  let path = location.pathname.replace(/\/index\.html$/, '/');
+  if (!path.endsWith('/')) path += '/';
   document.querySelectorAll('.nav-link').forEach(a => {
     const href = a.getAttribute('href') || '';
     if (!href) return;
-    const normalized = href.replace(/\/index\.html$/, '/').replace(/\/$/, '/');
-    if (normalized === path) a.classList.add('active');
-    else a.classList.remove('active');
+    let normalized = href.replace(/\/index\.html$/, '/');
+    if (!normalized.endsWith('/')) normalized += '/';
+    a.classList.toggle('active', normalized === path);
   });
 };
 
@@ -58,10 +125,10 @@ BB.SEARCH_INDEX = [
   { id: 'pr', uk: 'PR і криза', en: 'PR & Crisis', url: '/pr/', words: 'crisis communication PR rework reply' },
   { id: 'touchpoints', uk: 'Touchpoints', en: 'Touchpoints', url: '/touchpoints/', words: 'touchpoints сайт instagram полиця магазин фестивалі' },
   { id: 'documents', uk: 'Документи', en: 'Documents', url: '/documents/', words: 'ТМ ТУ патент сертифікат лабораторний 383307 160558' },
-  { id: 'roadmap', uk: 'Стратегічний roadmap', en: 'Strategic roadmap', url: '/roadmap/', words: 'roadmap Q3 пріоритети strategy 2026' },
-  { id: 'dashboards', uk: 'Каталог дашбордів', en: 'Dashboards', url: '/dashboard/', words: 'dashboards SMM Sales Inventory Partners Events HQ' },
+  { id: 'roadmap', uk: 'Roadmap', en: 'Roadmap', url: '/roadmap/', words: 'roadmap Q3 пріоритети strategy 2026' },
+  { id: 'dashboards', uk: 'Дашборди', en: 'Dashboards', url: '/dashboard/', words: 'dashboards SMM Sales Inventory Partners Events HQ' },
   { id: 'architecture', uk: 'Архітектура бренду', en: 'Brand architecture', url: '/architecture/', words: 'architecture snEco SNECO brand hierarchy' },
-  { id: 'ideas', uk: 'Ідеї', en: 'Ideas', url: '/ideas/', words: 'ideas propose suggest пропозиції' },
+  { id: 'ideas', uk: 'Ідеї та пропозиції', en: 'Ideas & proposals', url: '/ideas/', words: 'ideas propose suggest пропозиції' },
 ];
 BB.initSearch = function() {
   const input = document.getElementById('bb-search');
@@ -75,7 +142,7 @@ BB.initSearch = function() {
       return hay.includes(q);
     }).slice(0, 10);
     if (!matches.length) {
-      results.innerHTML = '<div class="search-result" style="color:var(--text-muted)"><span data-lang="uk">Нічого не знайдено</span><span data-lang="en">No results</span></div>';
+      results.innerHTML = '<div class="search-result" style="color:var(--text-muted)">Нічого / No results</div>';
     } else {
       results.innerHTML = matches.map(m => `
         <a class="search-result" href="${m.url}">
@@ -115,13 +182,10 @@ BB.loadIdeas = async function(filter = 'all') {
 
 BB.submitIdea = async function(data) {
   try {
-    const r = await BB.api('/brand_ideas', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-    if (!r.ok) { const err = await r.text(); console.error(err); return null; }
+    const r = await BB.api('/brand_ideas', { method: 'POST', body: JSON.stringify(data) });
+    if (!r.ok) { console.error(await r.text()); return null; }
     return await r.json();
-  } catch (e) { console.error('Submit:', e); return null; }
+  } catch (e) { return null; }
 };
 
 BB.upvoteIdea = async function(id, current) {
@@ -194,10 +258,8 @@ BB.initIdeasForm = function() {
       form.style.display = 'none';
       ['idea-title','idea-body','idea-author','idea-email','idea-section'].forEach(id => document.getElementById(id).value = '');
       BB.renderIdeas();
-      alert('Дякуємо! Ваша пропозиція збережена. / Thanks! Your idea has been saved.');
-    } else {
-      alert('Помилка збереження. / Save failed.');
-    }
+      alert('Дякуємо! Ваша пропозиція збережена. / Thanks! Saved.');
+    } else { alert('Помилка / Error'); }
   };
   filterBtns.forEach(b => {
     b.onclick = () => {
@@ -208,22 +270,18 @@ BB.initIdeasForm = function() {
   });
 };
 
-/* ===== Helpers ===== */
 function escapeHTML(s) {
   if (!s) return '';
   return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-/* ===== Init ===== */
 document.addEventListener('DOMContentLoaded', () => {
+  BB.injectSidebar();
   BB.initLang();
   BB.markActiveNav();
   BB.initSearch();
-  // Mobile menu
   const toggle = document.querySelector('.menu-toggle');
-  const sidebar = document.querySelector('.sidebar');
-  if (toggle && sidebar) toggle.onclick = () => sidebar.classList.toggle('open');
-  // Ideas (auto if on ideas page)
+  if (toggle) toggle.onclick = () => document.querySelector('.sidebar')?.classList.toggle('open');
   if (document.getElementById('ideas-list')) {
     BB.renderIdeas();
     BB.initIdeasForm();
