@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Production · Barpi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/bb.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--y:#001154;--y-soft:rgba(0,17,84,.13);--g:#39B44A;--g-soft:rgba(57,180,74,.13);--r:#E84040;--r-soft:rgba(232,64,64,.1);--bl:#3B82F6;--or:#F59E0B;--vi:#8B5CF6;--d:#1A1A1A;--bg:#FAF7F7;--card:#fff;--muted:#888;--border:#E5E5DC;--line:#EEE}
+body{background:var(--bg);font-family:Rubik,-apple-system,sans-serif;color:var(--d);margin:0}
+.pr-top{position:sticky;top:0;z-index:200;background:var(--d);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--y)}
+.pr-top h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.pr-top .sub{font-size:11px;opacity:.6;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.pr-top .spacer{flex:1}
+.pr-top .sync{font-size:12px;opacity:.7;display:flex;align-items:center;gap:6px}
+.pr-top .dot{width:8px;height:8px;border-radius:50%;background:var(--g)}
+.pr-wrap{max-width:1440px;margin:0 auto;padding:20px 24px 40px}
+.sec{margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+.sec h2{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--y-soft);color:var(--y)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:all .2s}
+.kpi:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,17,84,.06)}
+.kpi .lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.kpi .val{font-size:22px;font-weight:800;color:var(--d);letter-spacing:-.02em;line-height:1.1}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:6px}
+.kpi.cy{border-bottom:3px solid var(--y)}.kpi.cg{border-bottom:3px solid var(--g)}.kpi.cr{border-bottom:3px solid var(--r)}.kpi.cb{border-bottom:3px solid var(--bl)}.kpi.co{border-bottom:3px solid var(--or)}.kpi.cv{border-bottom:3px solid var(--vi)}
+.cc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.cc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.cc-head h3{margin:0;font-size:14px;font-weight:700;color:var(--d)}
+.cc-head .pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--y-soft);color:var(--y);text-transform:uppercase}
+.chart-wrap{position:relative;height:280px}
+.chart-wrap.tall{height:340px}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}
+table.dt th{text-align:left;padding:8px 12px;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--muted);background:#FAFAF5;border-bottom:1px solid var(--line);letter-spacing:.05em}
+table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0;color:var(--d)}
+table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.tbl-scroll{max-height:480px;overflow:auto;border-radius:8px;border:1px solid var(--line)}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
+.tag.tg{background:var(--g-soft);color:var(--g)}.tag.tr{background:var(--r-soft);color:var(--r)}.tag.ty{background:var(--y-soft);color:var(--y)}
+.loading{text-align:center;padding:60px;color:var(--muted)}
+.empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header class="pr-top">
+  <h1>🏭 Barpi · <span class="sub">Production</span></h1>
+  <span class="spacer"></span>
+  <span class="sync"><span class="dot"></span><span id="syncLabel">Завантаження…</span></span>
+</header>
+<div class="pr-wrap">
+  <div id="loadingBox" class="loading"><div>Завантаження…</div></div>
+  <div id="contentBox" style="display:none"></div>
+</div>
+<script src="../../assets/bb.js"></script>
+<script>
+const SUPA_URL='https://zrcqmwlpsggiqgipvxhv.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const $=(id)=>document.getElementById(id);
+const fmt={uah:(n)=>new Intl.NumberFormat('uk-UA').format(Math.round(n||0))+' ₴',uahK:(n)=>n>=1e6?(n/1e6).toFixed(1)+'M ₴':n>=1e3?(n/1e3).toFixed(0)+'K ₴':Math.round(n||0)+' ₴',num:(n)=>new Intl.NumberFormat('uk-UA').format(n||0),date:(s)=>{if(!s)return '—';const d=new Date(s);return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit'});}};
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function truncate(s,n){return (s||'').length>n?s.slice(0,n)+'…':s;}
+async function api(path){const r=await fetch(SUPA_URL+'/rest/v1/'+path,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});if(!r.ok)throw new Error('API '+r.status);return r.json();}
+let charts={};
+async function load(){
+  try{
+    $('syncLabel').textContent='Завантаження…';
+    const [plans,acts,eff,monthly,losses,supByProd,sync]=await Promise.all([
+      api('moysklad_processing_plans?select=ms_id,ms_name,archived&order=ms_name'),
+      api('moysklad_processing_acts?select=ms_id,ms_name,doc_type,moment,plan_ms_id,materials_sum_uah,products_sum_uah,state_name&order=moment.desc&limit=2000'),
+      api('v_production_efficiency?select=*&order=total_materials_uah.desc'),
+      api('v_production_monthly?select=*&order=month'),
+      api('v_losses_monthly?select=*&order=month'),
+      api('v_supplies_by_product?select=*&order=total_sum_uah.desc&limit=30'),
+      api('moysklad_sync_log?select=created_at&order=created_at.desc&limit=1'),
+    ]);
+    $('loadingBox').style.display='none'; $('contentBox').style.display='block';
+    if(sync[0]){const h=Math.floor((Date.now()-new Date(sync[0].created_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${acts.length} актів · ${plans.length} тех.карт`;}
+    render({plans,acts,eff,monthly,losses,supByProd});
+  }catch(e){console.error(e);$('syncLabel').textContent='Помилка: '+e.message;}
+}
+function render(d){
+  const {plans,acts,eff,monthly,losses,supByProd}=d;
+  const totalMaterials=acts.reduce((s,a)=>s+Number(a.materials_sum_uah||0),0);
+  const totalProducts=acts.reduce((s,a)=>s+Number(a.products_sum_uah||0),0);
+  const markup=totalMaterials>0?((totalProducts-totalMaterials)/totalMaterials*100):0;
+  const totalLosses=losses.reduce((s,l)=>s+Number(l.losses_uah||0),0);
+  const totalLossQty=losses.reduce((s,l)=>s+Number(l.qty_lost||0),0);
+  const activePlan=plans.filter(p=>!p.archived).length;
+  const lastAct=acts[0];
+  $('contentBox').innerHTML=`
+    <div class="sec"><h2>🏭 Виробництво · KPI</h2></div>
+    <div class="g4">
+      <div class="kpi cy"><div class="lbl">📋 Тех.карти</div><div class="val">${plans.length}</div><div class="sub">${activePlan} активних</div></div>
+      <div class="kpi cb"><div class="lbl">🔧 Виробничих актів</div><div class="val">${acts.length}</div><div class="sub">з ${lastAct?fmt.date(lastAct.moment):'—'}</div></div>
+      <div class="kpi cg"><div class="lbl">💰 Собівартість матеріалів</div><div class="val">${fmt.uahK(totalMaterials)}</div><div class="sub">Сировина</div></div>
+      <div class="kpi co"><div class="lbl">📈 Markup</div><div class="val">${markup.toFixed(1)}%</div><div class="sub">матеріали → готова</div></div>
+    </div>
+    <div class="g4" style="margin-top:14px">
+      <div class="kpi cv"><div class="lbl">📦 Сума готової продукції</div><div class="val">${fmt.uahK(totalProducts)}</div><div class="sub">за рецептом</div></div>
+      <div class="kpi cr"><div class="lbl">⚠ Списано (lifetime)</div><div class="val">${fmt.uahK(totalLosses)}</div><div class="sub">${fmt.num(totalLossQty)} шт</div></div>
+      <div class="kpi"><div class="lbl">📊 Loss rate</div><div class="val">${totalMaterials>0?(totalLosses/totalMaterials*100).toFixed(1):0}%</div><div class="sub">від матеріалів</div></div>
+      <div class="kpi"><div class="lbl">⏱ Останній акт</div><div class="val" style="font-size:14px">${lastAct?fmt.date(lastAct.moment):'—'}</div><div class="sub">${lastAct?truncate(lastAct.ms_name||'—',24):'—'}</div></div>
+    </div>
+
+    <div class="sec"><h2>📈 Виробництво по місяцях</h2></div>
+    <div class="cc"><div class="chart-wrap tall"><canvas id="monthChart"></canvas></div></div>
+
+    <div class="sec"><h2>📋 Ефективність по тех.картах</h2></div>
+    <div class="cc"><div class="tbl-scroll"><table class="dt">
+      <thead><tr><th>#</th><th>Тех.карта</th><th class="num">Запусків</th><th class="num">Сировина ₴</th><th class="num">Готова ₴</th><th class="num">Markup</th></tr></thead>
+      <tbody>${eff.map((e,i)=>`<tr><td>${i+1}</td><td><strong>${escapeHtml(truncate(e.plan_name||'—',40))}</strong></td><td class="num">${e.production_runs}</td><td class="num">${fmt.uahK(e.total_materials_uah)}</td><td class="num">${fmt.uahK(e.total_products_uah)}</td><td class="num"><span class="tag ${Number(e.markup_pct)>0?'tg':'tr'}">${e.markup_pct||0}%</span></td></tr>`).join('')||'<tr><td colspan="6" class="empty">Немає</td></tr>'}</tbody>
+    </table></div></div>
+
+    <div class="g2" style="margin-top:14px">
+      <div class="cc">
+        <div class="cc-head"><h3>📦 ТОП-20 закупленої сировини</h3><span class="pill">${supByProd.length}</span></div>
+        <div class="tbl-scroll" style="max-height:380px"><table class="dt">
+          <thead><tr><th>#</th><th>SKU сировини</th><th class="num">Кг/Шт</th><th class="num">₴ total</th><th class="num">₴/од.</th></tr></thead>
+          <tbody>${supByProd.slice(0,20).map((s,i)=>`<tr><td>${i+1}</td><td title="${escapeHtml(s.product_name||'')}">${escapeHtml(truncate(s.product_name||'—',32))}</td><td class="num">${Number(s.total_qty).toFixed(0)}</td><td class="num">${fmt.uahK(s.total_sum_uah)}</td><td class="num">${fmt.uah(s.avg_cost_per_unit)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">Немає</td></tr>'}</tbody>
+        </table></div>
+      </div>
+      <div class="cc">
+        <div class="cc-head"><h3>⚠ Списання по місяцях</h3><span class="pill">${losses.length}</span></div>
+        <div class="chart-wrap"><canvas id="lossChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec"><h2>🔧 Останні виробничі акти</h2></div>
+    <div class="cc"><div class="tbl-scroll"><table class="dt">
+      <thead><tr><th>Дата</th><th>Документ</th><th>Тип</th><th>Тех.карта</th><th class="num">Матеріали ₴</th><th class="num">Готова ₴</th><th>Статус</th></tr></thead>
+      <tbody>${acts.slice(0,80).map(a=>{const plan=plans.find(p=>p.ms_id===a.plan_ms_id);return `<tr><td>${fmt.date(a.moment)}</td><td><strong>${escapeHtml(truncate(a.ms_name||'—',28))}</strong></td><td><small>${a.doc_type}</small></td><td><small>${escapeHtml(truncate(plan?.ms_name||'—',30))}</small></td><td class="num">${fmt.uahK(a.materials_sum_uah)}</td><td class="num">${fmt.uahK(a.products_sum_uah)}</td><td><small>${a.state_name||'—'}</small></td></tr>`;}).join('')}</tbody>
+    </table></div></div>
+  `;
+  setTimeout(()=>{
+    if(charts.month)charts.month.destroy();
+    charts.month=new Chart($('monthChart'),{
+      type:'bar',
+      data:{labels:monthly.map(m=>{const d=new Date(m.month);return d.toLocaleDateString('uk-UA',{month:'short',year:'2-digit'});}),datasets:[
+        {label:'Сировина ₴',data:monthly.map(m=>Number(m.materials_uah||0)),backgroundColor:'#3B82F6',borderRadius:4},
+        {label:'Готова продукція ₴',data:monthly.map(m=>Number(m.products_uah||0)),backgroundColor:'#39B44A',borderRadius:4},
+        {label:'Кількість актів',data:monthly.map(m=>Number(m.acts_count||0)),type:'line',borderColor:'#E84040',backgroundColor:'transparent',borderWidth:2,tension:.3,yAxisID:'y1'},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{position:'left',ticks:{callback:(v)=>fmt.uahK(v)}},y1:{position:'right',title:{display:true,text:'Актів'},grid:{drawOnChartArea:false}}}}
+    });
+    if(charts.loss)charts.loss.destroy();
+    charts.loss=new Chart($('lossChart'),{
+      type:'bar',
+      data:{labels:losses.map(l=>{const d=new Date(l.month);return d.toLocaleDateString('uk-UA',{month:'short',year:'2-digit'});}),datasets:[{label:'Списано ₴',data:losses.map(l=>Number(l.losses_uah||0)),backgroundColor:'#E84040',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:(v)=>fmt.uahK(v)}}}}
+    });
+  },50);
+}
+load();
+</script>
+</body>
+</html>
