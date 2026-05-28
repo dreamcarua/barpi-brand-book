@@ -1,34 +1,294 @@
 <!DOCTYPE html>
 <html lang="uk">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sales Dashboard · Barpi</title>
-<style>:root{--bg:#FAFAFA;--ink:#1A1A1A;--blue:#2F6FED;--gray:#6b7280;--line:#e5e7eb;--radius:12px}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}header.top{border-bottom:1px solid var(--line);padding:16px 24px;background:white;position:sticky;top:0;z-index:50}header.top .wrap{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}.logo{font-weight:800;font-size:20px;letter-spacing:-0.02em}.logo .dot{color:var(--blue)}.crumb{color:var(--gray);font-size:13px}.crumb a{color:var(--gray);text-decoration:none}main{max-width:1100px;margin:0 auto;padding:32px 24px 80px}h1{font-size:32px;font-weight:800;letter-spacing:-0.02em;margin:0 0 8px}.sub{color:var(--gray);font-size:15px;margin:0 0 32px}.card{background:white;border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:16px}.card h3{margin:0 0 12px;font-size:16px;font-weight:700}.card h4{margin:18px 0 8px;font-size:14px;font-weight:700}table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}th{text-align:left;padding:10px 12px;font-weight:600;font-size:11px;text-transform:uppercase;color:var(--gray);background:#f3f4f6;border-bottom:1px solid var(--line)}td{padding:10px 12px;border-bottom:1px solid #f3f4f6}.pill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0}.pill{background:#f9fafb;border:1px solid var(--line);border-radius:10px;padding:14px}.pill .name{font-size:11px;color:var(--gray);text-transform:uppercase;font-weight:600}.pill .count{font-size:20px;font-weight:800;margin-top:4px}.status{display:inline-block;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;text-transform:uppercase;background:#fef3c7;color:#92400e;margin-left:8px}code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px;font-family:'SF Mono',monospace}.banner{background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;padding:16px 20px;color:#1e40af;font-size:14px;margin-bottom:24px}.banner strong{color:#1e3a8a}</style></head>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sales Dashboard · Barpi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/bb.css">
+<style>
+  .sales-hero{background:linear-gradient(135deg,#001154 0%,#0a1f7a 100%);color:#fff;padding:48px 32px;border-radius:24px;margin-bottom:32px;position:relative;overflow:hidden}
+  .sales-hero::before{content:"";position:absolute;top:-50%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(186,217,244,.2),transparent 70%);pointer-events:none}
+  .sales-hero h1{font-size:clamp(28px,4vw,42px);font-weight:800;margin:0 0 12px;letter-spacing:-.02em}
+  .sales-hero .lead{font-size:16px;opacity:.85;max-width:640px;margin:0}
+  .sales-hero .badges{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+  .sales-hero .badge{background:rgba(255,255,255,.15);border:1px solid rgba(186,217,244,.3);padding:6px 14px;border-radius:999px;font-size:12px;font-weight:500;backdrop-filter:blur(6px)}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px}
+  .kpi{background:#fff;border:1px solid #eee;border-radius:16px;padding:20px;position:relative;transition:all .2s}
+  .kpi:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,17,84,.08)}
+  .kpi .label{font-size:11px;font-weight:600;text-transform:uppercase;color:#888;letter-spacing:.05em;margin-bottom:8px}
+  .kpi .val{font-size:26px;font-weight:800;color:#001154;letter-spacing:-.02em;line-height:1}
+  .kpi .sub{font-size:12px;color:#666;margin-top:6px;min-height:16px}
+  .kpi.accent{background:linear-gradient(135deg,#BAD9F4 0%,#d4e7f7 100%);border-color:#001154}
+  .kpi.accent .val{color:#001154}
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px;padding:16px 20px;background:#fff;border:1px solid #eee;border-radius:14px}
+  .controls label{font-size:12px;font-weight:600;color:#555}
+  .controls select,.controls input{font-family:inherit;font-size:13px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333;outline:none}
+  .controls select:focus,.controls input:focus{border-color:#001154}
+  .controls .spacer{flex:1}
+  .btn{font-family:inherit;font-size:13px;font-weight:600;padding:9px 16px;border-radius:8px;border:none;cursor:pointer;transition:all .15s;background:#001154;color:#fff}
+  .btn:hover{background:#0a1f7a}
+  .btn.ghost{background:transparent;border:1px solid #ddd;color:#333}
+  .btn.ghost:hover{background:#f5f5f5;border-color:#001154}
+  .btn.accent{background:#BAD9F4;color:#001154}
+  .btn.accent:hover{background:#a8cdef}
+  .panel{background:#fff;border:1px solid #eee;border-radius:16px;padding:24px;margin-bottom:20px}
+  .panel h3{margin:0 0 16px;font-size:18px;font-weight:700;color:#001154;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  .panel h3 .pill{font-size:11px;font-weight:600;background:#BAD9F4;color:#001154;padding:3px 10px;border-radius:999px;text-transform:none;letter-spacing:0}
+  table.data{width:100%;border-collapse:collapse;font-size:13px}
+  table.data th{text-align:left;padding:10px 14px;font-weight:600;font-size:11px;text-transform:uppercase;color:#666;background:#FAF7F7;border-bottom:1px solid #eee;letter-spacing:.04em}
+  table.data td{padding:11px 14px;border-bottom:1px solid #f5f5f5;color:#333}
+  table.data tbody tr:hover{background:#FAF7F7}
+  table.data td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+  table.data td.muted{color:#888;font-style:italic}
+  table.data .chan-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+  .entry-form{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end}
+  @media(max-width:900px){.entry-form{grid-template-columns:1fr 1fr}}
+  .entry-form .field{display:flex;flex-direction:column;gap:4px}
+  .entry-form .field.full{grid-column:1/-1}
+  .entry-form label{font-size:11px;font-weight:600;text-transform:uppercase;color:#666;letter-spacing:.04em}
+  .entry-form input,.entry-form select{font-family:inherit;font-size:13px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333;outline:none}
+  .entry-form input:focus,.entry-form select:focus{border-color:#001154}
+  .empty{padding:40px;text-align:center;color:#888;font-style:italic;font-size:14px}
+  .toast{position:fixed;bottom:24px;right:24px;background:#001154;color:#fff;padding:14px 22px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:all .25s;z-index:1000}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast.err{background:#b91c1c}
+  .bars{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .bar-row{display:grid;grid-template-columns:140px 1fr 90px;gap:12px;align-items:center;font-size:13px}
+  .bar-row .name{font-weight:500;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar-row .track{height:10px;background:#FAF7F7;border-radius:99px;overflow:hidden}
+  .bar-row .fill{height:100%;background:linear-gradient(90deg,#001154,#0a1f7a);border-radius:99px;transition:width .4s}
+  .bar-row .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:#001154}
+</style>
+</head>
 <body>
-<header class="top"><div class="wrap"><div class="logo">Barpi<span class="dot">.</span></div><div class="crumb"><a href="../../">Brand Bible</a> / <a href="../">Dashboards</a> / <strong style="color:var(--ink)">Sales</strong></div></div></header>
-<main>
-<h1>💰 Sales Dashboard <span class="status">PLANNED · Фаза 4</span></h1>
-<p class="sub">Продажі по SKU, каналах, мережах. Джерело даних — МойСклад API.</p>
-<div class="banner">🚧 <strong>Дашборд у розробці.</strong> Зараз показано структуру майбутнього UI. Підключення до МойСклад через GitHub Actions cron + Cloudflare D1 — у Фазі 4.</div>
-<div class="card"><h3>KPI (планові)</h3><div class="pill-grid">
-<div class="pill"><div class="name">Виручка місяць</div><div class="count">— грн</div></div>
-<div class="pill"><div class="name">Кількість замовлень</div><div class="count">—</div></div>
-<div class="pill"><div class="name">Середній чек</div><div class="count">— грн</div></div>
-<div class="pill"><div class="name">% повторних</div><div class="count">—%</div></div>
-<div class="pill"><div class="name">Топ-канал</div><div class="count">—</div></div>
-<div class="pill"><div class="name">Топ-SKU</div><div class="count">—</div></div>
-</div></div>
-<div class="card"><h3>Продажі по каналах</h3><table><thead><tr><th>Канал</th><th>Виручка</th><th>Замовлень</th><th>Чек</th><th>Δ м/м</th></tr></thead><tbody>
-<tr><td>barpi.com.ua (Хорошоп)</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
-<tr><td>E-ZOO</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
-<tr><td>MasterZoo</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
-<tr><td>PetHouse</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
-<tr><td>GooDwine</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
-<tr><td>Локальні / маркетплейси</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
-<tr><td>Опт</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує даних…</td></tr>
-</tbody></table></div>
-<div class="card"><h3>Топ-SKU за місяць</h3><table><thead><tr><th>#</th><th>SKU</th><th>Формат</th><th>Шт.</th><th>Виручка</th></tr></thead><tbody><tr><td colspan="5" style="color:var(--gray);font-style:italic;text-align:center;padding:24px">Підключення до МойСклад API дасть автоматичний топ.</td></tr></tbody></table></div>
-<div class="card"><h3>Інтеграція з МойСклад</h3>
-<p style="font-size:14px;color:var(--gray);margin:0 0 8px">Архітектура (форк зі snEco):</p>
-<ol style="font-size:14px"><li>GitHub Action <code>sales-sync.yml</code> запускається щодня о 06:00 UTC</li><li>Скрипт <code>moysklad_sync.py</code> тягне demand, customerorder, invoiceout з API</li><li>Зберігає у Cloudflare D1 <code>barpi-bible</code> (таблиці <code>sales_*</code>)</li><li>Цей HTML підвантажує дані через <code>fetch('/api/dashboard/sales/data')</code> з Worker <code>barpi-auth</code></li><li>OTP-gate перевіряє JWT перед видачею</li></ol>
-<p style="font-size:13px;color:var(--gray);margin-top:12px">Потрібно (від тебе у Q3 2026): <strong>MoySklad API token</strong> → GitHub Secret <code>MOYSKLAD_TOKEN</code>.</p>
+<div id="bb-shell"></div>
+<main class="bb-main" id="bb-main">
+<div class="sales-hero">
+  <h1>💰 Sales Dashboard</h1>
+  <p class="lead">Продажі по SKU, каналах, мережах. Дані з Supabase в реальному часі. Ручне введення + майбутня інтеграція з МойСклад API.</p>
+  <div class="badges">
+    <span class="badge">🟢 Live · Supabase</span>
+    <span class="badge">📊 17 каналів</span>
+    <span class="badge">📦 24 SKU</span>
+    <span class="badge">📝 Manual + API</span>
+  </div>
 </div>
-</main></body></html>
+<div class="controls">
+  <label>Період:</label>
+  <select id="periodSel">
+    <option value="7">7 днів</option>
+    <option value="30" selected>30 днів</option>
+    <option value="90">90 днів</option>
+    <option value="365">12 місяців</option>
+    <option value="all">Вся історія</option>
+  </select>
+  <label style="margin-left:12px">Канал:</label>
+  <select id="channelFilter"><option value="">Всі</option></select>
+  <label style="margin-left:12px">Категорія:</label>
+  <select id="categoryFilter">
+    <option value="">Всі</option>
+    <option value="meat">М'ясо</option>
+    <option value="cheese">Сир</option>
+    <option value="appetizer">Апетайзери</option>
+    <option value="cat">Котячі</option>
+  </select>
+  <div class="spacer"></div>
+  <button class="btn ghost" id="reloadBtn">⟳ Оновити</button>
+  <button class="btn accent" id="exportBtn">⬇ CSV</button>
+  <button class="btn" id="newSaleBtn">+ Новий продаж</button>
+</div>
+<div class="kpi-grid">
+  <div class="kpi accent"><div class="label">Виручка</div><div class="val" id="kpiRevenue">—</div><div class="sub" id="kpiRevenueSub">грн за період</div></div>
+  <div class="kpi"><div class="label">Замовлень</div><div class="val" id="kpiOrders">—</div><div class="sub" id="kpiOrdersSub">шт продано</div></div>
+  <div class="kpi"><div class="label">Середній чек</div><div class="val" id="kpiAvg">—</div><div class="sub">грн / транзакція</div></div>
+  <div class="kpi"><div class="label">Топ-канал</div><div class="val" id="kpiTopChan" style="font-size:18px">—</div><div class="sub" id="kpiTopChanSub">—</div></div>
+  <div class="kpi"><div class="label">Топ-SKU</div><div class="val" id="kpiTopSku" style="font-size:16px">—</div><div class="sub" id="kpiTopSkuSub">—</div></div>
+  <div class="kpi"><div class="label">Активних SKU</div><div class="val" id="kpiSkuCount">—</div><div class="sub">з 24 в каталозі</div></div>
+</div>
+<div class="panel" id="entryPanel" style="display:none">
+  <h3>📝 Швидке додавання продажу <span class="pill" id="entryClose" style="cursor:pointer">✕ закрити</span></h3>
+  <form id="entryForm" class="entry-form">
+    <div class="field"><label>Дата</label><input type="date" id="f_date" required></div>
+    <div class="field"><label>Канал</label><select id="f_channel" required></select></div>
+    <div class="field"><label>SKU</label><select id="f_sku" required></select></div>
+    <div class="field"><label>Кількість, шт</label><input type="number" id="f_qty" min="1" step="1" required></div>
+    <div class="field"><label>Виручка, грн</label><input type="number" id="f_rev" min="0" step="0.01" required></div>
+    <div class="field"><button class="btn" type="submit" style="width:100%">Додати</button></div>
+    <div class="field full"><label>Нотатки (опц.)</label><input type="text" id="f_notes" placeholder="напр. промо, опт, тестовий продаж"></div>
+  </form>
+</div>
+<div class="grid-2">
+  <div class="panel">
+    <h3>📊 По каналах <span class="pill" id="chanCount">0</span></h3>
+    <div id="channelsBars" class="bars"><div class="empty">Завантаження…</div></div>
+  </div>
+  <div class="panel">
+    <h3>🏆 Топ-SKU <span class="pill" id="topSkuCount">0</span></h3>
+    <table class="data" id="topSkuTable">
+      <thead><tr><th>#</th><th>SKU</th><th>Кат.</th><th class="num">Шт</th><th class="num">Виручка</th></tr></thead>
+      <tbody><tr><td colspan="5" class="empty">Завантаження…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+<div class="panel">
+  <h3>📋 Останні продажі <span class="pill" id="recentCount">0</span></h3>
+  <table class="data" id="recentTable">
+    <thead><tr><th>Дата</th><th>Канал</th><th>SKU</th><th class="num">Шт</th><th class="num">Виручка</th><th>Нотатки</th></tr></thead>
+    <tbody><tr><td colspan="6" class="empty">Завантаження…</td></tr></tbody>
+  </table>
+</div>
+<div class="panel">
+  <h3>🔌 Інтеграції</h3>
+  <p style="margin:0 0 12px;color:#555;font-size:14px;line-height:1.6">Поточно: <strong>ручне введення</strong> через форму вище. Майбутні джерела:</p>
+  <ul style="font-size:13px;color:#555;line-height:1.7;margin:0;padding-left:20px">
+    <li><strong>Хорошоп</strong> (barpi.com.ua) — webhook на нове замовлення → Supabase Edge Function → INSERT</li>
+    <li><strong>МойСклад API</strong> — daily cron (06:00 UTC), тягне demand + customerorder</li>
+    <li><strong>1C / Excel імпорт</strong> — drag-n-drop XLSX → парсер → bulk insert</li>
+    <li><strong>Telegram bot</strong> — продажник пише в чат: <code>/sale 5 яловичина-30 e-zoo 450</code></li>
+  </ul>
+</div>
+</main>
+<div id="toast" class="toast"></div>
+<script src="../../assets/bb.js"></script>
+<script>
+const SUPA_URL = 'https://zrcqmwlpsggiqgipvxhv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const $ = (id) => document.getElementById(id);
+const fmtUah = (n) => new Intl.NumberFormat('uk-UA',{minimumFractionDigits:0,maximumFractionDigits:0}).format(Math.round(n||0)) + ' ₴';
+const fmtNum = (n) => new Intl.NumberFormat('uk-UA').format(n||0);
+const fmtDate = (s) => { const d = new Date(s); return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric'}); };
+let state = { channels: [], skus: [], daily: [], loading: false };
+function toast(msg, isErr=false){
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr?' err':'');
+  setTimeout(() => t.className = 'toast', 2800);
+}
+async function api(path, opts={}){
+  const r = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    ...opts,
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation', ...(opts.headers||{}) },
+  });
+  if(!r.ok){ throw new Error('API ' + r.status + ': ' + (await r.text())); }
+  return r.json();
+}
+async function loadAll(){
+  state.loading = true;
+  try {
+    const [chans, skus, daily] = await Promise.all([
+      api('sales_channels?select=*&order=name'),
+      api('sales_sku?select=*&order=name'),
+      api('sales_daily?select=*,channel:sales_channels(name,slug,color),sku:sales_sku(name,category,format_g,price_uah)&order=date.desc&limit=500'),
+    ]);
+    state.channels = chans; state.skus = skus; state.daily = daily;
+    populateFilters(); render();
+  } catch(e){ console.error(e); toast('Помилка завантаження: ' + e.message, true); }
+  finally { state.loading = false; }
+}
+function populateFilters(){
+  $('channelFilter').innerHTML = '<option value="">Всі</option>' + state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  $('f_channel').innerHTML = '<option value="">— виберіть —</option>' + state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  $('f_sku').innerHTML = '<option value="">— виберіть —</option>' + state.skus.map(s => `<option value="${s.id}">${s.name} (${s.format_g||'—'}г)</option>`).join('');
+  $('f_date').value = new Date().toISOString().slice(0,10);
+}
+function getFiltered(){
+  const period = $('periodSel').value;
+  const chanId = $('channelFilter').value;
+  const cat = $('categoryFilter').value;
+  const now = new Date();
+  let from = null;
+  if(period !== 'all'){ from = new Date(now.getTime() - parseInt(period)*86400000); }
+  return state.daily.filter(r => {
+    if(from && new Date(r.date) < from) return false;
+    if(chanId && String(r.channel_id) !== String(chanId)) return false;
+    if(cat && r.sku?.category !== cat) return false;
+    return true;
+  });
+}
+function render(){
+  const rows = getFiltered();
+  const revenue = rows.reduce((s,r)=>s+Number(r.revenue_uah||0),0);
+  const qty = rows.reduce((s,r)=>s+Number(r.quantity||0),0);
+  const avg = rows.length ? revenue / rows.length : 0;
+  $('kpiRevenue').textContent = fmtUah(revenue);
+  $('kpiRevenueSub').textContent = rows.length + ' транзакцій';
+  $('kpiOrders').textContent = fmtNum(qty);
+  $('kpiOrdersSub').textContent = 'одиниць продано';
+  $('kpiAvg').textContent = fmtUah(avg);
+  const byChan = {};
+  rows.forEach(r => {
+    const k = r.channel?.name || '—';
+    if(!byChan[k]) byChan[k] = {rev:0, qty:0, color:r.channel?.color||'#999'};
+    byChan[k].rev += Number(r.revenue_uah||0);
+    byChan[k].qty += Number(r.quantity||0);
+  });
+  const chanArr = Object.entries(byChan).map(([k,v])=>({name:k,...v})).sort((a,b)=>b.rev-a.rev);
+  if(chanArr[0]){ $('kpiTopChan').textContent = chanArr[0].name; $('kpiTopChanSub').textContent = fmtUah(chanArr[0].rev); }
+  else { $('kpiTopChan').textContent = '—'; $('kpiTopChanSub').textContent = ''; }
+  const bySku = {};
+  rows.forEach(r => {
+    const k = r.sku?.name || '—';
+    if(!bySku[k]) bySku[k] = {rev:0, qty:0, cat:r.sku?.category||'—'};
+    bySku[k].rev += Number(r.revenue_uah||0);
+    bySku[k].qty += Number(r.quantity||0);
+  });
+  const skuArr = Object.entries(bySku).map(([k,v])=>({name:k,...v})).sort((a,b)=>b.rev-a.rev);
+  if(skuArr[0]){
+    $('kpiTopSku').textContent = skuArr[0].name.length > 22 ? skuArr[0].name.slice(0,22)+'…' : skuArr[0].name;
+    $('kpiTopSkuSub').textContent = fmtUah(skuArr[0].rev) + ' · ' + skuArr[0].qty + ' шт';
+  }
+  $('kpiSkuCount').textContent = skuArr.length;
+  $('chanCount').textContent = chanArr.length;
+  const maxRev = chanArr[0]?.rev || 1;
+  $('channelsBars').innerHTML = chanArr.length === 0
+    ? '<div class="empty">Немає даних за обраний період</div>'
+    : chanArr.slice(0,12).map(c => `<div class="bar-row"><div class="name" style="color:${c.color}">${c.name}</div><div class="track"><div class="fill" style="width:${(c.rev/maxRev*100).toFixed(1)}%;background:linear-gradient(90deg,${c.color},${c.color}99)"></div></div><div class="val">${fmtUah(c.rev)}</div></div>`).join('');
+  $('topSkuCount').textContent = skuArr.length;
+  $('topSkuTable').querySelector('tbody').innerHTML = skuArr.length === 0
+    ? '<tr><td colspan="5" class="empty">Немає даних</td></tr>'
+    : skuArr.slice(0,15).map((s,i) => `<tr><td style="color:#888;font-weight:600">${i+1}</td><td>${s.name}</td><td><span style="font-size:10px;background:#FAF7F7;color:#555;padding:2px 8px;border-radius:999px">${s.cat}</span></td><td class="num">${s.qty}</td><td class="num">${fmtUah(s.rev)}</td></tr>`).join('');
+  $('recentCount').textContent = rows.length;
+  $('recentTable').querySelector('tbody').innerHTML = rows.length === 0
+    ? '<tr><td colspan="6" class="empty">Немає продажів</td></tr>'
+    : rows.slice(0,30).map(r => `<tr><td>${fmtDate(r.date)}</td><td><span class="chan-dot" style="background:${r.channel?.color||'#999'}"></span>${r.channel?.name||'—'}</td><td>${r.sku?.name||'—'}</td><td class="num">${r.quantity}</td><td class="num">${fmtUah(r.revenue_uah)}</td><td class="muted">${r.notes||''}</td></tr>`).join('');
+}
+$('newSaleBtn').addEventListener('click', () => { $('entryPanel').style.display = 'block'; $('entryPanel').scrollIntoView({behavior:'smooth',block:'center'}); });
+$('entryClose').addEventListener('click', () => $('entryPanel').style.display = 'none');
+$('entryForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const payload = { date: $('f_date').value, channel_id: parseInt($('f_channel').value), sku_id: parseInt($('f_sku').value), quantity: parseInt($('f_qty').value), revenue_uah: parseFloat($('f_rev').value), notes: $('f_notes').value || null };
+  try {
+    await api('sales_daily', { method: 'POST', body: JSON.stringify(payload) });
+    toast('✓ Продаж додано: ' + fmtUah(payload.revenue_uah));
+    $('entryForm').reset();
+    $('f_date').value = new Date().toISOString().slice(0,10);
+    await loadAll();
+  } catch(err){ toast('Помилка: ' + err.message, true); }
+});
+['periodSel','channelFilter','categoryFilter'].forEach(id => $(id).addEventListener('change', render));
+$('reloadBtn').addEventListener('click', loadAll);
+$('exportBtn').addEventListener('click', () => {
+  const rows = getFiltered();
+  if(!rows.length) return toast('Немає даних для експорту', true);
+  const header = ['Дата','Канал','SKU','Категорія','Кількість','Виручка,грн','Нотатки'];
+  const lines = [header.join(',')];
+  rows.forEach(r => {
+    lines.push([r.date,'"'+(r.channel?.name||'')+'"','"'+(r.sku?.name||'')+'"',r.sku?.category||'',r.quantity,r.revenue_uah,'"'+(r.notes||'').replace(/"/g,'""')+'"'].join(','));
+  });
+  const blob = new Blob(['﻿'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'barpi-sales-' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('✓ Експортовано ' + rows.length + ' рядків');
+});
+loadAll();
+</script>
+</body>
+</html>
