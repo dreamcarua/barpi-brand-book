@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Customer 360 · Barpi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/bb.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--y:#001154;--y-soft:rgba(0,17,84,.13);--y-light:#BAD9F4;--g:#39B44A;--g-soft:rgba(57,180,74,.13);--r:#E84040;--r-soft:rgba(232,64,64,.10);--bl:#3B82F6;--bl-soft:rgba(59,130,246,.10);--or:#F59E0B;--or-soft:rgba(245,158,11,.13);--d:#1A1A1A;--bg:#FAF7F7;--card:#fff;--muted:#888;--border:#E5E5DC;--line:#EEE}
+body{background:var(--bg);font-family:Rubik,-apple-system,sans-serif;color:var(--d);margin:0}
+.cp-topbar{position:sticky;top:0;z-index:200;background:var(--d);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--y)}
+.cp-topbar h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.cp-topbar .sub{font-size:11px;opacity:.6;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.cp-topbar .spacer{flex:1}
+.cp-topbar .sync{font-size:12px;opacity:.7;display:flex;align-items:center;gap:6px}
+.cp-topbar .dot{width:8px;height:8px;border-radius:50%;background:var(--g)}
+.cp-selector{position:sticky;top:48px;z-index:150;background:#fff;border-bottom:1px solid var(--line);padding:14px 24px;display:flex;gap:10px;align-items:center;justify-content:center}
+.cp-selector .search{flex:1;max-width:520px;position:relative}
+.cp-selector input{width:100%;font-family:Rubik;font-size:14px;padding:10px 14px 10px 38px;border:1px solid var(--border);border-radius:99px;background:#fff;color:var(--d);outline:none}
+.cp-selector input:focus{border-color:var(--y);box-shadow:0 0 0 3px var(--y-soft)}
+.cp-selector .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--muted)}
+.cp-selector .back{font-family:Rubik;font-size:13px;font-weight:600;padding:8px 16px;border-radius:99px;border:none;background:var(--y);color:#fff;cursor:pointer}
+.autocomplete{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;margin-top:4px;max-height:340px;overflow:auto;box-shadow:0 8px 24px rgba(0,17,84,.08);z-index:100;display:none}
+.autocomplete.show{display:block}
+.ac-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13px;display:flex;align-items:center;gap:8px}
+.ac-item:hover{background:var(--y-soft)}
+.ac-item .name{flex:1;font-weight:600}
+.ac-item .ch{font-size:10px;padding:2px 6px;border-radius:99px;background:var(--y-soft);color:var(--y)}
+.cp-wrap{max-width:1440px;margin:0 auto;padding:20px 24px 40px}
+.sec{margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+.sec h2{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--y-soft);color:var(--y)}
+.g1{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media(max-width:900px){.g2,.g3,.g4,.g5{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:all .2s}
+.kpi:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,17,84,.06)}
+.kpi .lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.kpi .val{font-size:22px;font-weight:800;color:var(--d);letter-spacing:-.02em;line-height:1.1}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:6px}
+.kpi.cy{border-bottom:3px solid var(--y)}
+.kpi.cg{border-bottom:3px solid var(--g)}
+.kpi.cr{border-bottom:3px solid var(--r)}
+.kpi.cb{border-bottom:3px solid var(--bl)}
+.delta{display:inline-flex;align-items:center;gap:3px;font-weight:700;font-size:11px;padding:2px 7px;border-radius:99px}
+.delta.up{background:var(--g-soft);color:var(--g)}
+.delta.dn{background:var(--r-soft);color:var(--r)}
+.delta.neu{background:#f3f3f3;color:#777}
+.cc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.cc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.cc-head h3{margin:0;font-size:14px;font-weight:700;color:var(--d)}
+.cc-head .pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--y-soft);color:var(--y);text-transform:uppercase;letter-spacing:.04em}
+.rfm-grid{display:grid;grid-template-columns:120px repeat(3,1fr);gap:6px;font-size:12px}
+.rfm-cell{padding:14px 12px;text-align:center;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;transition:all .15s}
+.rfm-cell:hover{transform:scale(1.02);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.rfm-cell .cnt{font-size:22px;line-height:1}
+.rfm-cell .lbl{font-size:10px;opacity:.9;margin-top:4px}
+.rfm-row-lbl{display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase}
+.rfm-col-lbl{text-align:center;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;padding-bottom:4px}
+.mover-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+.mover-card h4{margin:0 0 10px;font-size:13px;font-weight:700;color:var(--d)}
+.mover-row{display:grid;grid-template-columns:24px 1fr 80px 70px;gap:8px;font-size:12px;padding:6px 4px;border-bottom:1px solid var(--line);align-items:center;cursor:pointer}
+.mover-row:hover{background:var(--y-soft);border-radius:4px}
+.mover-row:last-child{border-bottom:none}
+.mover-row .rk{color:var(--muted);font-weight:700;font-size:11px}
+.mover-row .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mover-row .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--y);font-weight:700}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}
+table.dt th{text-align:left;padding:8px 12px;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--muted);background:#FAFAF5;border-bottom:1px solid var(--line);letter-spacing:.05em}
+table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0;color:var(--d)}
+table.dt tbody tr{cursor:pointer}
+table.dt tbody tr:hover{background:#FBFAF5}
+table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.tbl-scroll{max-height:400px;overflow:auto;border-radius:8px;border:1px solid var(--line)}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.04em}
+.tag.ty{background:var(--y-soft);color:var(--y)}.tag.tg{background:var(--g-soft);color:var(--g)}.tag.tr{background:var(--r-soft);color:var(--r)}.tag.tor{background:var(--or-soft);color:var(--or)}
+.cust-header{background:linear-gradient(135deg,var(--d) 0%,#2A2A2A 100%);color:#fff;padding:28px 32px;border-radius:16px;margin-bottom:20px;position:relative;overflow:hidden}
+.cust-header::before{content:"";position:absolute;top:-50%;right:-10%;width:400px;height:400px;background:radial-gradient(circle,rgba(186,217,244,.15),transparent 70%);pointer-events:none}
+.cust-header .cust-name{font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px;position:relative}
+.cust-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;opacity:.85;position:relative}
+.cust-tags{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap;position:relative}
+.cust-tag{font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px;background:rgba(186,217,244,.2);border:1px solid rgba(186,217,244,.3);color:#fff}
+.cust-tag.seg{background:var(--y-light);color:var(--y)}
+.health-hero{display:flex;align-items:center;gap:24px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:16px}
+.health-circle{width:120px;height:120px;flex-shrink:0;position:relative}
+.health-circle svg{transform:rotate(-90deg)}
+.health-circle .val{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:800;color:var(--d);letter-spacing:-.02em}
+.health-circle .lbl{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.health-info{flex:1}
+.health-info h3{margin:0 0 8px;font-size:18px;font-weight:700;color:var(--d)}
+.health-info .components{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.health-comp{padding:6px 12px;background:#FAFAF5;border-radius:8px;font-size:12px;color:var(--muted)}
+.health-comp strong{color:var(--d);font-weight:700}
+.timeline{max-height:480px;overflow:auto;border-radius:8px;border:1px solid var(--line)}
+.tl-item{display:grid;grid-template-columns:80px 1fr 120px;gap:14px;padding:10px 14px;border-bottom:1px solid var(--line);align-items:center;font-size:13px}
+.tl-item:hover{background:#FBFAF5}
+.tl-item .date{font-size:11px;font-weight:600;color:var(--muted)}
+.tl-item .desc{font-weight:500;color:var(--d)}
+.tl-item .qty{font-size:11px;color:var(--muted);margin-top:2px}
+.tl-item .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--y);font-weight:700}
+.insight{padding:14px;background:#fff;border:1px solid var(--line);border-radius:10px;border-left:4px solid var(--y)}
+.insight.green{border-left-color:var(--g);background:#F6FDF7}
+.insight.red{border-left-color:var(--r);background:#FEF6F6}
+.insight.yellow{border-left-color:var(--or);background:#FFFBEE}
+.insight h4{margin:0 0 6px;font-size:13px;font-weight:700;color:var(--d);display:flex;align-items:center;gap:6px}
+.insight p{margin:0;font-size:12px;color:#555;line-height:1.5}
+.ov-chip{font-family:Rubik;font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--d);transition:all .15s}
+.ov-chip:hover{border-color:var(--y);color:var(--y)}
+.ov-chip.on{background:var(--d);color:#fff;border-color:var(--d)}
+.empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--d);color:#fff;padding:14px 22px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:all .25s;z-index:1000}
+.toast.show{opacity:1;transform:translateY(0)}
+.chart-wrap{position:relative;height:280px}
+.chart-wrap.tall{height:340px}
+@media print{.cp-topbar,.cp-selector,.toast{display:none}.cp-wrap{max-width:none;padding:0}body{background:#fff}.cc{box-shadow:none;page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<div id="bb-shell"></div>
+<main class="bb-main" id="bb-main" style="padding:0">
+<header class="cp-topbar">
+  <h1>👥 Barpi · <span class="sub">Customer 360</span></h1>
+  <span class="spacer"></span>
+  <span class="sync"><span class="dot"></span><span id="syncLabel">Завантаження…</span></span>
+</header>
+<div class="cp-selector">
+  <div class="search">
+    <span class="ico">🔍</span>
+    <input type="text" id="searchInput" placeholder="Пошук клієнта: ім'я, ЄДРПОУ…" autocomplete="off">
+    <div id="autocomplete" class="autocomplete"></div>
+  </div>
+  <button class="back" id="backBtn" style="display:none">← Назад до огляду</button>
+</div>
+<div class="cp-wrap" id="contentWrap"></div>
+</main>
+<div id="toast" class="toast"></div>
+<script src="../../assets/bb.js"></script>
+<script>
+const SUPA_URL = 'https://zrcqmwlpsggiqgipvxhv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const $ = (id) => document.getElementById(id);
+const fmt = {
+  uah: (n) => new Intl.NumberFormat('uk-UA').format(Math.round(n||0)) + ' ₴',
+  uahK: (n) => n >= 1e6 ? (n/1e6).toFixed(1)+'M ₴' : n >= 1e3 ? (n/1e3).toFixed(0)+'K ₴' : Math.round(n)+' ₴',
+  num: (n) => new Intl.NumberFormat('uk-UA').format(n||0),
+  date: (s) => { const d = new Date(s); return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit'}); },
+};
+function ago(d){ if(!d) return '—'; const days = Math.floor((Date.now() - new Date(d).getTime())/86400000); if(days<1) return 'сьогодні'; if(days<2) return 'вчора'; if(days<30) return days+' дн.'; if(days<60) return '~1 міс'; return Math.floor(days/30)+' міс'; }
+function deltaPct(curr, prev){ if (!prev) return null; return ((curr - prev) / prev * 100); }
+function deltaTag(pct){ if (pct == null) return '<span class="delta neu">—</span>'; const cls = pct > 0.5 ? 'up' : pct < -0.5 ? 'dn' : 'neu'; const sign = pct > 0 ? '↑' : pct < 0 ? '↓' : '→'; return `<span class="delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}%</span>`; }
+function toast(msg, isErr=false){ const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (isErr?' err':''); setTimeout(() => t.className = 'toast', 2800); }
+async function api(path){ const r = await fetch(SUPA_URL + '/rest/v1/' + path, { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } }); if(!r.ok) throw new Error('API ' + r.status); return r.json(); }
+let state = { mode: 'overview', customer: null, customerSkus: [], customerTimeline: [], data: null, charts: {} };
+function truncate(s, n){ return (s||'').length > n ? s.slice(0, n) + '…' : s; }
+function healthBadge(score){ if (score == null) return '—'; const cls = score >= 70 ? 'tg' : score >= 40 ? 'tor' : 'tr'; return `<span class="tag ${cls}">${score}</span>`; }
+async function loadAll(){
+  try {
+    $('syncLabel').textContent = 'Завантаження…';
+    const [customers, movers, sync] = await Promise.all([
+      api('v_customer_metrics?select=*&order=lifetime_revenue.desc'),
+      api('v_movers?select=*&order=delta_uah.desc'),
+      api('moysklad_sync_log?select=created_at&order=created_at.desc&limit=1'),
+    ]);
+    state.data = { customers, movers };
+    if (sync[0]) { const h = Math.floor((Date.now() - new Date(sync[0].created_at).getTime())/3600000); $('syncLabel').textContent = `Sync ${h}h тому · ${customers.length} клієнтів`; }
+    renderOverview();
+  } catch(e){ console.error(e); toast('Помилка: ' + e.message, true); }
+}
+function renderOverview(){
+  state.mode = 'overview'; $('backBtn').style.display = 'none'; $('searchInput').value = '';
+  const customers = state.data.customers; const movers = state.data.movers;
+  const activeCustomers = customers.filter(c => c.days_since_last_order != null && c.days_since_last_order <= 30);
+  const lostCustomers = customers.filter(c => c.days_since_last_order > 180);
+  const newCustomers = customers.filter(c => c.first_order_date && (new Date() - new Date(c.first_order_date))/86400000 <= 30);
+  const totalLifetime = customers.reduce((s,c) => s + Number(c.lifetime_revenue || 0), 0);
+  const totalCurrent = customers.reduce((s,c) => s + Number(c.revenue_90d || 0), 0);
+  const totalPrev = customers.reduce((s,c) => s + Number(c.revenue_prev90 || 0), 0);
+  const avgHealth = customers.length ? Math.round(customers.reduce((s,c) => s + (c.health_score || 0), 0) / customers.length) : 0;
+  const critical = customers.filter(c => (c.health_score || 0) < 40).length;
+  const top5 = customers.slice(0, 5);
+  const top5Share = totalLifetime > 0 ? top5.reduce((s,c) => s + Number(c.lifetime_revenue || 0), 0) / totalLifetime * 100 : 0;
+  $('contentWrap').innerHTML = `
+    <div class="sec"><h2>📊 Огляд портфелю клієнтів</h2><span class="badge">${customers.length} клієнтів</span></div>
+    <div class="g5">
+      <div class="kpi cy"><div class="lbl">👥 Активні (30д)</div><div class="val">${activeCustomers.length}</div><div class="sub">з ${customers.length} всього</div></div>
+      <div class="kpi cg"><div class="lbl">🆕 Нові (30д)</div><div class="val">${newCustomers.length}</div><div class="sub">перше замовлення</div></div>
+      <div class="kpi cb"><div class="lbl">💰 Виручка (90д)</div><div class="val">${fmt.uahK(totalCurrent)}</div><div class="sub">${deltaTag(deltaPct(totalCurrent, totalPrev))} vs попер.</div></div>
+      <div class="kpi"><div class="lbl">🩺 Avg Health</div><div class="val">${avgHealth}/100</div><div class="sub">${critical} критичних (<40)</div></div>
+      <div class="kpi cr"><div class="lbl">💔 Lost (>180д)</div><div class="val">${lostCustomers.length}</div><div class="sub">давно не купляли</div></div>
+    </div>
+    ${top5Share > 50 ? `<div style="margin-top:14px;padding:14px 18px;background:#FFFBEE;border-left:4px solid var(--or);border-radius:8px;font-size:13px"><strong>⚠ Концентрація:</strong> TOP-5 клієнтів = <strong>${top5Share.toFixed(1)}%</strong> lifetime виручки.</div>` : ''}
+    <div class="sec"><h2>🔥 RFM Heatmap (Recency × Frequency)</h2></div>
+    <div class="cc">${renderRFM(customers)}<div style="margin-top:10px;font-size:11px;color:var(--muted)">Клікніть на клітинку щоб побачити клієнтів сегменту.</div></div>
+    <div class="sec"><h2>📈 Movers (90 днів)</h2></div>
+    <div class="g2">
+      <div class="mover-card"><h4 style="color:var(--g)">🚀 ТОП-15 ріст ₴</h4>
+        ${movers.filter(m => m.delta_uah > 0).slice(0, 15).map((m,i) => `<div class="mover-row" onclick="selectCustomer('${m.counterparty_ms_id}')"><div class="rk">${i+1}</div><div class="nm" title="${m.name}">${truncate(m.name, 28)}</div><div class="val">+${fmt.uahK(m.delta_uah)}</div><div>${deltaTag(m.delta_pct)}</div></div>`).join('') || '<div class="empty">Немає</div>'}
+      </div>
+      <div class="mover-card"><h4 style="color:var(--r)">📉 ТОП-15 падіння ₴</h4>
+        ${movers.filter(m => m.delta_uah < 0).slice(0, 15).map((m,i) => `<div class="mover-row" onclick="selectCustomer('${m.counterparty_ms_id}')"><div class="rk">${i+1}</div><div class="nm" title="${m.name}">${truncate(m.name, 28)}</div><div class="val" style="color:var(--r)">${fmt.uahK(m.delta_uah)}</div><div>${deltaTag(m.delta_pct)}</div></div>`).join('') || '<div class="empty">Немає</div>'}
+      </div>
+    </div>
+    <div class="sec"><h2>🎯 Концентрація — TOP-20 за Lifetime</h2></div>
+    <div class="cc"><div class="tbl-scroll"><table class="dt">
+      <thead><tr><th>#</th><th>Клієнт</th><th>Канал</th><th>Сегмент</th><th class="num">Lifetime</th><th class="num">90д</th><th class="num">Δ%</th><th class="num">Health</th><th class="num">Last</th></tr></thead>
+      <tbody>${customers.slice(0, 20).map((c,i) => `<tr onclick="selectCustomer('${c.counterparty_ms_id}')"><td>${i+1}</td><td><strong>${truncate(c.name, 32)}</strong></td><td><span class="tag" style="background:${c.channel_color}22;color:${c.channel_color}">${c.channel_name || '—'}</span></td><td><small>${c.segment_label || '—'}</small></td><td class="num">${fmt.uah(c.lifetime_revenue)}</td><td class="num">${fmt.uahK(c.revenue_90d)}</td><td class="num">${deltaTag(c.growth_90d_pct)}</td><td class="num">${healthBadge(c.health_score)}</td><td class="num"><small>${ago(c.last_order_date)}</small></td></tr>`).join('')}</tbody>
+    </table></div></div>
+    <div class="sec"><h2>⚠ Action items</h2></div>
+    <div class="g2">
+      <div class="cc"><div class="cc-head"><h3>😴 Сонні (>90д, lifetime >10k)</h3></div>
+        <div class="tbl-scroll" style="max-height:300px"><table class="dt"><thead><tr><th>Клієнт</th><th class="num">Lifetime</th><th class="num">Останнє</th></tr></thead>
+        <tbody>${customers.filter(c => c.days_since_last_order > 90 && c.days_since_last_order < 180 && Number(c.lifetime_revenue||0) > 10000).slice(0, 12).map(c => `<tr onclick="selectCustomer('${c.counterparty_ms_id}')"><td><strong>${truncate(c.name, 30)}</strong></td><td class="num">${fmt.uahK(c.lifetime_revenue)}</td><td class="num"><small>${c.days_since_last_order} дн.</small></td></tr>`).join('') || '<tr><td colspan="3" class="empty">Немає</td></tr>'}</tbody>
+        </table></div>
+      </div>
+      <div class="cc"><div class="cc-head"><h3>🆕 Нові — слідкуйте за 2-м замовленням</h3></div>
+        <div class="tbl-scroll" style="max-height:300px"><table class="dt"><thead><tr><th>Клієнт</th><th class="num">Канал</th><th class="num">Дата</th></tr></thead>
+        <tbody>${newCustomers.slice(0, 12).map(c => `<tr onclick="selectCustomer('${c.counterparty_ms_id}')"><td><strong>${truncate(c.name, 30)}</strong></td><td class="num"><small>${c.channel_name || '—'}</small></td><td class="num"><small>${fmt.date(c.first_order_date)}</small></td></tr>`).join('') || '<tr><td colspan="3" class="empty">Немає</td></tr>'}</tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="sec"><h2>📚 Навігація</h2></div>
+    <div class="cc"><p style="margin:0;font-size:12px;color:var(--muted)">
+      <a href="../sales-performance/" style="color:var(--y);font-weight:600;text-decoration:none">📈 Sales Performance →</a>
+      &nbsp;·&nbsp; <a href="../financial/" style="color:var(--y);text-decoration:none">💵 Financial / ABC →</a>
+      &nbsp;·&nbsp; <a href="../sales/" style="color:var(--y);text-decoration:none">💰 Sales (legacy) →</a>
+      &nbsp;·&nbsp; <a href="../hq/" style="color:var(--y);text-decoration:none">🏢 HQ SMM →</a>
+    </p></div>
+  `;
+}
+function renderRFM(customers){
+  const grid = {};
+  customers.forEach(c => { const key = `${c.r_score}-${c.f_score}`; grid[key] = (grid[key]||0) + 1; });
+  const cellHTML = (r, f) => {
+    const cnt = grid[`${r}-${f}`] || 0;
+    let color = '#94a3b8', lbl = '💀 Lost';
+    if (r === 1 && f === 3) { color = '#39B44A'; lbl = '💎 Чемпіони'; }
+    else if (r === 1 && f === 2) { color = '#39B44A'; lbl = '🟢 Лояльні'; }
+    else if (r === 1 && f === 1) { color = '#3B82F6'; lbl = '🆕 Нові'; }
+    else if (r === 2 && f === 3) { color = '#F59E0B'; lbl = '⚠ Втрачаємо'; }
+    else if (r === 2 && f === 2) { color = '#F59E0B'; lbl = '🟡 At-risk'; }
+    else if (r === 2 && f === 1) { color = '#F59E0B'; lbl = '😴 Засинають'; }
+    else if (r === 3 && f === 3) { color = '#E84040'; lbl = '🚨 Лост чемпіони'; }
+    else if (r === 3 && f === 2) { color = '#E84040'; lbl = '🔴 Лост лояльні'; }
+    return `<div class="rfm-cell" style="background:${color}" onclick="filterByRF(${r},${f})"><div class="cnt">${cnt}</div><div class="lbl">${lbl}</div></div>`;
+  };
+  return `<div class="rfm-grid">
+    <div class="rfm-col-lbl"></div><div class="rfm-col-lbl">F=1 (1-2)</div><div class="rfm-col-lbl">F=2 (3-9)</div><div class="rfm-col-lbl">F=3 (10+)</div>
+    <div class="rfm-row-lbl">R=1 (≤30д)</div>${cellHTML(1,1)}${cellHTML(1,2)}${cellHTML(1,3)}
+    <div class="rfm-row-lbl">R=2 (30-90д)</div>${cellHTML(2,1)}${cellHTML(2,2)}${cellHTML(2,3)}
+    <div class="rfm-row-lbl">R=3 (>90д)</div>${cellHTML(3,1)}${cellHTML(3,2)}${cellHTML(3,3)}
+  </div>`;
+}
+function filterByRF(r, f){
+  const matches = state.data.customers.filter(c => c.r_score === r && c.f_score === f);
+  if (matches.length === 0) return toast('Немає клієнтів у сегменті');
+  if (matches.length === 1) return selectCustomer(matches[0].counterparty_ms_id);
+  toast(`Сегмент R=${r} F=${f}: ${matches.length} клієнтів`);
+}
+async function selectCustomer(ms_id){
+  const c = state.data.customers.find(x => x.counterparty_ms_id === ms_id);
+  if (!c) return toast('Не знайдено', true);
+  try {
+    const [skus, timeline] = await Promise.all([
+      api(`v_customer_skus?counterparty_ms_id=eq.${ms_id}&select=*&order=revenue.desc`),
+      api(`v_customer_timeline?counterparty_ms_id=eq.${ms_id}&select=*&order=date.desc&limit=200`),
+    ]);
+    state.customer = c; state.customerSkus = skus; state.customerTimeline = timeline;
+    renderDetail();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch(e){ toast('Помилка: ' + e.message, true); }
+}
+function renderDetail(){
+  state.mode = 'detail'; $('backBtn').style.display = 'block'; $('searchInput').value = '';
+  const c = state.customer, skus = state.customerSkus, timeline = state.customerTimeline, allCustomers = state.data.customers;
+  const avgLifetime = allCustomers.reduce((s,x) => s + Number(x.lifetime_revenue||0), 0) / allCustomers.length;
+  const avgAov = allCustomers.reduce((s,x) => s + Number(x.aov||0), 0) / allCustomers.length;
+  const sorted = [...allCustomers].sort((a,b) => Number(b.lifetime_revenue||0) - Number(a.lifetime_revenue||0));
+  const rank = sorted.findIndex(x => x.counterparty_ms_id === c.counterparty_ms_id) + 1;
+  const totalAll = sorted.reduce((s,x) => s + Number(x.lifetime_revenue||0), 0);
+  const sharePct = totalAll > 0 ? (Number(c.lifetime_revenue||0) / totalAll * 100) : 0;
+  const insights = [];
+  if (c.days_since_last_order > 60) insights.push({ cls: 'red', icon: '😴', title: 'Спить', body: `Не замовляли ${c.days_since_last_order} днів.` });
+  if (c.growth_90d_pct != null && c.growth_90d_pct > 30) insights.push({ cls: 'green', icon: '🚀', title: 'Швидко росте', body: `+${c.growth_90d_pct}% за 90д.` });
+  if (c.growth_90d_pct != null && c.growth_90d_pct < -30) insights.push({ cls: 'red', icon: '📉', title: 'Падає', body: `${c.growth_90d_pct}% за 90д.` });
+  if (Number(c.lifetime_revenue) >= avgLifetime * 3) insights.push({ cls: 'green', icon: '💎', title: 'VIP клієнт', body: `${(c.lifetime_revenue/avgLifetime).toFixed(1)}× від середнього.` });
+  if (c.health_score < 40) insights.push({ cls: 'red', icon: '🩺', title: 'Health критичний', body: `Score = ${c.health_score}/100.` });
+  if (c.skus_purchased < 3 && c.tx_count >= 3) insights.push({ cls: 'yellow', icon: '🎯', title: 'Вузький асортимент', body: `${c.skus_purchased} SKU. Cross-sell.` });
+  if (insights.length === 0) insights.push({ cls: 'green', icon: '✓', title: 'Все добре', body: 'Клієнт без алертів.' });
+  const byMonth = {};
+  timeline.forEach(t => { const m = t.date.slice(0,7); byMonth[m] = (byMonth[m] || 0) + Number(t.revenue_uah || 0); });
+  const months = Object.keys(byMonth).sort();
+  $('contentWrap').innerHTML = `
+    <div class="cust-header">
+      <h1 class="cust-name">${c.name}</h1>
+      <div class="cust-meta">
+        <span>📋 ${c.company_type === 'individual' ? 'Фізособа' : c.company_type === 'entrepreneur' ? 'ФОП' : c.company_type === 'legal' ? 'Юр.особа' : '—'}</span>
+        ${c.inn ? `<span>🧾 ${c.inn}</span>` : ''}
+        <span>📍 <strong>${c.channel_name || '—'}</strong></span>
+        ${c.price_type ? `<span>💰 ${c.price_type}</span>` : ''}
+        ${c.state ? `<span>🏷 ${c.state}</span>` : ''}
+      </div>
+      <div class="cust-tags">
+        <span class="cust-tag seg">${c.segment_label}</span>
+        <span class="cust-tag">Health ${c.health_score}/100</span>
+        <span class="cust-tag">Rank #${rank}/${allCustomers.length}</span>
+      </div>
+    </div>
+    <div class="health-hero">
+      <div class="health-circle">${healthCircleSVG(c.health_score)}<div class="val">${c.health_score}</div><div class="lbl">Health</div></div>
+      <div class="health-info">
+        <h3>${c.segment_label}</h3>
+        <p style="margin:0;color:var(--muted);font-size:13px">Health = 40·Recency + 30·Frequency + 20·Growth + 10·Spend</p>
+        <div class="components">
+          <div class="health-comp">⏱ Recency: <strong>${c.days_since_last_order} дн.</strong></div>
+          <div class="health-comp">🔁 Транзакцій: <strong>${c.tx_count}</strong></div>
+          <div class="health-comp">📈 Growth 90д: <strong>${c.growth_90d_pct != null ? c.growth_90d_pct + '%' : '—'}</strong></div>
+          <div class="health-comp">💰 Lifetime: <strong>${fmt.uahK(c.lifetime_revenue)}</strong></div>
+        </div>
+      </div>
+    </div>
+    <div class="g4">
+      <div class="kpi cy"><div class="lbl">💰 Lifetime</div><div class="val">${fmt.uah(c.lifetime_revenue)}</div><div class="sub">${c.tx_count} тр · ${c.lifetime_qty} шт</div></div>
+      <div class="kpi cg"><div class="lbl">🛒 AOV</div><div class="val">${fmt.uah(c.aov)}</div><div class="sub">avg order value</div></div>
+      <div class="kpi"><div class="lbl">📅 Перше</div><div class="val" style="font-size:16px">${fmt.date(c.first_order_date)}</div><div class="sub">${c.customer_lifetime_days} дн як клієнт</div></div>
+      <div class="kpi"><div class="lbl">⏱ Останнє</div><div class="val" style="font-size:16px">${fmt.date(c.last_order_date)}</div><div class="sub">${ago(c.last_order_date)}</div></div>
+    </div>
+    <div class="g4" style="margin-top:14px">
+      <div class="kpi cb"><div class="lbl">📊 Виручка 90д</div><div class="val">${fmt.uahK(c.revenue_90d)}</div><div class="sub">${c.tx_90d} тр</div></div>
+      <div class="kpi ${c.growth_90d_pct > 0 ? 'cg' : c.growth_90d_pct < 0 ? 'cr' : ''}"><div class="lbl">📈 Growth 90д</div><div class="val">${c.growth_90d_pct != null ? c.growth_90d_pct + '%' : '—'}</div><div class="sub">vs попер. 90д</div></div>
+      <div class="kpi"><div class="lbl">🔁 Cadence</div><div class="val">${c.avg_days_between_orders ? Math.round(c.avg_days_between_orders) + ' дн' : '—'}</div><div class="sub">avg між замовл.</div></div>
+      <div class="kpi"><div class="lbl">🏷 Асортимент</div><div class="val">${c.skus_purchased}</div><div class="sub">унікальних SKU</div></div>
+    </div>
+    <div class="sec"><h2>🧠 Auto-insights</h2></div>
+    <div class="g3">${insights.map(i => `<div class="insight ${i.cls}"><h4>${i.icon} ${i.title}</h4><p>${i.body}</p></div>`).join('')}</div>
+    <div class="sec"><h2>📈 Динаміка по місяцях</h2></div>
+    <div class="cc" style="margin-bottom:16px"><div class="chart-wrap tall"><canvas id="custTrendChart"></canvas></div></div>
+    <div class="g2">
+      <div class="cc">
+        <div class="cc-head"><h3>🛒 ТОП SKU клієнта</h3><span class="pill">${skus.length}</span></div>
+        <div class="tbl-scroll"><table class="dt">
+          <thead><tr><th>#</th><th>SKU</th><th>Кат</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Разів</th></tr></thead>
+          <tbody>${skus.slice(0, 30).map((s,i) => `<tr><td>${i+1}</td><td title="${s.sku_name}">${truncate(s.sku_name, 28)}</td><td><small>${s.sku_category||'—'}</small></td><td class="num">${s.qty}</td><td class="num">${fmt.uah(s.revenue)}</td><td class="num">${s.times_ordered}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Немає</td></tr>'}</tbody>
+        </table></div>
+      </div>
+      <div class="cc">
+        <div class="cc-head"><h3>📊 Порівняння з середнім</h3></div>
+        <div class="g1" style="gap:10px">
+          <div class="kpi"><div class="lbl">💰 Lifetime vs avg</div><div class="val">${(c.lifetime_revenue / avgLifetime).toFixed(1)}×</div><div class="sub">avg: ${fmt.uahK(avgLifetime)}</div></div>
+          <div class="kpi"><div class="lbl">🛒 AOV vs avg</div><div class="val">${(Number(c.aov) / avgAov).toFixed(1)}×</div><div class="sub">avg: ${fmt.uah(avgAov)}</div></div>
+          <div class="kpi"><div class="lbl">🏆 Rank</div><div class="val">#${rank}</div><div class="sub">з ${allCustomers.length} (TOP ${(rank/allCustomers.length*100).toFixed(0)}%)</div></div>
+          <div class="kpi"><div class="lbl">🍰 Частка</div><div class="val">${sharePct.toFixed(2)}%</div><div class="sub">від total виручки</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="sec"><h2>📅 Timeline транзакцій</h2><span class="badge">${timeline.length}</span></div>
+    <div class="cc">
+      <div class="timeline">${timeline.length === 0 ? '<div class="empty">Немає</div>' : timeline.map(t => `<div class="tl-item"><div class="date">${fmt.date(t.date)}</div><div><div class="desc">${truncate(t.sku_name || '—', 50)}</div><div class="qty">${t.qty} шт · ${t.channel_name || '—'} ${t.note ? '· ' + truncate(t.note, 30) : ''}</div></div><div class="val">${fmt.uah(t.revenue_uah)}</div></div>`).join('')}</div>
+    </div>
+    <div class="sec"><h2>🎯 Рекомендовані дії</h2></div>
+    <div class="cc"><p style="margin:0;font-size:13px;color:#444;line-height:1.7">
+      ${c.days_since_last_order > 60 ? `<strong>📞 Подзвонити:</strong> не замовляли ${c.days_since_last_order} днів.<br>` : ''}
+      ${c.growth_90d_pct < -20 ? `<strong>🔍 З'ясувати причину:</strong> -${Math.abs(c.growth_90d_pct)}% за 90д.<br>` : ''}
+      ${c.skus_purchased < 5 && c.lifetime_revenue > 20000 ? `<strong>🎯 Cross-sell:</strong> ${c.skus_purchased} SKU при lifetime ${fmt.uahK(c.lifetime_revenue)}.<br>` : ''}
+      ${c.segment_label.includes('VIP') ? `<strong>💎 Утримати:</strong> VIP клієнт.<br>` : ''}
+      ${c.tx_count === 1 ? `<strong>🆕 Welcome:</strong> перше замовлення.<br>` : ''}
+    </p></div>
+  `;
+  setTimeout(() => {
+    const ctx = $('custTrendChart');
+    if (ctx) {
+      if (state.charts.custTrend) state.charts.custTrend.destroy();
+      state.charts.custTrend = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: months, datasets: [{ label: 'Виручка ₴', data: months.map(m => byMonth[m]), backgroundColor: '#001154', borderRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: (v) => fmt.uahK(v) } } } },
+      });
+    }
+  }, 50);
+}
+function healthCircleSVG(score){
+  const r = 48, cx = 60, cy = 60, circ = 2 * Math.PI * r;
+  const offset = circ * (1 - (score||0) / 100);
+  const color = score >= 70 ? '#39B44A' : score >= 40 ? '#F59E0B' : '#E84040';
+  return `<svg width="120" height="120" viewBox="0 0 120 120"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#EEE" stroke-width="8"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="8" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round" /></svg>`;
+}
+$('searchInput').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q || q.length < 2) { $('autocomplete').className = 'autocomplete'; return; }
+  const matches = state.data.customers.filter(c => (c.name||'').toLowerCase().includes(q) || (c.inn||'').includes(q)).slice(0, 20);
+  $('autocomplete').innerHTML = matches.length === 0 ? '<div class="ac-item"><div class="name">Не знайдено</div></div>' : matches.map(c => `<div class="ac-item" onclick="selectCustomer('${c.counterparty_ms_id}')"><div class="name">${c.name}</div><span class="ch">${c.channel_name||'—'}</span><small style="color:var(--muted)">${fmt.uahK(c.lifetime_revenue)}</small></div>`).join('');
+  $('autocomplete').className = 'autocomplete show';
+});
+document.addEventListener('click', (e) => { if (!e.target.closest('.search')) $('autocomplete').className = 'autocomplete'; });
+$('backBtn').addEventListener('click', renderOverview);
+window.selectCustomer = selectCustomer;
+window.filterByRF = filterByRF;
+window.renderOverview = renderOverview;
+loadAll();
+</script>
+</body>
+</html>
