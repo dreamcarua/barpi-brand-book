@@ -1,79 +1,113 @@
 <!DOCTYPE html>
 <html lang="uk">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboards · Barpi</title>
-<style>:root{--bg:#FAFAFA;--ink:#1A1A1A;--blue:#001154;--gray:#6b7280;--line:#e5e7eb;--radius:12px}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}header.top{border-bottom:1px solid var(--line);padding:16px 24px;background:white;position:sticky;top:0;z-index:50}header.top .wrap{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}.logo{font-weight:800;font-size:20px}.logo .dot{color:var(--blue)}.crumb{color:var(--gray);font-size:13px}.crumb a{color:var(--gray);text-decoration:none}main{max-width:1100px;margin:0 auto;padding:48px 24px 80px}h1{font-size:40px;font-weight:800;letter-spacing:-0.025em;margin:0 0 12px}.sub{color:var(--gray);font-size:16px;margin:0 0 40px;max-width:600px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}.featured{grid-column:1/-1;background:linear-gradient(135deg,#001154,#000a30);color:white;border:none}.featured h3{color:white}.featured p{color:rgba(255,255,255,0.85)}.featured .meta{color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.2)}.featured .meta strong{color:white}.featured:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,17,84,0.3)}.featured .status{background:rgba(255,255,255,0.2);color:white}.card{background:white;border:1px solid var(--line);border-radius:var(--radius);padding:24px;text-decoration:none;color:var(--ink);transition:border-color .15s,transform .15s,box-shadow .15s;display:block}.card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.05)}.card h3{margin:0 0 8px;font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.card p{margin:0;font-size:14px;color:var(--gray);line-height:1.5}.status{font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}.status.live{background:#dcfce7;color:#166534}.status.beta{background:#dbeafe;color:#1e40af}.status.new{background:#fef3c7;color:#92400e}.status.planned{background:#f3f4f6;color:#6b7280}.meta{margin-top:16px;font-size:12px;color:var(--gray);padding-top:12px;border-top:1px solid #f3f4f6}.meta strong{color:var(--ink);font-weight:600}.legend{margin-top:40px;padding:20px;background:white;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;color:var(--gray)}.legend strong{color:var(--ink)}.section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin:36px 0 12px}</style></head>
-<body>
-<header class="top"><div class="wrap"><div class="logo">Barpi<span class="dot">.</span></div><div class="crumb"><a href="../">Brand Bible</a> / <strong style="color:var(--ink)">Dashboards</strong></div></div></header>
-<main>
-<h1>📊 Dashboards</h1>
-<p class="sub">Внутрішні інструменти команди Barpi. Brand Bible + операційні дашборди МойСклад + SMM.</p>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboards · Barpi Brand Bible</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="/assets/bb.css">
+<style>
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.dash-card{background:#fff;border:1px solid var(--border, #e5e7eb);border-radius:12px;padding:24px;text-decoration:none;color:var(--text, #1A1A1A);transition:border-color .15s,transform .15s,box-shadow .15s;display:block}
+.dash-card:hover{border-color:var(--blue, #001154);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.05)}
+.dash-card h3{margin:0 0 8px;font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dash-card p{margin:0;font-size:14px;color:var(--text-muted, #6b7280);line-height:1.5}
+.dash-card.featured{grid-column:1/-1;background:linear-gradient(135deg,#001154,#000a30);color:#fff;border:none}
+.dash-card.featured h3,.dash-card.featured strong{color:#fff}
+.dash-card.featured p{color:rgba(255,255,255,.85)}
+.dash-card.featured .meta{color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)}
+.dash-card.featured:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,17,84,.3)}
+.dash-card.featured .status{background:rgba(255,255,255,.2);color:#fff}
+.status{font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.status.live{background:#dcfce7;color:#166534}
+.status.beta{background:#dbeafe;color:#1e40af}
+.status.new{background:#fef3c7;color:#92400e}
+.status.planned{background:#f3f4f6;color:#6b7280}
+.meta{margin-top:16px;font-size:12px;color:var(--text-muted, #6b7280);padding-top:12px;border-top:1px solid #f3f4f6}
+.meta strong{color:var(--text, #1A1A1A);font-weight:600}
+.dash-legend{margin-top:40px;padding:20px;background:#fff;border:1px solid var(--border, #e5e7eb);border-radius:12px;font-size:13px;color:var(--text-muted, #6b7280)}
+.dash-legend strong{color:var(--text, #1A1A1A)}
+.dash-section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted, #6b7280);margin:36px 0 12px}
+.dash-section-title:first-child{margin-top:20px}
+</style>
+</head>
+<body class="lang-uk">
+<button class="menu-toggle">☰</button>
+<div class="app">
+  <div id="bb-sidebar"></div>
+  <main class="main">
+    <span class="chapter-num">16 · <span data-lang="uk">Сервіс</span><span data-lang="en">Service</span></span>
+    <h1>📊 <span data-lang="uk">Дашборди</span><span data-lang="en">Dashboards</span></h1>
+    <p class="lead">
+      <span data-lang="uk">Внутрішні інструменти команди Barpi. Brand Bible + операційні дашборди МойСклад + SMM.</span>
+      <span data-lang="en">Internal Barpi team tools. Brand Bible + MoySklad operational dashboards + SMM.</span>
+    </p>
 
-<div class="section-title">🏢 Sales Intelligence (МойСклад)</div>
-<div class="grid">
+    <div class="dash-section-title"><span data-lang="uk">🏢 Sales Intelligence (МойСклад)</span><span data-lang="en">🏢 Sales Intelligence (MoySklad)</span></div>
+    <div class="dash-grid">
+      <a class="dash-card featured" href="customer-360/">
+        <h3>👥 Customer 360 v4 <span class="status">NEW</span></h3>
+        <p><span data-lang="uk">Повноцінний CRM-аналітичний дашборд з 30+ блоками: Health Score, RFM Heatmap, Лост-когорти, AR Aging, Прострочена дебіторка, Cross-sell, Auto-insights, Promo response, Контактні особи. Period chips (30/90/180/365/Все).</span><span data-lang="en">Full CRM analytics dashboard with 30+ blocks: Health Score, RFM Heatmap, Lost cohorts, AR Aging, Overdue AR, Cross-sell, Auto-insights, Promo response, Contacts. Period chips (30/90/180/365/All).</span></p>
+        <div class="meta"><strong>Дані:</strong> 9203 транзакції · 1109 платежів · 1516 рахунків · 614 клієнтів · 28 повернень · <strong>Sync:</strong> 06:00 UTC щодня</div>
+      </a>
+      <a class="dash-card" href="sales-performance/">
+        <h3>📈 Sales Performance <span class="status live">LIVE</span></h3>
+        <p><span data-lang="uk">Виручка та динаміка продажів: 4 вкладки (Огляд / Динаміка / Продукти / Канали). KPI, графіки, ТОП-SKU, ABC-аналіз. Period chips, client-side агрегація з sales_extended.</span><span data-lang="en">Revenue and sales dynamics: 4 tabs. KPIs, charts, TOP SKU, ABC analysis.</span></p>
+        <div class="meta"><strong>Дані:</strong> МойСклад (з 06.01.2025) · <strong>Сегментація:</strong> по тегах + price types</div>
+      </a>
+      <a class="dash-card" href="financial/">
+        <h3>💵 Financial <span class="status live">LIVE</span></h3>
+        <p><span data-lang="uk">Маржинальність / ABC / P&L по SKU. 3 вкладки з фінансовою аналітикою. Готова сировина для звітів Пилипу.</span><span data-lang="en">Margin / ABC / P&L by SKU. 3 tabs with financial analytics.</span></p>
+        <div class="meta"><strong>Дані:</strong> sales_with_margin · cost_uah з МойСклад</div>
+      </a>
+    </div>
 
-<a class="card featured" href="customer-360/">
-<h3>👥 Customer 360 v4 <span class="status new">NEW</span></h3>
-<p>Повноцінний CRM-аналітичний дашборд з 30+ блоками: Health Score, RFM Heatmap, Лост-когорти, AR Aging, Прострочена дебіторка, Cross-sell, Auto-insights, Promo response, Контактні особи. Включно з period chips (30/90/180/365/Все).</p>
-<div class="meta"><strong>Дані:</strong> 9203 транзакції · 1109 платежів · 1516 рахунків · 614 клієнтів · 28 повернень · <strong>Sync:</strong> 06:00 UTC щодня</div>
-</a>
+    <div class="dash-section-title"><span data-lang="uk">🚀 SMM & Операції</span><span data-lang="en">🚀 SMM & Operations</span></div>
+    <div class="dash-grid">
+      <a class="dash-card" href="hq/">
+        <h3>🚀 Barpi HQ — Стіл SMM <span class="status beta">BETA</span></h3>
+        <p><span data-lang="uk">SMM-платформа: календар публікацій (Місяць/Тиждень/День/Список) · Картка публікації з 16 полями · Дошка погоджень · Бібліотека креативів · Запуски · Глобальний пошук · Шорткати.</span><span data-lang="en">Full SMM platform: publication calendar, post cards with 16 fields, approvals board, creatives library, launches, global search, shortcuts.</span></p>
+        <div class="meta"><strong>Стек:</strong> Supabase (Postgres + Auth + RLS + Realtime) · <strong>Доступ:</strong> Вадим / Пилип / Аксьонов / Альона / Мар'яна</div>
+      </a>
+      <a class="dash-card" href="smm/">
+        <h3>📊 SMM Dashboard (v1) <span class="status live">LIVE</span></h3>
+        <p><span data-lang="uk">Звітність: Content Log, Weekly/Monthly, Stories, Reels, Direct, UGC, Pillars. Простіший за HQ — для швидкого ведення.</span><span data-lang="en">Reports: Content Log, Weekly/Monthly, Stories, Reels, Direct, UGC, Pillars.</span></p>
+        <div class="meta"><strong>Доступ:</strong> публічний · <strong>Дані:</strong> localStorage</div>
+      </a>
+      <a class="dash-card" href="events/">
+        <h3>🎪 Events Dashboard <span class="status live">LIVE</span></h3>
+        <p><span data-lang="uk">Фестивалі, дегустації, ROI. 17 подій у 2026. Бюджет, зразки, UGC, ROI tracking.</span><span data-lang="en">Festivals, tastings, ROI. 17 events in 2026. Budget, samples, UGC, ROI tracking.</span></p>
+        <div class="meta"><strong>Доступ:</strong> Альона + Мар'яна + Вадим</div>
+      </a>
+    </div>
 
-<a class="card" href="sales-performance/">
-<h3>📈 Sales Performance <span class="status live">LIVE</span></h3>
-<p>Виручка та динаміка продажів: 4 вкладки (Огляд/Динаміка/Продукти/Канали). KPI, графіки, ТОП-SKU, ABC-аналіз. Period chips, client-side агрегація з sales_extended.</p>
-<div class="meta"><strong>Дані:</strong> МойСклад (з 06.01.2025) · <strong>Сегментація:</strong> по тегах + price types</div>
-</a>
+    <div class="dash-section-title"><span data-lang="uk">📦 Заплановано</span><span data-lang="en">📦 Planned</span></div>
+    <div class="dash-grid">
+      <a class="dash-card" href="inventory/">
+        <h3>📦 Inventory Dashboard <span class="status planned">PLANNED</span></h3>
+        <p><span data-lang="uk">Залишки по SKU, оборотність, мінімальні запаси, покриття днів. Stock sync з МойСклад вже готовий — треба тільки UI.</span><span data-lang="en">SKU stock, turnover, minimum levels, days coverage. Stock sync from MoySklad ready.</span></p>
+        <div class="meta"><strong>Джерело:</strong> МойСклад /report/stock/all</div>
+      </a>
+      <a class="dash-card" href="partners/">
+        <h3>🤝 Partner Pipeline <span class="status planned">PLANNED</span></h3>
+        <p><span data-lang="uk">B2B-вирва: переговори, статус, нові точки продажу. Win rate, активні переговори. Дозбираємо з МС states.</span><span data-lang="en">B2B funnel: negotiations, status, new POS. Win rate.</span></p>
+        <div class="meta"><strong>Доступ:</strong> Олександр + Мар'яна + Вадим</div>
+      </a>
+    </div>
 
-<a class="card" href="financial/">
-<h3>💵 Financial <span class="status live">LIVE</span></h3>
-<p>Маржинальність / ABC / P&L по SKU. 3 вкладки з фінансовою аналітикою. Готова сировина для звітів Пилипу.</p>
-<div class="meta"><strong>Дані:</strong> sales_with_margin · cost_uah з МойСклад</div>
-</a>
+    <div class="dash-legend">
+      <strong><span data-lang="uk">Архітектура:</span><span data-lang="en">Architecture:</span></strong>
+      <span data-lang="uk">Brand Bible (статичний HTML на GitHub Pages) + Supabase (Postgres + Edge Functions + pg_cron) + МойСклад API.</span>
+      <span data-lang="en">Brand Bible (static HTML on GitHub Pages) + Supabase (Postgres + Edge Functions + pg_cron) + MoySklad API.</span>
+      <br><br>
+      <strong><span data-lang="uk">Daily sync 06:00 UTC:</span><span data-lang="en">Daily sync 06:00 UTC:</span></strong>
+      products / counterparties / demand / paymentin / invoiceout / salesreturn → 50k+
+      <span data-lang="uk">записів. Live дані для всіх Sales-дашбордів.</span>
+      <span data-lang="en">records. Live data for all Sales dashboards.</span>
+    </div>
 
+    <div class="page-foot"><div>© ТОВ «ПЕТ КОРП» · v2.3</div></div>
+  </main>
 </div>
-
-<div class="section-title">🚀 SMM & Operations</div>
-<div class="grid">
-
-<a class="card" href="hq/">
-<h3>🚀 Barpi HQ — Стіл SMM <span class="status beta">BETA</span></h3>
-<p>Повноцінна SMM-платформа: календар публікацій (Місяць/Тиждень/День/Список) · Картка публікації з 16 полями · Дошка погоджень · Бібліотека креативів · Запуски · Глобальний пошук · Шорткати.</p>
-<div class="meta"><strong>Стек:</strong> Supabase (Postgres + Auth + RLS + Realtime) · <strong>Доступ:</strong> Вадим / Пилип / Аксьонов / Альона / Мар'яна</div>
-</a>
-
-<a class="card" href="smm/">
-<h3>📊 SMM Dashboard (v1) <span class="status live">LIVE</span></h3>
-<p>Звітність: Content Log, Weekly/Monthly, Stories, Reels, Direct, UGC, Pillars. Простіший за HQ — для швидкого ведення.</p>
-<div class="meta"><strong>Доступ:</strong> публічний · <strong>Дані:</strong> localStorage</div>
-</a>
-
-<a class="card" href="events/">
-<h3>🎪 Events Dashboard <span class="status live">LIVE</span></h3>
-<p>Фестивалі, дегустації, ROI. 17 подій у 2026. Бюджет, зразки, UGC, ROI tracking.</p>
-<div class="meta"><strong>Доступ:</strong> Альона + Мар'яна + Вадим</div>
-</a>
-
-</div>
-
-<div class="section-title">📦 Заплановано</div>
-<div class="grid">
-
-<a class="card" href="inventory/">
-<h3>📦 Inventory Dashboard <span class="status planned">PLANNED</span></h3>
-<p>Залишки по SKU, оборотність, мінімальні запаси, покриття днів. Stock sync з МойСклад вже готовий — треба тільки UI.</p>
-<div class="meta"><strong>Джерело:</strong> МойСклад /report/stock/all</div>
-</a>
-
-<a class="card" href="partners/">
-<h3>🤝 Partner Pipeline <span class="status planned">PLANNED</span></h3>
-<p>B2B-вирва: переговори, статус, нові точки продажу. Win rate, активні переговори. Дозбираємо з МС states (Угода Погоджена / Відмова).</p>
-<div class="meta"><strong>Доступ:</strong> Олександр + Мар'яна + Вадим</div>
-</a>
-
-</div>
-
-<div class="legend">
-<strong>Архітектура:</strong> Brand Bible (статичний HTML на GitHub Pages) + Supabase (Postgres + Edge Functions + pg_cron) + МойСклад API.<br><br>
-<strong>Daily sync 06:00 UTC:</strong> products / counterparties / demand / paymentin / invoiceout / salesreturn → 50k+ записів. Live дані для всіх Sales-дашбордів.<br><br>
-<strong>Brand book:</strong> 50+ markdown-документів у <code>/documents/</code> + 18 інтерактивних розділів у <code>/index.html</code>. Версія Brand Bible v1.2.
-</div>
-</main></body></html>
+<script src="/assets/bb.js"></script>
+</body>
+</html>
