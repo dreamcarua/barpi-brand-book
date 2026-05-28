@@ -1,5 +1,5 @@
 /* ============================================================
-   Barpi Brand Bible v2.6 — Global JS
+   Barpi Brand Bible v2.7 — Global JS
    Стиль адаптовано під barpi.com.ua
    Логотип — inline base64 WebP (без зовнішніх запитів)
    ============================================================ */
@@ -18,8 +18,8 @@ BB.SIDEBAR_HTML = `
     <a class="sidebar-brand" href="/">
       <img src="${BB.LOGO_DATA}" alt="Barpi" width="200" height="96" loading="eager">
       <div class="brand-text-sub">
-        <span data-lang="uk">Brand Bible · v2.6</span>
-        <span data-lang="en">Brand Bible · v2.6</span>
+        <span data-lang="uk">Brand Bible · v2.7</span>
+        <span data-lang="en">Brand Bible · v2.7</span>
       </div>
     </a>
     <div class="sidebar-search" style="position:relative">
@@ -96,6 +96,15 @@ BB.setLang = function(lang) {
   document.querySelectorAll('.lang-switch button').forEach(b => {
     b.classList.toggle('active', b.dataset.lang === lang);
   });
+  // Localize document title via H1 content
+  try {
+    const h1 = document.querySelector('main h1');
+    if (h1) {
+      const span = h1.querySelector(`span[data-lang="${lang}"]`);
+      const txt = (span ? span.textContent : h1.textContent).trim().replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}]/gu, '').trim();
+      if (txt) document.title = txt + ' · Barpi Brand Bible';
+    }
+  } catch(e) {}
 };
 BB.initLang = function() {
   const saved = localStorage.getItem('bb_lang') || 'uk';
