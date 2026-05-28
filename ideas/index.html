@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ідеї та пропозиції · Barpi Brand Bible</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="/assets/bb.css">
+</head>
+<body class="lang-uk">
+<button class="menu-toggle" aria-label="Menu">☰</button>
+<div class="app">
+  <div id="bb-sidebar"></div>
+  <main class="main">
+
+    <span class="chapter-num">💡 <span data-lang="uk">Спільнота</span><span data-lang="en">Community</span></span>
+    <h1>
+      <span data-lang="uk">Ідеї та пропозиції</span>
+      <span data-lang="en">Ideas & proposals</span>
+    </h1>
+    <p class="lead">
+      <span data-lang="uk">Допоможи зробити Brand Bible і бренд Barpi кращими. Запропонуй ідею, проголосуй за чужу, обговори у коментарях.</span>
+      <span data-lang="en">Help improve the Brand Bible and Barpi brand. Submit an idea, upvote others, discuss in comments.</span>
+    </p>
+
+    <div class="ideas-toolbar">
+      <div class="ideas-filter">
+        <button class="is-active" data-status="all"><span data-lang="uk">Всі</span><span data-lang="en">All</span></button>
+        <button data-status="new"><span data-lang="uk">Нові</span><span data-lang="en">New</span></button>
+        <button data-status="reviewing"><span data-lang="uk">На розгляді</span><span data-lang="en">Reviewing</span></button>
+        <button data-status="accepted"><span data-lang="uk">Прийнято</span><span data-lang="en">Accepted</span></button>
+        <button data-status="done"><span data-lang="uk">Виконано</span><span data-lang="en">Done</span></button>
+      </div>
+      <span class="ideas-counter" id="ideas-counter"></span>
+      <button class="ideas-new-btn" id="ideas-new-btn">
+        + <span data-lang="uk">Нова пропозиція</span><span data-lang="en">New idea</span>
+      </button>
+    </div>
+
+    <div class="ideas-form" id="ideas-form" style="display:none">
+      <h3 style="margin: 0 0 16px"><span data-lang="uk">Запропонувати ідею</span><span data-lang="en">Propose an idea</span></h3>
+      <input type="text" id="idea-title" placeholder="Заголовок ідеї / Idea title" />
+      <textarea id="idea-body" placeholder="Опис: що, чому, для якого розділу? / Description: what, why, which section?"></textarea>
+      <div class="ideas-form-grid">
+        <input type="text" id="idea-author" placeholder="Ваше ім'я / Your name" />
+        <input type="email" id="idea-email" placeholder="Email (опційно)" />
+      </div>
+      <select id="idea-section" style="width:100%; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; margin-bottom: 10px; font-family: inherit">
+        <option value="">— Розділ (опційно) / Section (optional) —</option>
+        <option value="manifesto">Маніфест / Manifesto</option>
+        <option value="about">Про бренд / About</option>
+        <option value="team">Команда / Team</option>
+        <option value="tech">SNECO технологія / Technology</option>
+        <option value="messages">Меседжі / Messages</option>
+        <option value="visual">Візуал / Visual</option>
+        <option value="voice">Голос / Voice</option>
+        <option value="photo">Фото / Photo</option>
+        <option value="digital">Digital · Instagram</option>
+        <option value="packaging">Упаковка / Packaging</option>
+        <option value="partners">Партнери / Partners</option>
+        <option value="pr">PR & криза / Crisis</option>
+        <option value="documents">Документи / Documents</option>
+      </select>
+      <button id="ideas-submit" class="ideas-new-btn" style="width:100%; margin: 8px 0 0">
+        <span data-lang="uk">Надіслати</span><span data-lang="en">Submit</span>
+      </button>
+    </div>
+
+    <div class="ideas-list" id="ideas-list"></div>
+
+    <div class="page-foot">
+      <div style="font-size: 13px; color: var(--text-muted)">
+        <span data-lang="uk">Всі пропозиції зберігаються у Supabase і обробляються командою Barpi.</span>
+        <span data-lang="en">All ideas are stored in Supabase and reviewed by the Barpi team.</span>
+      </div>
+    </div>
+
+  </main>
+</div>
+<script src="/assets/bb.js"></script>
+</body>
+</html>
