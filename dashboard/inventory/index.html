@@ -1,27 +1,128 @@
 <!DOCTYPE html>
 <html lang="uk">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Inventory Dashboard · Barpi</title>
-<style>:root{--bg:#FAFAFA;--ink:#1A1A1A;--blue:#2F6FED;--gray:#6b7280;--line:#e5e7eb;--radius:12px}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}header.top{border-bottom:1px solid var(--line);padding:16px 24px;background:white;position:sticky;top:0;z-index:50}header.top .wrap{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}.logo{font-weight:800;font-size:20px;letter-spacing:-0.02em}.logo .dot{color:var(--blue)}.crumb{color:var(--gray);font-size:13px}.crumb a{color:var(--gray);text-decoration:none}main{max-width:1100px;margin:0 auto;padding:32px 24px 80px}h1{font-size:32px;font-weight:800;letter-spacing:-0.02em;margin:0 0 8px}.sub{color:var(--gray);font-size:15px;margin:0 0 32px}.card{background:white;border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:16px}.card h3{margin:0 0 12px;font-size:16px;font-weight:700}table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;padding:10px 12px;font-weight:600;font-size:11px;text-transform:uppercase;color:var(--gray);background:#f3f4f6}td{padding:10px 12px;border-bottom:1px solid #f3f4f6}.status{display:inline-block;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;text-transform:uppercase;background:#fef3c7;color:#92400e;margin-left:8px}.banner{background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;padding:16px 20px;color:#1e40af;font-size:14px;margin-bottom:24px}code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px}</style></head>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inventory · Barpi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/bb.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--y:#001154;--y-soft:rgba(0,17,84,.13);--g:#39B44A;--g-soft:rgba(57,180,74,.13);--r:#E84040;--r-soft:rgba(232,64,64,.1);--bl:#3B82F6;--or:#F59E0B;--d:#1A1A1A;--bg:#FAF7F7;--card:#fff;--muted:#888;--border:#E5E5DC;--line:#EEE}
+body{background:var(--bg);font-family:Rubik,-apple-system,sans-serif;color:var(--d);margin:0}
+.iv-top{position:sticky;top:0;z-index:200;background:var(--d);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--y)}
+.iv-top h1{margin:0;font-size:18px;font-weight:800}.iv-top .sub{font-size:11px;opacity:.6;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.iv-top .spacer{flex:1}.iv-top .sync{font-size:12px;opacity:.7;display:flex;align-items:center;gap:6px}.iv-top .dot{width:8px;height:8px;border-radius:50%;background:var(--g)}
+.iv-wrap{max-width:1440px;margin:0 auto;padding:20px 24px 40px}
+.sec{margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+.sec h2{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--y-soft);color:var(--y)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.kpi .lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.kpi .val{font-size:22px;font-weight:800;color:var(--d);letter-spacing:-.02em;line-height:1.1}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:6px}
+.kpi.cg{border-bottom:3px solid var(--g)}.kpi.cr{border-bottom:3px solid var(--r)}.kpi.co{border-bottom:3px solid var(--or)}.kpi.cb{border-bottom:3px solid var(--bl)}
+.cc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.cc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.cc-head h3{margin:0;font-size:14px;font-weight:700}.cc-head .pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--y-soft);color:var(--y);text-transform:uppercase}
+.chart-wrap{position:relative;height:280px}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}
+table.dt th{text-align:left;padding:8px 12px;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--muted);background:#FAFAF5;border-bottom:1px solid var(--line)}
+table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0}.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.tbl-scroll{max-height:480px;overflow:auto;border-radius:8px;border:1px solid var(--line)}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
+.tag.critical{background:rgba(232,64,64,.13);color:var(--r)}.tag.low{background:rgba(245,158,11,.13);color:var(--or)}.tag.normal{background:var(--g-soft);color:var(--g)}.tag.high{background:rgba(59,130,246,.13);color:var(--bl)}
+.loading{text-align:center;padding:60px;color:var(--muted)}.empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
 <body>
-<header class="top"><div class="wrap"><div class="logo">Barpi<span class="dot">.</span></div><div class="crumb"><a href="../../">Brand Bible</a> / <a href="../">Dashboards</a> / <strong style="color:var(--ink)">Inventory</strong></div></div></header>
-<main>
-<h1>📦 Inventory Dashboard <span class="status">PLANNED · Фаза 4</span></h1>
-<p class="sub">Залишки по SKU, оборотність, мінімальні запаси. Дані з МойСклад.</p>
-<div class="banner">🚧 <strong>Дашборд у розробці.</strong> Структура майбутнього UI нижче.</div>
-<div class="card"><h3>Залишки SKU (всі формати)</h3><table><thead><tr><th>SKU</th><th>Формат</th><th>Залишок</th><th>Мін. поріг</th><th>Покриття днів</th><th>Статус</th></tr></thead><tbody>
-<tr><td>Курячі пупочки</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-<tr><td>Крекер яловичий (рубець)</td><td>15г / 60г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-<tr><td>Зефір яловичий (легені)</td><td>15г / 60г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-<tr><td>Безе яловиче (вим'я)</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-<tr><td>Печінка яловича</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-<tr><td>Хрустики яловичі (трахея)</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-<tr><td>Довгожуйка (станова)</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-<tr><td>Серденька курячі</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-<tr><td>Сир кульки (Гауда)</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-<tr><td>Сир стіки (Сулугуні)</td><td>20г / 100г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-<tr><td>Апетайзери (рубець/печінка/легені)</td><td>80–120г</td><td colspan="4" style="color:var(--gray);font-style:italic">очікує МойСклад…</td></tr>
-</tbody></table></div>
-<div class="card"><h3>Інтеграція</h3>
-<p style="font-size:14px;color:var(--gray);margin:0 0 8px">GitHub Action <code>inventory-sync.yml</code> щодня о 06:00 UTC → <code>moysklad_sync.py</code> тягне <code>/stock/all</code> → D1 <code>barpi-bible.inventory</code>.</p>
+<header class="iv-top">
+  <h1>📦 Barpi · <span class="sub">Inventory · залишки</span></h1>
+  <span class="spacer"></span>
+  <span class="sync"><span class="dot"></span><span id="syncLabel">Завантаження…</span></span>
+</header>
+<div class="iv-wrap">
+  <div id="loadingBox" class="loading">Завантаження…</div>
+  <div id="contentBox" style="display:none"></div>
 </div>
-</main></body></html>
+<script src="../../assets/bb.js"></script>
+<script>
+const SUPA_URL='https://zrcqmwlpsggiqgipvxhv.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const $=(id)=>document.getElementById(id);
+const fmt={uah:(n)=>new Intl.NumberFormat('uk-UA').format(Math.round(n||0))+' ₴',uahK:(n)=>n>=1e6?(n/1e6).toFixed(1)+'M ₴':n>=1e3?(n/1e3).toFixed(0)+'K ₴':Math.round(n||0)+' ₴',num:(n)=>new Intl.NumberFormat('uk-UA').format(n||0)};
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function truncate(s,n){return (s||'').length>n?s.slice(0,n)+'…':s;}
+async function api(p){const r=await fetch(SUPA_URL+'/rest/v1/'+p,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});if(!r.ok)throw new Error('API '+r.status);return r.json();}
+let charts={};
+async function load(){
+  try{
+    const [inv,sync]=await Promise.all([
+      api('v_inventory_extended?select=*&order=quantity.desc'),
+      api('moysklad_sync_log?select=created_at&order=created_at.desc&limit=1'),
+    ]);
+    $('loadingBox').style.display='none';$('contentBox').style.display='block';
+    if(sync[0]){const h=Math.floor((Date.now()-new Date(sync[0].created_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${inv.length} SKU`;}
+    render(inv);
+  }catch(e){console.error(e);$('syncLabel').textContent='Помилка: '+e.message;}
+}
+function render(inv){
+  const totalQty=inv.reduce((s,i)=>s+Number(i.quantity||0),0);
+  const totalRetail=inv.reduce((s,i)=>s+Number(i.retail_value_uah||0),0);
+  const totalCost=inv.reduce((s,i)=>s+Number(i.cost_value_uah||0),0);
+  const reserved=inv.reduce((s,i)=>s+Number(i.reserved||0),0);
+  const critical=inv.filter(i=>i.stock_level==='critical').length;
+  const low=inv.filter(i=>i.stock_level==='low').length;
+  const normal=inv.filter(i=>i.stock_level==='normal').length;
+  const high=inv.filter(i=>i.stock_level==='high').length;
+  const byCat={};
+  inv.forEach(i=>{const k=i.sku_category||'—';if(!byCat[k])byCat[k]={qty:0,retail:0,cost:0,cnt:0};byCat[k].qty+=Number(i.quantity||0);byCat[k].retail+=Number(i.retail_value_uah||0);byCat[k].cost+=Number(i.cost_value_uah||0);byCat[k].cnt++;});
+  const catRows=Object.entries(byCat).map(([k,v])=>({cat:k,...v})).sort((a,b)=>b.retail-a.retail);
+  $('contentBox').innerHTML=`
+    <div class="sec"><h2>📦 KPI залишків</h2><span class="badge">${inv.length} SKU</span></div>
+    <div class="g4">
+      <div class="kpi cg"><div class="lbl">📦 Всього шт</div><div class="val">${fmt.num(totalQty)}</div><div class="sub">on hand</div></div>
+      <div class="kpi"><div class="lbl">🔒 Зарезервовано</div><div class="val">${fmt.num(reserved)}</div><div class="sub">під замовлення</div></div>
+      <div class="kpi cb"><div class="lbl">💰 Retail value</div><div class="val">${fmt.uahK(totalRetail)}</div><div class="sub">по retail price</div></div>
+      <div class="kpi co"><div class="lbl">💵 Cost value</div><div class="val">${fmt.uahK(totalCost)}</div><div class="sub">по cost</div></div>
+    </div>
+    <div class="g4" style="margin-top:14px">
+      <div class="kpi cr"><div class="lbl">🚨 Критичні (≤10)</div><div class="val">${critical}</div><div class="sub">негайно докупити</div></div>
+      <div class="kpi co"><div class="lbl">⚠ Low (≤50)</div><div class="val">${low}</div><div class="sub">скоро закінчиться</div></div>
+      <div class="kpi cg"><div class="lbl">✓ Normal (50-200)</div><div class="val">${normal}</div><div class="sub">в нормі</div></div>
+      <div class="kpi cb"><div class="lbl">🔵 High (>200)</div><div class="val">${high}</div><div class="sub">забагато</div></div>
+    </div>
+
+    <div class="sec"><h2>📊 Розподіл по категоріях</h2></div>
+    <div class="g2">
+      <div class="cc"><div class="chart-wrap"><canvas id="catChart"></canvas></div></div>
+      <div class="cc">
+        <div class="cc-head"><h3>📊 По категоріях</h3></div>
+        <table class="dt"><thead><tr><th>Категорія</th><th class="num">SKU</th><th class="num">Шт</th><th class="num">Retail ₴</th></tr></thead>
+        <tbody>${catRows.map(c=>`<tr><td><strong>${escapeHtml(c.cat)}</strong></td><td class="num">${c.cnt}</td><td class="num">${fmt.num(c.qty)}</td><td class="num">${fmt.uahK(c.retail)}</td></tr>`).join('')}</tbody></table>
+      </div>
+    </div>
+
+    <div class="sec"><h2>📋 Всі залишки (по спаданню)</h2></div>
+    <div class="cc"><div class="tbl-scroll"><table class="dt">
+      <thead><tr><th>SKU</th><th>Назва</th><th>Кат</th><th class="num">Кількість</th><th class="num">Зарез.</th><th class="num">Доступно</th><th class="num">Retail ₴</th><th>Рівень</th></tr></thead>
+      <tbody>${inv.map(i=>`<tr><td><code style="font-size:11px">${i.sku_id}</code></td><td><strong>${escapeHtml(truncate(i.sku_name||'—',32))}</strong></td><td><small>${i.sku_category||'—'}</small></td><td class="num">${Number(i.quantity).toFixed(0)}</td><td class="num">${Number(i.reserved||0).toFixed(0)}</td><td class="num">${Number(i.available||0).toFixed(0)}</td><td class="num">${fmt.uahK(i.retail_value_uah)}</td><td><span class="tag ${i.stock_level}">${i.stock_level}</span></td></tr>`).join('')||'<tr><td colspan="8" class="empty">Немає даних</td></tr>'}</tbody>
+    </table></div></div>
+  `;
+  if(charts.cat)charts.cat.destroy();
+  charts.cat=new Chart($('catChart'),{
+    type:'doughnut',
+    data:{labels:catRows.map(c=>c.cat),datasets:[{data:catRows.map(c=>c.retail),backgroundColor:['#001154','#39B44A','#3B82F6','#F59E0B','#E84040','#8B5CF6','#94a3b8']}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'}}}
+  });
+}
+load();
+</script>
+</body>
+</html>
