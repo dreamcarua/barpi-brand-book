@@ -1,22 +1,19 @@
 /* ============================================================
-   Barpi Brand Bible v2.2 — Global Stylesheet
+   Barpi Brand Bible v2.3 — Global Stylesheet
+   v2.3: Mobile menu overhaul — animated hamburger top-right,
+         backdrop blur, body scroll lock, ESC, auto-close, ARIA
    STYLE SOURCE: реальний сайт barpi.com.ua
-   - Шрифт: Rubik (Google Fonts)
-   - BG: #FAF7F7 (теплий beige)
-   - Текст: #333333 (м'який чорний)
-   - Accent кнопка: #BAD9F4 з темно-синім #001154
-   - Темно-синій: #001154
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --blue:        #001154;  /* темно-синій акцент (як lateral нав і CTA текст сайту) */
-  --blue-soft:   #BAD9F4;  /* м'який блакитний (фон CTA-кнопок сайту) */
+  --blue:        #001154;
+  --blue-soft:   #BAD9F4;
   --blue-deep:   #000940;
   --ink:         #333333;
   --ink-soft:    #555555;
-  --bg:          #FAF7F7;  /* теплий beige-білий фон сайту */
+  --bg:          #FAF7F7;
   --surface:     #FFFFFF;
   --line:        rgba(0,0,0,0.08);
   --line-soft:   rgba(0,0,0,0.04);
@@ -28,8 +25,9 @@
   --green:       #16a34a;
   --amber:       #f59e0b;
   --red:         #dc2626;
+  --accent:      #FEBF27;
+  --border:      rgba(0,0,0,0.08);
 
-  /* SKU palette (з Brand Book v7) */
   --sku-1: #F7931D; --sku-2: #1E75BC; --sku-3: #00A79E; --sku-4: #D91A5C; --sku-5: #ED1D23;
   --sku-6: #39B44A; --sku-7: #00ADEE; --sku-8: #ED008C; --sku-9: #F15928; --sku-10: #91268F;
 
@@ -86,11 +84,7 @@ body {
   color: var(--ink);
   margin-bottom: 16px;
 }
-.sidebar-brand img {
-  max-width: 160px;
-  height: auto;
-  display: block;
-}
+.sidebar-brand img { max-width: 160px; height: auto; display: block; }
 .sidebar-brand .brand-fallback {
   font-weight: 800;
   font-size: 28px;
@@ -108,10 +102,7 @@ body {
 }
 
 /* Search */
-.sidebar-search {
-  position: relative;
-  margin-top: 4px;
-}
+.sidebar-search { position: relative; margin-top: 4px; }
 .sidebar-search input {
   width: 100%;
   background: var(--bg);
@@ -123,11 +114,7 @@ body {
   font-family: inherit;
   transition: border-color .15s, background .15s;
 }
-.sidebar-search input:focus {
-  outline: none;
-  border-color: var(--blue-soft);
-  background: white;
-}
+.sidebar-search input:focus { outline: none; border-color: var(--blue-soft); background: white; }
 .sidebar-search::before {
   content: '🔍';
   position: absolute;
@@ -162,16 +149,10 @@ body {
   text-transform: uppercase;
   transition: all .15s;
 }
-.lang-switch button.active {
-  background: var(--blue);
-  color: white;
-}
+.lang-switch button.active { background: var(--blue); color: white; }
 
 /* Nav */
-.sidebar-nav {
-  padding: 18px 14px;
-  flex: 1;
-}
+.sidebar-nav { padding: 18px 14px; flex: 1; }
 .nav-group { margin-bottom: 20px; }
 .nav-group-label {
   font-size: 10px;
@@ -202,12 +183,7 @@ body {
 }
 .nav-link:hover { background: var(--blue-10); }
 .nav-link.active { background: var(--blue-soft); color: var(--blue); font-weight: 600; }
-.nav-link .dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--line);
-  flex-shrink: 0;
-}
+.nav-link .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); flex-shrink: 0; }
 .nav-link.active .dot { background: var(--blue); }
 .nav-link:hover .dot { background: var(--blue); }
 
@@ -221,10 +197,7 @@ body {
 .sidebar-foot a { color: var(--blue); text-decoration: none; }
 
 /* === Main content === */
-.main {
-  padding: 56px 64px 96px;
-  max-width: 980px;
-}
+.main { padding: 56px 64px 96px; max-width: 980px; }
 .main.hero { padding: 0; max-width: 100%; }
 
 /* Chapter header */
@@ -256,12 +229,7 @@ body {
   margin: 64px 0 18px;
   color: var(--ink);
 }
-.main h3 {
-  font-size: 19px;
-  font-weight: 600;
-  margin: 32px 0 14px;
-  color: var(--ink);
-}
+.main h3 { font-size: 19px; font-weight: 600; margin: 32px 0 14px; color: var(--ink); }
 .main .lead {
   font-size: 20px;
   color: var(--ink-soft);
@@ -321,20 +289,10 @@ body {
   line-height: 1.45;
   margin-bottom: 16px;
 }
-.hero-block .hero-lead {
-  font-size: 18px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-  max-width: 680px;
-}
+.hero-block .hero-lead { font-size: 18px; line-height: 1.55; color: var(--ink-soft); max-width: 680px; }
 
-/* Badges row (як на сайті barpi.com.ua) */
-.feature-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin: 32px 0;
-}
+/* Badges row */
+.feature-badges { display: flex; flex-wrap: wrap; gap: 20px; margin: 32px 0; }
 .feature-badge {
   display: flex;
   flex-direction: column;
@@ -348,13 +306,10 @@ body {
   text-align: center;
 }
 .feature-badge .circle {
-  width: 56px;
-  height: 56px;
+  width: 56px; height: 56px;
   background: var(--blue-soft);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   font-size: 22px;
   color: var(--blue);
 }
@@ -417,12 +372,7 @@ blockquote .who {
 }
 
 /* Palette */
-.palette {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin: 20px 0;
-}
+.palette { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 20px 0; }
 .swatch {
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -449,7 +399,7 @@ blockquote .who {
 .badge.blue  { background: var(--blue-soft); color: var(--blue); }
 .badge.amber { background: #fef3c7; color: #92400e; }
 
-/* CTA button (як на сайті barpi.com.ua) */
+/* CTA button */
 .cta {
   display: inline-flex;
   align-items: center;
@@ -469,16 +419,9 @@ blockquote .who {
 .cta:hover { background: var(--blue); color: white; transform: translateY(-1px); }
 
 /* Ideas section */
-.ideas-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-}
+.ideas-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
 .ideas-filter {
-  display: flex;
-  gap: 4px;
+  display: flex; gap: 4px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-pill);
@@ -495,10 +438,7 @@ blockquote .who {
   color: var(--text-muted);
   font-family: inherit;
 }
-.ideas-filter button.is-active {
-  background: var(--blue);
-  color: white;
-}
+.ideas-filter button.is-active { background: var(--blue); color: white; }
 .ideas-counter { font-size: 11.5px; color: var(--text-muted); }
 .ideas-new-btn {
   margin-left: auto;
@@ -540,12 +480,7 @@ blockquote .who {
   border-radius: var(--radius);
   padding: 16px 20px;
 }
-.idea-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 6px;
-}
+.idea-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
 .idea-head .title { font-weight: 700; font-size: 15px; color: var(--ink); }
 .idea-head .status { font-size: 10px; padding: 2px 8px; border-radius: 5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 .status-new { background: var(--blue-soft); color: var(--blue); }
@@ -570,9 +505,7 @@ blockquote .who {
 /* Search results modal */
 .search-results {
   position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  top: 100%; left: 0; right: 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -595,33 +528,167 @@ blockquote .who {
 .search-result:hover { background: var(--blue-10); }
 .search-result .sect { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
 
-/* Mobile */
-@media (max-width: 900px) {
-  .app { grid-template-columns: 1fr; }
-  .sidebar { position: fixed; left: 0; top: 0; width: 280px; height: 100vh; z-index: 200; transform: translateX(-100%); transition: transform .25s; box-shadow: 4px 0 24px rgba(0,0,0,0.1); }
-  .sidebar.open { transform: translateX(0); }
-  .main { padding: 32px 24px 64px; }
-  .hero-block { padding: 48px 24px 56px; }
-  .menu-toggle { display: block; }
-}
+/* ============================================================
+   MOBILE MENU v2.3 — Animated hamburger + backdrop + scroll lock
+   ============================================================ */
+
+/* Hamburger button — hidden by default, shown on mobile */
 .menu-toggle {
   display: none;
   position: fixed;
-  top: 16px;
-  left: 16px;
+  top: 14px;
+  right: 14px;
+  width: 46px;
+  height: 46px;
+  background: var(--surface);
+  color: var(--blue);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  z-index: 350;
+  cursor: pointer;
+  font-size: 0;                        /* hide the ☰ char from old markup */
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+  transition: background .2s ease, color .2s ease, transform .15s ease, box-shadow .2s ease;
+  padding: 0;
+  outline: none;
+}
+.menu-toggle:focus-visible {
+  box-shadow: 0 0 0 3px var(--blue-soft), 0 4px 14px rgba(0,0,0,0.08);
+}
+.menu-toggle:hover {
   background: var(--blue);
   color: white;
-  border: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  z-index: 150;
-  cursor: pointer;
-  font-size: 20px;
-  box-shadow: 0 4px 12px rgba(0,17,84,0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,17,84,0.25);
+}
+.menu-toggle:active { transform: translateY(0); }
+
+/* Hamburger lines via pseudo-elements
+   - ::before = top line + box-shadow creates middle line
+   - ::after  = bottom line */
+.menu-toggle::before,
+.menu-toggle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 20px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform .3s cubic-bezier(0.4,0,0.2,1),
+              top .25s ease,
+              box-shadow .15s ease;
+  transform: translateX(-50%);
+}
+.menu-toggle::before {
+  top: calc(50% - 7px);
+  box-shadow: 0 7px 0 currentColor;     /* this creates the middle line */
+}
+.menu-toggle::after  { top: calc(50% + 7px); }
+
+/* Hamburger → X transformation when open */
+.menu-toggle.is-open::before {
+  top: 50%;
+  box-shadow: none;                     /* hide middle line */
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.menu-toggle.is-open::after {
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-/* Footer */
+/* Backdrop overlay (created dynamically by JS) */
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 17, 40, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 199;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.menu-backdrop.shown {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile media query — main layout overrides */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0;
+    width: min(86vw, 320px);
+    height: 100vh;
+    height: 100dvh;                     /* dynamic viewport (mobile browser UI) */
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform .32s cubic-bezier(0.32, 0.72, 0, 1);
+    box-shadow: 4px 0 32px rgba(0,0,0,0.18);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  /* Lock body scroll while menu is open */
+  body.menu-open {
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  .main { padding: 70px 18px 56px; }    /* top padding for fixed hamburger */
+  .main.hero { padding: 0; }
+  .hero-block { padding: 90px 22px 56px; }
+
+  /* Tighter mobile typography */
+  .main h2 { font-size: 24px; margin: 40px 0 14px; }
+  .main h3 { font-size: 17px; margin: 24px 0 10px; }
+  .main .lead { font-size: 17px; margin-bottom: 22px; }
+
+  /* Tables overflow handling */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  table th, table td { white-space: normal; }
+
+  /* Card grids — single column */
+  .card-grid { grid-template-columns: 1fr; }
+
+  /* Show the hamburger! */
+  .menu-toggle { display: block; }
+
+  /* Dashboards already have bb-topnav — hide hamburger there
+     to avoid conflict with topnav controls */
+  body.has-topnav .menu-toggle { display: none; }
+
+  /* If body has topnav, no extra top padding needed for hamburger */
+  body.has-topnav .main { padding-top: 32px; }
+}
+
+/* Smaller phones — even tighter */
+@media (max-width: 480px) {
+  .menu-toggle { width: 42px; height: 42px; top: 12px; right: 12px; }
+  .menu-toggle::before, .menu-toggle::after { width: 18px; }
+  .menu-toggle::before { top: calc(50% - 6px); box-shadow: 0 6px 0 currentColor; }
+  .menu-toggle::after  { top: calc(50% + 6px); }
+  .main { padding: 64px 16px 48px; }
+  .main h1 { font-size: clamp(28px, 8vw, 36px); }
+  .hero-block { padding: 80px 18px 48px; }
+  .sidebar { width: min(88vw, 300px); }
+  .sidebar-head { padding: 20px 18px 14px; }
+  .sidebar-brand img { max-width: 140px; }
+  .sidebar-nav { padding: 14px 10px; }
+  .nav-link { padding: 12px; font-size: 14.5px; }
+}
+
+/* === Footer === */
 .page-foot {
   margin-top: 80px;
   padding: 32px 0;
