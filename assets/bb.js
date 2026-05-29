@@ -1,6 +1,8 @@
 /* ============================================================
-   Barpi Brand Bible v3.0 — Global JS
-   v3.0 adds: /products/ (17 SKU catalog) + /ambassadors/ (UGC) in sidebar + SEARCH_INDEX
+   Barpi Brand Bible v3.1 — Global JS
+   v3.1 adds: BB.initMobileMenu (full mobile UX: backdrop, ESC,
+              auto-close on nav-link, body scroll lock, ARIA)
+   v3.0: /products/ + /ambassadors/ in sidebar + SEARCH_INDEX
    v2.9: /downloads/ entry
    v2.8: BB.AUTH (Magic Link OTP gate on /dashboard/*)
    ============================================================ */
@@ -169,15 +171,15 @@ if (typeof location !== 'undefined' && location.pathname.startsWith('/dashboard/
   });
 }
 
-/* ===== SIDEBAR HTML v3.0 — додано /products/ + /ambassadors/ ===== */
+/* ===== SIDEBAR HTML v3.1 ===== */
 BB.SIDEBAR_HTML = `
-<nav class="sidebar" id="bb-sidebar-nav">
+<nav class="sidebar" id="bb-sidebar-nav" aria-label="Brand Bible navigation">
   <div class="sidebar-head">
     <a class="sidebar-brand" href="/">
       <img src="${BB.LOGO_DATA}" alt="Barpi" width="200" height="96" loading="eager">
       <div class="brand-text-sub">
-        <span data-lang="uk">Brand Bible · v3.0</span>
-        <span data-lang="en">Brand Bible · v3.0</span>
+        <span data-lang="uk">Brand Bible · v3.1</span>
+        <span data-lang="en">Brand Bible · v3.1</span>
       </div>
     </a>
     <div class="sidebar-search" style="position:relative">
@@ -274,6 +276,97 @@ BB.markActiveNav = function() {
     let normalized = href.replace(/\/index\.html$/, '/');
     if (!normalized.endsWith('/')) normalized += '/';
     a.classList.toggle('active', normalized === path);
+  });
+};
+
+/* ============================================================
+   BB.initMobileMenu — v3.1
+   Modern mobile UX: backdrop, scroll lock, ESC, click-outside,
+   nav-link auto-close, ARIA
+   ============================================================ */
+BB.initMobileMenu = function() {
+  const toggle = document.querySelector('.menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  if (!toggle || !sidebar) return;
+
+  // Detect dashboards (has topnav) — CSS hides hamburger via body class
+  if (document.querySelector('.bb-topnav')) {
+    document.body.classList.add('has-topnav');
+  }
+
+  // Create backdrop element once
+  let backdrop = document.querySelector('.menu-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'menu-backdrop';
+    backdrop.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(backdrop);
+  }
+
+  // ARIA attributes on the toggle
+  toggle.setAttribute('aria-label', 'Toggle navigation menu');
+  toggle.setAttribute('aria-controls', 'bb-sidebar-nav');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.setAttribute('type', 'button');
+
+  const isOpen = () => sidebar.classList.contains('open');
+
+  const openMenu = () => {
+    sidebar.classList.add('open');
+    toggle.classList.add('is-open');
+    backdrop.classList.add('shown');
+    document.body.classList.add('menu-open');
+    toggle.setAttribute('aria-expanded', 'true');
+    // Move focus to first nav-link for keyboard users
+    const firstLink = sidebar.querySelector('.nav-link');
+    if (firstLink) setTimeout(() => firstLink.focus({preventScroll: true}), 320);
+  };
+
+  const closeMenu = () => {
+    sidebar.classList.remove('open');
+    toggle.classList.remove('is-open');
+    backdrop.classList.remove('shown');
+    document.body.classList.remove('menu-open');
+    toggle.setAttribute('aria-expanded', 'false');
+  };
+
+  const toggleMenu = e => {
+    if (e) e.preventDefault();
+    if (isOpen()) closeMenu(); else openMenu();
+  };
+
+  // Wire up — remove any inline onclick first to be safe
+  toggle.onclick = null;
+  toggle.addEventListener('click', toggleMenu);
+
+  // Close on backdrop click
+  backdrop.addEventListener('click', closeMenu);
+
+  // Close on ESC key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && isOpen()) {
+      closeMenu();
+      toggle.focus();
+    }
+  });
+
+  // Close on nav-link click (small delay for tap feedback)
+  sidebar.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      // Don't close if it's a current-page link without actual navigation
+      if (window.innerWidth <= 900) {
+        setTimeout(closeMenu, 180);
+      }
+    });
+  });
+
+  // Auto-close on resize beyond mobile breakpoint
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (window.innerWidth > 900 && isOpen()) closeMenu();
+    }, 150);
   });
 };
 
@@ -471,8 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
   BB.initLang();
   BB.markActiveNav();
   BB.initSearch();
-  const toggle = document.querySelector('.menu-toggle');
-  if (toggle) toggle.onclick = () => document.querySelector('.sidebar')?.classList.toggle('open');
+  BB.initMobileMenu();
   if (document.getElementById('ideas-list')) {
     BB.renderIdeas();
     BB.initIdeasForm();
