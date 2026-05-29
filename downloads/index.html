@@ -9,7 +9,10 @@
   @media(min-width: 720px) { .dl-grid { grid-template-columns: 1fr 1fr; } }
   .dl-card { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; text-decoration: none; color: inherit; transition: all .15s; background: var(--bg-card, #fff); }
   .dl-card:hover { border-color: var(--accent, #FEBF27); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .dl-card.archive { background: rgba(120,120,120,0.04); border-style: dashed; }
+  .dl-card.archive:hover { border-color: var(--text-muted, #999); }
   .dl-icon { font-size: 28px; line-height: 1; flex-shrink: 0; width: 48px; height: 48px; background: rgba(254,191,39,0.12); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .dl-card.archive .dl-icon { background: rgba(120,120,120,0.12); }
   .dl-meta { flex: 1; min-width: 0; }
   .dl-title { font-weight: 700; font-size: 14px; line-height: 1.3; margin-bottom: 3px; color: var(--text, #0a0a0a); }
   .dl-sub { font-size: 12px; color: var(--text-muted, #777); line-height: 1.4; }
@@ -23,6 +26,7 @@
   .dl-badge.expired { background: rgba(220,53,69,0.12); color: #c62828; }
   .dl-badge.active { background: rgba(40,167,69,0.12); color: #2e7d32; }
   .dl-badge.new { background: rgba(254,191,39,0.18); color: #c89600; }
+  .dl-badge.archive { background: rgba(120,120,120,0.18); color: #555; }
 </style>
 </head>
 <body class="lang-uk">
@@ -255,6 +259,124 @@
       </a>
     </div>
 
+    <!-- ============= МЕДІА-БАНК НА DRIVE ============= -->
+    <div class="dl-section" style="margin-top: 48px">
+      <h2>🎬 <span data-lang="uk">Медіа-банк (Drive)</span><span data-lang="en">Media library (Drive)</span> <span class="count">~600 файлів</span></h2>
+      <p class="note">
+        <span data-lang="uk">Фото, відео, упаковка, UGC — без масового імпорту у BB, тільки прямі лінки на Drive-папки</span>
+        <span data-lang="en">Photo, video, packaging, UGC — direct links to Drive folders, no bulk import to BB</span>
+      </p>
+    </div>
+    <div class="dl-grid">
+      <a class="dl-card" href="https://drive.google.com/drive/folders/18Q7c_CCAB7Rhx-oVuCAzmdx24lk4Wa98" target="_blank" rel="noopener">
+        <div class="dl-icon">📸</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">Фото продукту (11 SKU)</span><span data-lang="en">Product photos (11 SKU)</span></div>
+          <div class="dl-sub"><span data-lang="uk">Безе, Хрустики, Сир, Пупочки, Крекер…</span><span data-lang="en">Beze, Hrustiki, Cheese, Pupochki…</span> · 100+ files</div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+      <a class="dl-card" href="https://drive.google.com/drive/folders/1QTwzsAaPRkKFLu_tcLXqFu5AgpsfX5qp" target="_blank" rel="noopener">
+        <div class="dl-icon">📦</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">Упаковка (всі формати)</span><span data-lang="en">Packaging (all formats)</span></div>
+          <div class="dl-sub">20g · 100g · 280ml · <span data-lang="uk">коти</span><span data-lang="en">cats</span> · ~100 PNG</div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+      <a class="dl-card" href="https://drive.google.com/drive/folders/1gugaik_j0P8wWBDtHHIU2UYCtSrJ2YAC" target="_blank" rel="noopener">
+        <div class="dl-icon">📷</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">Фото UGC</span><span data-lang="en">UGC Photos</span></div>
+          <div class="dl-sub"><span data-lang="uk">Айза, Люк, Мішаня, Лея, Айріш + Nikon RAW</span><span data-lang="en">Aiza, Luke, Misha, Leya + Nikon RAW</span> · 45+ files</div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+      <a class="dl-card" href="https://drive.google.com/drive/folders/1s4BDOgZA1xIDIBghDaHunZDf_Lm6TL3j" target="_blank" rel="noopener">
+        <div class="dl-icon">🎥</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">Відео UGC</span><span data-lang="en">UGC Videos</span></div>
+          <div class="dl-sub"><span data-lang="uk">Інфлюенсери і амбасадори</span><span data-lang="en">Influencers & ambassadors</span> · 40+ MP4/MOV</div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+      <a class="dl-card" href="https://drive.google.com/drive/folders/1WUGDqJxbytCQC0xBF0j-FzXRqnGmF7uo" target="_blank" rel="noopener">
+        <div class="dl-icon">🏭</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">Виробництво</span><span data-lang="en">Production</span></div>
+          <div class="dl-sub"><span data-lang="uk">Behind the scenes (Мукачево)</span><span data-lang="en">Behind the scenes (Mukachevo)</span> · 50+ files</div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+      <a class="dl-card" href="https://drive.google.com/drive/folders/1coPpfav5_Ycyx9fCr4GvyE5uXYZAtz-Z" target="_blank" rel="noopener">
+        <div class="dl-icon">🤝</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">Контент для партнерів</span><span data-lang="en">Partner content</span></div>
+          <div class="dl-sub"><span data-lang="uk">Лого, hero-фото, демо-відео</span><span data-lang="en">Logos, hero photos, demos</span> · 19 files</div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+      <a class="dl-card" href="https://drive.google.com/drive/folders/1u_BwWHbIFaUrPHgLiGf6csc48nh4vDYW" target="_blank" rel="noopener">
+        <div class="dl-icon">📹</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">Відео продукту</span><span data-lang="en">Product videos</span></div>
+          <div class="dl-sub"><span data-lang="uk">Огляди 20-23.03.2026</span><span data-lang="en">Reviews 20-23.03.2026</span> · 25+ MOV</div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+      <a class="dl-card" href="https://drive.google.com/drive/folders/1q6AESYGPI4gAbTHdXTOWvto-bt5iyfeG" target="_blank" rel="noopener">
+        <div class="dl-icon">🌐</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">Контент для сайтів</span><span data-lang="en">Website content</span></div>
+          <div class="dl-sub"><span data-lang="uk">SKU фото + відео для маркетплейсів</span><span data-lang="en">SKU photos + videos for marketplaces</span></div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+    </div>
+
+    <!-- ============= АРХІВ ============= -->
+    <div class="dl-section" style="margin-top: 48px">
+      <h2>📦 <span data-lang="uk">Архів</span><span data-lang="en">Archive</span> <span class="dl-badge archive">history only</span></h2>
+      <p class="note">
+        <span data-lang="uk">Старі матеріали 2024-2025 які вже не використовуються у поточних кампаніях. Залишені тільки для довідки і відновлення історичного контексту. Не використовувати у нових B2B-комунікаціях.</span>
+        <span data-lang="en">Old 2024-2025 materials no longer in active use. Kept for historical reference only. Do not use in new B2B communications.</span>
+      </p>
+    </div>
+    <div class="dl-grid">
+      <a class="dl-card archive" href="https://drive.google.com/drive/folders/17UubRwNz2GJMxtgZaY8kRU1PafIeCCyj" target="_blank" rel="noopener">
+        <div class="dl-icon">🗄️</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">Архів матеріалів (Drive root)</span><span data-lang="en">Materials Archive (Drive root)</span></div>
+          <div class="dl-sub"><span data-lang="uk">9 підпапок: опубл. контент, старі Canva шаблони, старі фото/відео, UGC, партнерські матеріали, звіти, бренд-документи</span><span data-lang="en">9 subfolders: published content, old Canva templates, old photos/videos, UGC, partner materials, reports, brand docs</span></div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+      <a class="dl-card archive" href="https://drive.google.com/drive/folders/1EJB27v4ra3kWI8VfcChXRbBNmfdk-T8X" target="_blank" rel="noopener">
+        <div class="dl-icon">📰</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">01 Опублікований контент</span><span data-lang="en">01 Published Content</span></div>
+          <div class="dl-sub"><span data-lang="uk">Historical posts</span><span data-lang="en">Historical posts</span></div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+      <a class="dl-card archive" href="https://drive.google.com/drive/folders/1JDlHMkEGT3BWK41dUr5C-el70aBUrbn2" target="_blank" rel="noopener">
+        <div class="dl-icon">🎞️</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">04 Старі відео + Reels кампанії</span><span data-lang="en">04 Old Videos + Reels</span></div>
+          <div class="dl-sub"><span data-lang="uk">100+ Reels від амбасадорів (Барні, Кіара, Райден…)</span><span data-lang="en">100+ ambassador Reels</span></div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+      <a class="dl-card archive" href="https://drive.google.com/drive/folders/1Y7FjAlru-ibcn3L9Sngk9L51D5SdZXeR" target="_blank" rel="noopener">
+        <div class="dl-icon">📑</div>
+        <div class="dl-meta">
+          <div class="dl-title"><span data-lang="uk">08 Старі бренд-документи</span><span data-lang="en">08 Old Brand Docs</span></div>
+          <div class="dl-sub"><span data-lang="uk">Цінні PDF вже виокремлено вище у /downloads/</span><span data-lang="en">Valuable PDFs already extracted to /downloads/ above</span></div>
+        </div>
+        <div class="dl-arrow">→</div>
+      </a>
+    </div>
+
     <!-- ============= ПОВ'ЯЗАНІ РОЗДІЛИ ============= -->
     <div class="dl-section" style="margin-top: 48px">
       <h2>🔗 <span data-lang="uk">Пов'язані розділи</span><span data-lang="en">Related sections</span></h2>
@@ -299,7 +421,7 @@
       <span data-lang="en">💡 <strong>Technical note:</strong> all files — direct download from corporate Google Drive (<code>barpiwork@gmail.com</code>). If a file won't open — check that you're logged into Google Workspace or use a VPN. Downloads work for anyone-with-link.</span>
     </p>
 
-    <div class="page-foot"><div>© <span data-lang="uk">ТОВ «ПЕТ КОРП»</span><span data-lang="en">Pet Corp LLC</span> · /downloads/ v1.0 · 29.05.2026 · 19 <span data-lang="uk">файлів</span><span data-lang="en">files</span></div></div>
+    <div class="page-foot"><div>© <span data-lang="uk">ТОВ «ПЕТ КОРП»</span><span data-lang="en">Pet Corp LLC</span> · /downloads/ v1.1 · 29.05.2026 · 19 <span data-lang="uk">прямих файлів + 8 медіа-папок + 4 архіви</span><span data-lang="en">direct files + 8 media folders + 4 archives</span></div></div>
   </main>
 </div>
 <script src="/assets/bb.js"></script>
