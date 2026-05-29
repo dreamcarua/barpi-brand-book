@@ -1,10 +1,10 @@
 /* ============================================================
-   Barpi Brand Bible v3.1 — Global JS
-   v3.1 adds: BB.initMobileMenu (full mobile UX: backdrop, ESC,
-              auto-close on nav-link, body scroll lock, ARIA)
-   v3.0: /products/ + /ambassadors/ in sidebar + SEARCH_INDEX
-   v2.9: /downloads/ entry
-   v2.8: BB.AUTH (Magic Link OTP gate on /dashboard/*)
+   Barpi Brand Bible v3.2 — Global JS
+   v3.2: menu-toggle now has visible "Меню/Menu" label + icon
+   v3.1: BB.initMobileMenu (backdrop, ESC, auto-close, ARIA)
+   v3.0: /products/ + /ambassadors/
+   v2.9: /downloads/
+   v2.8: BB.AUTH
    ============================================================ */
 
 const BB = window.BB = window.BB || {};
@@ -14,172 +14,64 @@ BB.SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 
 BB.LOGO_DATA = 'data:image/webp;base64,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';
 
-/* ============================================================
-   BB.AUTH — unchanged from v2.8
-   ============================================================ */
+/* === BB.AUTH unchanged === */
 BB.AUTH = {
   ALLOWED: ['vg@abrisart.com','office@barpi.com.ua','aksonov@barpi.com.ua','pylyp@abrisart.com','office@abrisart.com','vg@dreamcar.ua'],
-  SESSION_KEY: 'bb_auth_session',
-  RETURN_KEY: 'bb_auth_returnTo',
-  SEVEN_DAYS_MS: 7 * 24 * 60 * 60 * 1000,
-  getSession() {
-    try {
-      const raw = localStorage.getItem(this.SESSION_KEY);
-      if (!raw) return null;
-      const s = JSON.parse(raw);
-      if (!s || !s.access_token || !s.issued_at) return null;
-      if (Date.now() - s.issued_at > this.SEVEN_DAYS_MS) { localStorage.removeItem(this.SESSION_KEY); return null; }
-      return s;
-    } catch (e) { return null; }
-  },
+  SESSION_KEY: 'bb_auth_session', RETURN_KEY: 'bb_auth_returnTo', SEVEN_DAYS_MS: 7*24*60*60*1000,
+  getSession() { try { const raw = localStorage.getItem(this.SESSION_KEY); if (!raw) return null; const s = JSON.parse(raw); if (!s || !s.access_token || !s.issued_at) return null; if (Date.now() - s.issued_at > this.SEVEN_DAYS_MS) { localStorage.removeItem(this.SESSION_KEY); return null; } return s; } catch(e) { return null; } },
   logout() { localStorage.removeItem(this.SESSION_KEY); location.reload(); },
   isAllowed(email) { if (!email) return false; return this.ALLOWED.includes(email.trim().toLowerCase()); },
-  async sendMagicLink(email) {
-    email = email.trim().toLowerCase();
-    if (!this.isAllowed(email)) return { error: 'NOT_ALLOWED' };
-    localStorage.setItem(this.RETURN_KEY, location.pathname + location.search);
-    const redirectTo = location.origin + '/auth-callback/';
-    try {
-      const r = await fetch(BB.SUPABASE_URL + '/auth/v1/otp', {
-        method: 'POST',
-        headers: { 'apikey': BB.SUPABASE_ANON, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, create_user: true, gotrue_meta_security: {}, options: { emailRedirectTo: redirectTo } }),
-      });
-      if (!r.ok) return { error: (await r.text()).slice(0, 200) };
-      return { ok: true };
-    } catch (e) { return { error: e.message || 'NETWORK' }; }
-  },
-  async requireAuth() {
-    const s = this.getSession();
-    if (s && this.isAllowed(s.email)) { this.injectUserBadge(s.email); return s; }
-    if (s) localStorage.removeItem(this.SESSION_KEY);
-    document.documentElement.classList.add('bb-auth-locked');
-    this.injectGate();
-    return new Promise(resolve => {
-      window.addEventListener('bb-auth-success', () => {
-        document.documentElement.classList.remove('bb-auth-locked');
-        const s2 = this.getSession();
-        if (s2) this.injectUserBadge(s2.email);
-        resolve(s2);
-      });
-    });
-  },
+  async sendMagicLink(email) { email = email.trim().toLowerCase(); if (!this.isAllowed(email)) return { error: 'NOT_ALLOWED' }; localStorage.setItem(this.RETURN_KEY, location.pathname + location.search); const redirectTo = location.origin + '/auth-callback/'; try { const r = await fetch(BB.SUPABASE_URL + '/auth/v1/otp', { method: 'POST', headers: { 'apikey': BB.SUPABASE_ANON, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, create_user: true, gotrue_meta_security: {}, options: { emailRedirectTo: redirectTo } }) }); if (!r.ok) return { error: (await r.text()).slice(0, 200) }; return { ok: true }; } catch(e) { return { error: e.message || 'NETWORK' }; } },
+  async requireAuth() { const s = this.getSession(); if (s && this.isAllowed(s.email)) { this.injectUserBadge(s.email); return s; } if (s) localStorage.removeItem(this.SESSION_KEY); document.documentElement.classList.add('bb-auth-locked'); this.injectGate(); return new Promise(resolve => { window.addEventListener('bb-auth-success', () => { document.documentElement.classList.remove('bb-auth-locked'); const s2 = this.getSession(); if (s2) this.injectUserBadge(s2.email); resolve(s2); }); }); },
   injectGate() {
     if (document.getElementById('bb-auth-gate')) return;
-    const html = `
-<style>
-  html.bb-auth-locked main, html.bb-auth-locked .bb-topnav, html.bb-auth-locked .sidebar { visibility: hidden !important; }
-  #bb-auth-gate { position: fixed; inset: 0; background: rgba(10,10,10,0.95); z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: Rubik, -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; backdrop-filter: blur(8px); }
-  .bb-auth-card { background: #fff; border-radius: 16px; padding: 32px; width: 400px; max-width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-  .bb-auth-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; color: #0a0a0a; }
-  .bb-auth-card p { margin: 0; color: #666; font-size: 13px; line-height: 1.5; }
-  .bb-auth-card input { width: 100%; padding: 13px 14px; border: 1.5px solid #e2e2e2; border-radius: 10px; font-size: 14px; font-family: inherit; box-sizing: border-box; transition: border-color .15s; outline: none; }
-  .bb-auth-card input:focus { border-color: #FEBF27; }
-  .bb-auth-card button.primary { width: 100%; padding: 13px; background: #FEBF27; color: #0a0a0a; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; font-family: inherit; transition: transform .1s; }
-  .bb-auth-card button.primary:hover { transform: translateY(-1px); }
-  .bb-auth-card button.primary:disabled { opacity: .5; cursor: wait; transform: none; }
-  .bb-auth-card .meta { color: #999; font-size: 11px; text-align: center; margin-top: 14px; line-height: 1.5; }
-  .bb-auth-card .err { color: #c62828; font-size: 12px; margin-top: 12px; text-align: center; min-height: 16px; }
-  .bb-auth-head { text-align: center; margin-bottom: 22px; }
-  .bb-auth-logo { width: 56px; height: 56px; background: #FEBF27; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 12px; }
-</style>
-<div id="bb-auth-gate" role="dialog" aria-modal="true" aria-labelledby="bb-auth-title">
-  <div class="bb-auth-card">
-    <div class="bb-auth-head">
-      <div class="bb-auth-logo">🔒</div>
-      <h2 id="bb-auth-title"><span data-lang="uk">Доступ обмежено</span><span data-lang="en">Restricted access</span></h2>
-      <p><span data-lang="uk">Дашборди містять конфіденційні дані. Введіть свій робочий email — ми надішлемо посилання для входу.</span><span data-lang="en">Dashboards contain confidential data. Enter your work email — we'll send a sign-in link.</span></p>
-    </div>
-    <div id="bb-auth-step-email">
-      <label style="display:block;font-size:11px;font-weight:600;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Email</label>
-      <input type="email" id="bb-auth-email" placeholder="you@barpi.com.ua" autocomplete="email" autofocus />
-      <div style="height:12px"></div>
-      <button class="primary" id="bb-auth-send"><span data-lang="uk">Надіслати посилання</span><span data-lang="en">Send link</span></button>
-    </div>
-    <div id="bb-auth-step-sent" style="display:none">
-      <div style="text-align:center;padding:8px 0">
-        <div style="font-size:40px;margin-bottom:8px">📩</div>
-        <p style="font-size:14px;color:#0a0a0a;margin-bottom:6px"><strong><span data-lang="uk">Перевірте пошту</span><span data-lang="en">Check your email</span></strong></p>
-        <p><span data-lang="uk">Посилання надіслано на</span><span data-lang="en">Link sent to</span> <strong id="bb-auth-sent-email"></strong></p>
-        <p style="margin-top:12px"><span data-lang="uk">Клікніть на посилання у листі — і ви автоматично увійдете. Посилання діє 1 годину.</span><span data-lang="en">Click the link in the email — you'll be signed in automatically. Link expires in 1 hour.</span></p>
-        <div style="height:18px"></div>
-        <button id="bb-auth-back" style="background:none;color:#999;border:1px solid #e2e2e2;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit"><span data-lang="uk">← Інший email</span><span data-lang="en">← Different email</span></button>
-      </div>
-    </div>
-    <div class="err" id="bb-auth-err"></div>
-    <div class="meta">Barpi Brand Bible · Pet Corp LLC<br><span data-lang="uk">Сесія діє 7 днів</span><span data-lang="en">Session lasts 7 days</span></div>
-  </div>
-</div>`;
+    const html = `<style>html.bb-auth-locked main, html.bb-auth-locked .bb-topnav, html.bb-auth-locked .sidebar { visibility: hidden !important; } #bb-auth-gate { position: fixed; inset: 0; background: rgba(10,10,10,0.95); z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: Rubik, -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; backdrop-filter: blur(8px); } .bb-auth-card { background: #fff; border-radius: 16px; padding: 32px; width: 400px; max-width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); } .bb-auth-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; color: #0a0a0a; } .bb-auth-card p { margin: 0; color: #666; font-size: 13px; line-height: 1.5; } .bb-auth-card input { width: 100%; padding: 13px 14px; border: 1.5px solid #e2e2e2; border-radius: 10px; font-size: 14px; font-family: inherit; box-sizing: border-box; transition: border-color .15s; outline: none; } .bb-auth-card input:focus { border-color: #FEBF27; } .bb-auth-card button.primary { width: 100%; padding: 13px; background: #FEBF27; color: #0a0a0a; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; font-family: inherit; transition: transform .1s; } .bb-auth-card button.primary:hover { transform: translateY(-1px); } .bb-auth-card button.primary:disabled { opacity: .5; cursor: wait; transform: none; } .bb-auth-card .meta { color: #999; font-size: 11px; text-align: center; margin-top: 14px; line-height: 1.5; } .bb-auth-card .err { color: #c62828; font-size: 12px; margin-top: 12px; text-align: center; min-height: 16px; } .bb-auth-head { text-align: center; margin-bottom: 22px; } .bb-auth-logo { width: 56px; height: 56px; background: #FEBF27; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 12px; }</style><div id="bb-auth-gate" role="dialog" aria-modal="true" aria-labelledby="bb-auth-title"><div class="bb-auth-card"><div class="bb-auth-head"><div class="bb-auth-logo">🔒</div><h2 id="bb-auth-title"><span data-lang="uk">Доступ обмежено</span><span data-lang="en">Restricted access</span></h2><p><span data-lang="uk">Дашборди містять конфіденційні дані. Введіть свій робочий email — ми надішлемо посилання для входу.</span><span data-lang="en">Dashboards contain confidential data. Enter your work email — we'll send a sign-in link.</span></p></div><div id="bb-auth-step-email"><label style="display:block;font-size:11px;font-weight:600;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Email</label><input type="email" id="bb-auth-email" placeholder="you@barpi.com.ua" autocomplete="email" autofocus /><div style="height:12px"></div><button class="primary" id="bb-auth-send"><span data-lang="uk">Надіслати посилання</span><span data-lang="en">Send link</span></button></div><div id="bb-auth-step-sent" style="display:none"><div style="text-align:center;padding:8px 0"><div style="font-size:40px;margin-bottom:8px">📩</div><p style="font-size:14px;color:#0a0a0a;margin-bottom:6px"><strong><span data-lang="uk">Перевірте пошту</span><span data-lang="en">Check your email</span></strong></p><p><span data-lang="uk">Посилання надіслано на</span><span data-lang="en">Link sent to</span> <strong id="bb-auth-sent-email"></strong></p><p style="margin-top:12px"><span data-lang="uk">Клікніть на посилання у листі — і ви автоматично увійдете. Посилання діє 1 годину.</span><span data-lang="en">Click the link in the email — you'll be signed in automatically. Link expires in 1 hour.</span></p><div style="height:18px"></div><button id="bb-auth-back" style="background:none;color:#999;border:1px solid #e2e2e2;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit"><span data-lang="uk">← Інший email</span><span data-lang="en">← Different email</span></button></div></div><div class="err" id="bb-auth-err"></div><div class="meta">Barpi Brand Bible · Pet Corp LLC<br><span data-lang="uk">Сесія діє 7 днів</span><span data-lang="en">Session lasts 7 days</span></div></div></div>`;
     document.body.insertAdjacentHTML('beforeend', html);
     const lang = localStorage.getItem('bb_lang') || 'uk';
-    document.body.classList.remove('lang-uk','lang-en');
-    document.body.classList.add('lang-' + lang);
+    document.body.classList.remove('lang-uk','lang-en'); document.body.classList.add('lang-' + lang);
     const $ = id => document.getElementById(id);
     const errBox = $('bb-auth-err');
     const setErr = msg => { errBox.textContent = msg || ''; };
     $('bb-auth-send').onclick = async () => {
       const email = $('bb-auth-email').value.trim().toLowerCase();
       if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setErr(lang === 'uk' ? 'Невалідний email' : 'Invalid email');
-      setErr('');
-      const btn = $('bb-auth-send');
-      btn.disabled = true;
-      const orig = btn.innerHTML;
-      btn.innerHTML = '<span data-lang="uk">Надсилаю…</span><span data-lang="en">Sending…</span>';
+      setErr(''); const btn = $('bb-auth-send'); btn.disabled = true;
+      const orig = btn.innerHTML; btn.innerHTML = '<span data-lang="uk">Надсилаю…</span><span data-lang="en">Sending…</span>';
       document.body.classList.add('lang-' + lang);
       const r = await this.sendMagicLink(email);
-      btn.disabled = false;
-      btn.innerHTML = orig;
-      document.body.classList.add('lang-' + lang);
+      btn.disabled = false; btn.innerHTML = orig; document.body.classList.add('lang-' + lang);
       if (r.error === 'NOT_ALLOWED') return setErr(lang === 'uk' ? 'Цей email не у списку доступу. Запитайте у адміна.' : 'This email is not on the allowlist. Ask admin.');
       if (r.error) return setErr((lang === 'uk' ? 'Помилка: ' : 'Error: ') + r.error);
-      $('bb-auth-step-email').style.display = 'none';
-      $('bb-auth-step-sent').style.display = 'block';
-      $('bb-auth-sent-email').textContent = email;
+      $('bb-auth-step-email').style.display = 'none'; $('bb-auth-step-sent').style.display = 'block'; $('bb-auth-sent-email').textContent = email;
     };
-    $('bb-auth-back').onclick = () => {
-      $('bb-auth-step-sent').style.display = 'none';
-      $('bb-auth-step-email').style.display = 'block';
-      setErr('');
-      $('bb-auth-email').focus();
-    };
+    $('bb-auth-back').onclick = () => { $('bb-auth-step-sent').style.display = 'none'; $('bb-auth-step-email').style.display = 'block'; setErr(''); $('bb-auth-email').focus(); };
     $('bb-auth-email').addEventListener('keydown', e => { if (e.key === 'Enter') $('bb-auth-send').click(); });
   },
   injectUserBadge(email) {
     if (document.getElementById('bb-user-badge')) return;
     const tools = document.querySelector('.bb-topnav-tools');
     if (!tools) { setTimeout(() => this.injectUserBadge(email), 200); return; }
-    const wrap = document.createElement('span');
-    wrap.id = 'bb-user-badge';
+    const wrap = document.createElement('span'); wrap.id = 'bb-user-badge';
     wrap.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin-left:10px';
     const name = email.split('@')[0];
     wrap.innerHTML = `<span title="${email}" style="background:rgba(254,191,39,.18);color:#FEBF27;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700">${name}</span><button onclick="BB.AUTH.logout()" style="background:none;color:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.18);padding:3px 9px;border-radius:6px;font-size:10px;cursor:pointer;font-family:inherit" title="Logout">⎋</button>`;
     tools.appendChild(wrap);
   },
 };
-
 if (typeof location !== 'undefined' && location.pathname.startsWith('/dashboard/')) {
-  try {
-    const style = document.createElement('style');
-    style.id = 'bb-auth-prelock';
-    style.textContent = 'main, .bb-topnav, .sidebar { visibility: hidden !important; }';
-    document.head.appendChild(style);
-  } catch(e) {}
-  document.addEventListener('DOMContentLoaded', async () => {
-    await BB.AUTH.requireAuth();
-    const prel = document.getElementById('bb-auth-prelock');
-    if (prel) prel.remove();
-  });
+  try { const style = document.createElement('style'); style.id = 'bb-auth-prelock'; style.textContent = 'main, .bb-topnav, .sidebar { visibility: hidden !important; }'; document.head.appendChild(style); } catch(e) {}
+  document.addEventListener('DOMContentLoaded', async () => { await BB.AUTH.requireAuth(); const prel = document.getElementById('bb-auth-prelock'); if (prel) prel.remove(); });
 }
 
-/* ===== SIDEBAR HTML v3.1 ===== */
+/* ===== SIDEBAR HTML v3.2 ===== */
 BB.SIDEBAR_HTML = `
 <nav class="sidebar" id="bb-sidebar-nav" aria-label="Brand Bible navigation">
   <div class="sidebar-head">
     <a class="sidebar-brand" href="/">
       <img src="${BB.LOGO_DATA}" alt="Barpi" width="200" height="96" loading="eager">
       <div class="brand-text-sub">
-        <span data-lang="uk">Brand Bible · v3.1</span>
-        <span data-lang="en">Brand Bible · v3.1</span>
+        <span data-lang="uk">Brand Bible · v3.2</span>
+        <span data-lang="en">Brand Bible · v3.2</span>
       </div>
     </a>
     <div class="sidebar-search" style="position:relative">
@@ -239,7 +131,6 @@ BB.SIDEBAR_HTML = `
   </div>
 </nav>
 `;
-
 BB.injectSidebar = function() {
   const placeholder = document.getElementById('bb-sidebar');
   if (placeholder) placeholder.outerHTML = BB.SIDEBAR_HTML;
@@ -280,9 +171,7 @@ BB.markActiveNav = function() {
 };
 
 /* ============================================================
-   BB.initMobileMenu — v3.1
-   Modern mobile UX: backdrop, scroll lock, ESC, click-outside,
-   nav-link auto-close, ARIA
+   BB.initMobileMenu — v3.2 with visible "Меню/Menu" label
    ============================================================ */
 BB.initMobileMenu = function() {
   const toggle = document.querySelector('.menu-toggle');
@@ -294,7 +183,16 @@ BB.initMobileMenu = function() {
     document.body.classList.add('has-topnav');
   }
 
-  // Create backdrop element once
+  // Replace button content with proper label + icon spans
+  // (was just "☰" in HTML — now we get bilingual label + animated icon)
+  toggle.innerHTML = `
+    <span class="mt-label">
+      <span data-lang="uk">Меню</span><span data-lang="en">Menu</span>
+    </span>
+    <span class="mt-icon" aria-hidden="true"></span>
+  `;
+
+  // Backdrop
   let backdrop = document.querySelector('.menu-backdrop');
   if (!backdrop) {
     backdrop = document.createElement('div');
@@ -303,7 +201,7 @@ BB.initMobileMenu = function() {
     document.body.appendChild(backdrop);
   }
 
-  // ARIA attributes on the toggle
+  // ARIA
   toggle.setAttribute('aria-label', 'Toggle navigation menu');
   toggle.setAttribute('aria-controls', 'bb-sidebar-nav');
   toggle.setAttribute('aria-expanded', 'false');
@@ -317,7 +215,6 @@ BB.initMobileMenu = function() {
     backdrop.classList.add('shown');
     document.body.classList.add('menu-open');
     toggle.setAttribute('aria-expanded', 'true');
-    // Move focus to first nav-link for keyboard users
     const firstLink = sidebar.querySelector('.nav-link');
     if (firstLink) setTimeout(() => firstLink.focus({preventScroll: true}), 320);
   };
@@ -330,43 +227,24 @@ BB.initMobileMenu = function() {
     toggle.setAttribute('aria-expanded', 'false');
   };
 
-  const toggleMenu = e => {
-    if (e) e.preventDefault();
-    if (isOpen()) closeMenu(); else openMenu();
-  };
+  const toggleMenu = e => { if (e) e.preventDefault(); if (isOpen()) closeMenu(); else openMenu(); };
 
-  // Wire up — remove any inline onclick first to be safe
   toggle.onclick = null;
   toggle.addEventListener('click', toggleMenu);
-
-  // Close on backdrop click
   backdrop.addEventListener('click', closeMenu);
 
-  // Close on ESC key
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && isOpen()) {
-      closeMenu();
-      toggle.focus();
-    }
+    if (e.key === 'Escape' && isOpen()) { closeMenu(); toggle.focus(); }
   });
 
-  // Close on nav-link click (small delay for tap feedback)
   sidebar.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-      // Don't close if it's a current-page link without actual navigation
-      if (window.innerWidth <= 900) {
-        setTimeout(closeMenu, 180);
-      }
-    });
+    link.addEventListener('click', () => { if (window.innerWidth <= 900) setTimeout(closeMenu, 180); });
   });
 
-  // Auto-close on resize beyond mobile breakpoint
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      if (window.innerWidth > 900 && isOpen()) closeMenu();
-    }, 150);
+    resizeTimer = setTimeout(() => { if (window.innerWidth > 900 && isOpen()) closeMenu(); }, 150);
   });
 };
 
@@ -403,45 +281,19 @@ BB.initSearch = function() {
   input.addEventListener('input', e => {
     const q = e.target.value.toLowerCase().trim();
     if (q.length < 2) { results.classList.remove('shown'); return; }
-    const matches = BB.SEARCH_INDEX.filter(item => {
-      const hay = (item.uk + ' ' + item.en + ' ' + item.words).toLowerCase();
-      return hay.includes(q);
-    }).slice(0, 10);
-    if (!matches.length) {
-      results.innerHTML = '<div class="search-result" style="color:var(--text-muted)">Нічого / No results</div>';
-    } else {
-      results.innerHTML = matches.map(m => `
-        <a class="search-result" href="${m.url}">
-          <div class="sect">${m.id}</div>
-          <span data-lang="uk">${m.uk}</span><span data-lang="en">${m.en}</span>
-        </a>`).join('');
-    }
+    const matches = BB.SEARCH_INDEX.filter(item => { const hay = (item.uk + ' ' + item.en + ' ' + item.words).toLowerCase(); return hay.includes(q); }).slice(0, 10);
+    if (!matches.length) results.innerHTML = '<div class="search-result" style="color:var(--text-muted)">Нічого / No results</div>';
+    else results.innerHTML = matches.map(m => `<a class="search-result" href="${m.url}"><div class="sect">${m.id}</div><span data-lang="uk">${m.uk}</span><span data-lang="en">${m.en}</span></a>`).join('');
     results.classList.add('shown');
   });
   input.addEventListener('blur', () => setTimeout(() => results.classList.remove('shown'), 200));
   input.addEventListener('focus', () => { if (input.value.length >= 2) results.classList.add('shown'); });
 };
 
-BB.api = function(path, opts = {}) {
-  return fetch(BB.SUPABASE_URL + '/rest/v1' + path, {
-    ...opts,
-    headers: { 'apikey': BB.SUPABASE_ANON, 'Authorization': 'Bearer ' + BB.SUPABASE_ANON, 'Content-Type': 'application/json', 'Prefer': opts.method === 'POST' ? 'return=representation' : '', ...(opts.headers || {}) }
-  });
-};
-BB.loadIdeas = async function(filter = 'all') {
-  let q = '/brand_ideas?select=*&order=created_at.desc';
-  if (filter !== 'all') q += '&status=eq.' + filter;
-  try { const r = await BB.api(q); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
-  catch (e) { console.error('Load ideas:', e); return []; }
-};
-BB.submitIdea = async function(data) {
-  try { const r = await BB.api('/brand_ideas', { method: 'POST', body: JSON.stringify(data) }); if (!r.ok) { console.error(await r.text()); return null; } return await r.json(); }
-  catch (e) { return null; }
-};
-BB.upvoteIdea = async function(id, current) {
-  try { const r = await BB.api('/brand_ideas?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ upvotes: (current || 0) + 1 }) }); return r.ok; }
-  catch (e) { return false; }
-};
+BB.api = function(path, opts = {}) { return fetch(BB.SUPABASE_URL + '/rest/v1' + path, { ...opts, headers: { 'apikey': BB.SUPABASE_ANON, 'Authorization': 'Bearer ' + BB.SUPABASE_ANON, 'Content-Type': 'application/json', 'Prefer': opts.method === 'POST' ? 'return=representation' : '', ...(opts.headers || {}) } }); };
+BB.loadIdeas = async function(filter = 'all') { let q = '/brand_ideas?select=*&order=created_at.desc'; if (filter !== 'all') q += '&status=eq.' + filter; try { const r = await BB.api(q); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); } catch(e) { console.error('Load ideas:', e); return []; } };
+BB.submitIdea = async function(data) { try { const r = await BB.api('/brand_ideas', { method: 'POST', body: JSON.stringify(data) }); if (!r.ok) { console.error(await r.text()); return null; } return await r.json(); } catch(e) { return null; } };
+BB.upvoteIdea = async function(id, current) { try { const r = await BB.api('/brand_ideas?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ upvotes: (current || 0) + 1 }) }); return r.ok; } catch(e) { return false; } };
 BB.renderIdeas = async function(filter = 'all') {
   const list = document.getElementById('ideas-list');
   const counter = document.getElementById('ideas-counter');
@@ -449,31 +301,10 @@ BB.renderIdeas = async function(filter = 'all') {
   list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted)">…</div>';
   const ideas = await BB.loadIdeas(filter);
   if (counter) counter.textContent = `${ideas.length} пропозицій / ideas`;
-  if (!ideas.length) {
-    list.innerHTML = '<div class="card" style="text-align:center;color:var(--text-muted)"><span data-lang="uk">Поки що пропозицій немає. Будьте першим!</span><span data-lang="en">No ideas yet. Be the first!</span></div>';
-    return;
-  }
-  list.innerHTML = ideas.map(i => `
-    <div class="idea" data-id="${i.id}">
-      <div class="idea-head">
-        <div class="title">${escapeHTML(i.title)}</div>
-        <div class="status status-${i.status}">${i.status}</div>
-      </div>
-      <div class="idea-body">${escapeHTML(i.body)}</div>
-      <div class="idea-meta">
-        <span>${escapeHTML(i.author_name || 'Анонім')}</span>
-        <span>${new Date(i.created_at).toLocaleDateString('uk-UA')}</span>
-        ${i.section_id ? `<span style="background:var(--bg);padding:1px 6px;border-radius:4px">${i.section_id}</span>` : ''}
-        <button class="upvote" onclick="BB.handleUpvote('${i.id}', ${i.upvotes || 0}, this)">▲ ${i.upvotes || 0}</button>
-      </div>
-    </div>`).join('');
+  if (!ideas.length) { list.innerHTML = '<div class="card" style="text-align:center;color:var(--text-muted)"><span data-lang="uk">Поки що пропозицій немає. Будьте першим!</span><span data-lang="en">No ideas yet. Be the first!</span></div>'; return; }
+  list.innerHTML = ideas.map(i => `<div class="idea" data-id="${i.id}"><div class="idea-head"><div class="title">${escapeHTML(i.title)}</div><div class="status status-${i.status}">${i.status}</div></div><div class="idea-body">${escapeHTML(i.body)}</div><div class="idea-meta"><span>${escapeHTML(i.author_name || 'Анонім')}</span><span>${new Date(i.created_at).toLocaleDateString('uk-UA')}</span>${i.section_id ? `<span style="background:var(--bg);padding:1px 6px;border-radius:4px">${i.section_id}</span>` : ''}<button class="upvote" onclick="BB.handleUpvote('${i.id}', ${i.upvotes || 0}, this)">▲ ${i.upvotes || 0}</button></div></div>`).join('');
 };
-BB.handleUpvote = async function(id, current, btn) {
-  btn.disabled = true;
-  const ok = await BB.upvoteIdea(id, current);
-  if (ok) btn.innerHTML = '▲ ' + (current + 1);
-  btn.disabled = false;
-};
+BB.handleUpvote = async function(id, current, btn) { btn.disabled = true; const ok = await BB.upvoteIdea(id, current); if (ok) btn.innerHTML = '▲ ' + (current + 1); btn.disabled = false; };
 BB.initIdeasForm = function() {
   const form = document.getElementById('ideas-form');
   const newBtn = document.getElementById('ideas-new-btn');
@@ -482,39 +313,17 @@ BB.initIdeasForm = function() {
   if (!form || !newBtn || !submitBtn) return;
   newBtn.onclick = () => { form.style.display = form.style.display === 'none' ? 'block' : 'none'; };
   submitBtn.onclick = async () => {
-    const data = {
-      title: document.getElementById('idea-title').value.trim(),
-      body: document.getElementById('idea-body').value.trim(),
-      author_name: document.getElementById('idea-author').value.trim(),
-      author_email: document.getElementById('idea-email').value.trim(),
-      section_id: document.getElementById('idea-section').value.trim() || null,
-      status: 'new',
-    };
+    const data = { title: document.getElementById('idea-title').value.trim(), body: document.getElementById('idea-body').value.trim(), author_name: document.getElementById('idea-author').value.trim(), author_email: document.getElementById('idea-email').value.trim(), section_id: document.getElementById('idea-section').value.trim() || null, status: 'new' };
     if (!data.title) return alert('Введіть заголовок / Enter title');
-    submitBtn.disabled = true;
-    submitBtn.textContent = '…';
+    submitBtn.disabled = true; submitBtn.textContent = '…';
     const result = await BB.submitIdea(data);
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Надіслати / Submit';
-    if (result) {
-      form.style.display = 'none';
-      ['idea-title','idea-body','idea-author','idea-email','idea-section'].forEach(id => document.getElementById(id).value = '');
-      BB.renderIdeas();
-      alert('Дякуємо! Ваша пропозиція збережена. / Thanks! Saved.');
-    } else { alert('Помилка / Error'); }
+    submitBtn.disabled = false; submitBtn.textContent = 'Надіслати / Submit';
+    if (result) { form.style.display = 'none'; ['idea-title','idea-body','idea-author','idea-email','idea-section'].forEach(id => document.getElementById(id).value = ''); BB.renderIdeas(); alert('Дякуємо! Ваша пропозиція збережена. / Thanks! Saved.'); }
+    else alert('Помилка / Error');
   };
-  filterBtns.forEach(b => {
-    b.onclick = () => {
-      filterBtns.forEach(x => x.classList.remove('is-active'));
-      b.classList.add('is-active');
-      BB.renderIdeas(b.dataset.status || 'all');
-    };
-  });
+  filterBtns.forEach(b => { b.onclick = () => { filterBtns.forEach(x => x.classList.remove('is-active')); b.classList.add('is-active'); BB.renderIdeas(b.dataset.status || 'all'); }; });
 };
-function escapeHTML(s) {
-  if (!s) return '';
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+function escapeHTML(s) { if (!s) return ''; return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 BB.DASHBOARD_LINKS = [
   {href:'/dashboard/customer-360/', label:'👥 Customer 360', match:'customer-360'},
@@ -528,30 +337,11 @@ BB.DASHBOARD_LINKS = [
   {href:'/dashboard/', label:'📋 Усі', match:'__index__'},
   {href:'/', label:'📘 Brand Bible', match:'__brandbible__'},
 ];
-BB.DASHBOARD_TOPNAV_CSS = `
-.bb-topnav{background:#0a0a0a;color:#fff;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:300;font-family:Rubik,-apple-system,sans-serif}
-.bb-topnav-inner{max-width:1480px;margin:0 auto;padding:0 18px;display:flex;align-items:center;gap:14px;height:44px;overflow-x:auto;scrollbar-width:thin}
-.bb-topnav-inner::-webkit-scrollbar{height:0}
-.bb-topnav-brand{color:#fff;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:-.01em;display:flex;align-items:center;gap:5px;flex-shrink:0;padding-right:8px;border-right:1px solid rgba(255,255,255,.12);height:100%}
-.bb-topnav-brand .dot{color:#FEBF27}
-.bb-topnav-brand:hover{opacity:.85}
-.bb-topnav-links{display:flex;align-items:center;gap:2px;flex:1}
-.bb-topnav-links .nav-link{color:rgba(255,255,255,.65);text-decoration:none;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:7px;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
-.bb-topnav-links .nav-link:hover{background:rgba(255,255,255,.08);color:#fff}
-.bb-topnav-links .nav-link.active{background:rgba(254,191,39,.18);color:#FEBF27}
-.bb-topnav-tools{display:flex;align-items:center;gap:8px;flex-shrink:0;color:rgba(255,255,255,.5);font-size:11px}
-@media(max-width:900px){.bb-topnav-inner{height:auto;padding:8px 12px;flex-wrap:wrap}.bb-topnav-brand{border-right:none;padding-right:0}.bb-topnav-links{order:3;width:100%}}
-`;
+BB.DASHBOARD_TOPNAV_CSS = `.bb-topnav{background:#0a0a0a;color:#fff;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:300;font-family:Rubik,-apple-system,sans-serif}.bb-topnav-inner{max-width:1480px;margin:0 auto;padding:0 18px;display:flex;align-items:center;gap:14px;height:44px;overflow-x:auto;scrollbar-width:thin}.bb-topnav-inner::-webkit-scrollbar{height:0}.bb-topnav-brand{color:#fff;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:-.01em;display:flex;align-items:center;gap:5px;flex-shrink:0;padding-right:8px;border-right:1px solid rgba(255,255,255,.12);height:100%}.bb-topnav-brand .dot{color:#FEBF27}.bb-topnav-brand:hover{opacity:.85}.bb-topnav-links{display:flex;align-items:center;gap:2px;flex:1}.bb-topnav-links .nav-link{color:rgba(255,255,255,.65);text-decoration:none;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:7px;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}.bb-topnav-links .nav-link:hover{background:rgba(255,255,255,.08);color:#fff}.bb-topnav-links .nav-link.active{background:rgba(254,191,39,.18);color:#FEBF27}.bb-topnav-tools{display:flex;align-items:center;gap:8px;flex-shrink:0;color:rgba(255,255,255,.5);font-size:11px}@media(max-width:900px){.bb-topnav-inner{height:auto;padding:8px 12px;flex-wrap:wrap}.bb-topnav-brand{border-right:none;padding-right:0}.bb-topnav-links{order:3;width:100%}}`;
 BB.injectDashboardTopnav = function(){
   const path = location.pathname;
-  function isActive(m){
-    if (m === '__index__') return /^\/dashboard\/?$/.test(path);
-    if (m === '__brandbible__') return false;
-    return path.includes(m);
-  }
-  const style = document.createElement('style');
-  style.textContent = BB.DASHBOARD_TOPNAV_CSS;
-  document.head.appendChild(style);
+  function isActive(m){ if (m === '__index__') return /^\/dashboard\/?$/.test(path); if (m === '__brandbible__') return false; return path.includes(m); }
+  const style = document.createElement('style'); style.textContent = BB.DASHBOARD_TOPNAV_CSS; document.head.appendChild(style);
   const html = `<nav class="bb-topnav"><div class="bb-topnav-inner"><a href="/" class="bb-topnav-brand">Barpi<span class="dot">.</span></a><div class="bb-topnav-links">${BB.DASHBOARD_LINKS.map(l => `<a class="nav-link ${isActive(l.match) ? 'active' : ''}" href="${l.href}">${l.label}</a>`).join('')}</div><div class="bb-topnav-tools"><span id="bb-topnav-time"></span></div></div></nav>`;
   document.body.insertAdjacentHTML('afterbegin', html);
   const t = document.getElementById('bb-topnav-time');
@@ -565,8 +355,5 @@ document.addEventListener('DOMContentLoaded', () => {
   BB.markActiveNav();
   BB.initSearch();
   BB.initMobileMenu();
-  if (document.getElementById('ideas-list')) {
-    BB.renderIdeas();
-    BB.initIdeasForm();
-  }
+  if (document.getElementById('ideas-list')) { BB.renderIdeas(); BB.initIdeasForm(); }
 });
