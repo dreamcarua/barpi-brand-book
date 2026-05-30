@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+<defs>
+  <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FAF7F7"/>
+    <stop offset="100%" stop-color="#BAD9F4"/>
+  </linearGradient>
+</defs>
+<rect width="1200" height="630" fill="url(#bg)"/>
+<text x="80" y="120" font-family="Rubik, sans-serif" font-size="22" font-weight="700" fill="#001154" letter-spacing="3">BARPI BRAND BIBLE</text>
+<text x="80" y="270" font-family="Rubik, sans-serif" font-size="84" font-weight="800" fill="#1A1A1A" letter-spacing="-2">Турбота для</text>
+<text x="80" y="370" font-family="Rubik, sans-serif" font-size="84" font-weight="800" fill="#001154" letter-spacing="-2">справжніх друзів.</text>
+<text x="80" y="450" font-family="Rubik, sans-serif" font-size="28" font-weight="400" fill="#333" letter-spacing="-0.5">Один інгредієнт. Без зайвого. SNECO 34–38°C.</text>
+<g transform="translate(80,510)">
+  <rect width="160" height="48" rx="24" fill="#001154"/>
+  <text x="80" y="32" font-family="Rubik, sans-serif" font-size="16" font-weight="700" fill="white" text-anchor="middle">100% NATURAL</text>
+</g>
+<g transform="translate(260,510)">
+  <rect width="180" height="48" rx="24" fill="white" stroke="#001154" stroke-width="2"/>
+  <text x="90" y="32" font-family="Rubik, sans-serif" font-size="16" font-weight="700" fill="#001154" text-anchor="middle">17 SKU / 9 DOGS</text>
+</g>
+<g transform="translate(460,510)">
+  <rect width="160" height="48" rx="24" fill="white" stroke="#001154" stroke-width="2"/>
+  <text x="80" y="32" font-family="Rubik, sans-serif" font-size="16" font-weight="700" fill="#001154" text-anchor="middle">SNECO TECH</text>
+</g>
+<text x="1120" y="595" font-family="Rubik, sans-serif" font-size="16" font-weight="500" fill="#001154" text-anchor="end">brand.barpi.ua</text>
+</svg>
