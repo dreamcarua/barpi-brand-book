@@ -1,0 +1,12 @@
+name = "barpi-api"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "barpi-bible"
+database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
+
+[vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://brand.barpi.ua,https://barpi-brand-book.pages.dev"
