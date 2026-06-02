@@ -1,5 +1,6 @@
 /* ============================================================
-   Barpi Brand Bible v4.1 — Global JS
+   Barpi Brand Bible v4.2 — Global JS
+   v4.2: SMM cleanup — викинуто HQ SMM + SMM v1 (Supabase project deleted)
    v4.1: Supabase refs повністю видалено (SUPABASE_URL/ANON), pure D1
    v4.0: CF Access (Zero Trust) edge auth — BB.AUTH видалено
    v3.4: BB.api → Cloudflare D1 (barpi-api Worker, Supabase REST deprecated)
@@ -20,15 +21,15 @@ BB.LOGO_DATA = 'data:image/webp;base64,UklGRugRAABXRUJQVlA4WAoAAAAYAAAAjwEAvgAAQ
 
 /* === BB.AUTH removed in v4.0 — CF Access (Zero Trust) handles auth at edge === */
 
-/* ===== SIDEBAR HTML v4.1 ===== */
+/* ===== SIDEBAR HTML v4.2 ===== */
 BB.SIDEBAR_HTML = `
 <nav class="sidebar" id="bb-sidebar-nav" aria-label="Brand Bible navigation">
   <div class="sidebar-head">
     <a class="sidebar-brand" href="/">
       <img src="${BB.LOGO_DATA}" alt="Barpi" width="200" height="96" loading="eager">
       <div class="brand-text-sub">
-        <span data-lang="uk">Brand Bible · v4.1</span>
-        <span data-lang="en">Brand Bible · v4.1</span>
+        <span data-lang="uk">Brand Bible · v4.2</span>
+        <span data-lang="en">Brand Bible · v4.2</span>
       </div>
     </a>
     <div class="sidebar-search" style="position:relative">
@@ -171,7 +172,7 @@ BB.SEARCH_INDEX = [
   { id: 'documents', uk: 'Документи', en: 'Documents', url: '/documents/', words: 'ТМ ТУ патент сертифікат лабораторний 383307 160558 ПЕТ КОРП 45519838 IBAN' },
   { id: 'downloads', uk: 'Завантаження', en: 'Downloads', url: '/downloads/', words: 'downloads презентація pdf docx прайс каталог сертифікат патент ТМ ТУ лабораторний реквізити виписка завантажити drive' },
   { id: 'roadmap', uk: 'Roadmap', en: 'Roadmap', url: '/roadmap/', words: 'roadmap Q3 пріоритети strategy 2026' },
-  { id: 'dashboards', uk: 'Дашборди', en: 'Dashboards', url: '/dashboard/', words: 'dashboards SMM Sales Inventory Partners Events HQ Customer 360 Financial Production' },
+  { id: 'dashboards', uk: 'Дашборди', en: 'Dashboards', url: '/dashboard/', words: 'dashboards Sales Inventory Events Customer 360 Financial Production' },
   { id: 'architecture', uk: 'Архітектура бренду', en: 'Brand architecture', url: '/architecture/', words: 'architecture snEco SNECO brand hierarchy' },
   { id: 'ideas', uk: 'Ідеї та пропозиції', en: 'Ideas & proposals', url: '/ideas/', words: 'ideas propose suggest пропозиції' },
   { id: 'fonts', uk: 'Шрифти Qanelas', en: 'Typography Qanelas', url: '/fonts/', words: 'qanelas font typography typeface шрифт weight bold regular italic woff ttf' },
@@ -235,9 +236,7 @@ BB.DASHBOARD_LINKS = [
   {href:'/dashboard/sales-performance/', label:'📈 Sales', match:'sales-performance'},
   {href:'/dashboard/production/', label:'🏭 Production', match:'production'},
   {href:'/dashboard/inventory/', label:'📦 Inventory', match:'inventory'},
-  {href:'/dashboard/hq/', label:'🚀 HQ SMM', match:'/hq'},
   {href:'/dashboard/events/', label:'🎪 Events', match:'events'},
-  {href:'/dashboard/smm/', label:'📊 SMM v1', match:'/smm'},
   {href:'/dashboard/', label:'📋 Усі', match:'__index__'},
   {href:'/', label:'📘 Brand Bible', match:'__brandbible__'},
 ];
