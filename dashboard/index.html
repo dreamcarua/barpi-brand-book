@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboards · Barpi Brand Bible</title>
-<meta name="description" content="Внутрішні дашборди Barpi: Customer 360, Sales Performance, Financial P&L, Production, Inventory, SMM, Events. Дані з МойСклад через Cloudflare D1, оновлення щогодини.">
+<meta name="description" content="Внутрішні дашборди Barpi: Customer 360, Sales Performance, Financial P&L, Production, Inventory, Events. Дані з МойСклад через Cloudflare D1, оновлення щогодини.">
 <link rel="canonical" href="https://brand.barpi.ua/dashboard/">
 <link rel="icon" href="/favicon.ico">
 <link rel="stylesheet" href="/assets/bb.css">
@@ -40,28 +40,28 @@
     <span class="chapter-num">16 · <span data-lang="uk">Сервіс</span><span data-lang="en">Service</span></span>
     <h1>📊 <span data-lang="uk">Дашборди</span><span data-lang="en">Dashboards</span></h1>
     <p class="lead">
-      <span data-lang="uk">Внутрішні інструменти команди Barpi. 8 дашбордів — Sales Performance, Customer 360, Financial P&L, Production, Inventory, HQ SMM, Events, SMM v1.</span>
-      <span data-lang="en">Internal Barpi team tools. 8 dashboards covering Sales, Customer, Financial, Production, Inventory, SMM.</span>
+      <span data-lang="uk">Внутрішні інструменти команди Barpi. 6 дашбордів — Customer 360, Sales Performance, Financial P&L, Production, Inventory, Events.</span>
+      <span data-lang="en">Internal Barpi team tools. 6 dashboards covering Sales, Customer, Financial, Production, Inventory, Events.</span>
     </p>
 
     <div class="dash-section-title"><span data-lang="uk">🏢 Sales Intelligence (МойСклад → D1)</span><span data-lang="en">🏢 Sales Intelligence (MoySklad → D1)</span></div>
     <div class="dash-grid">
       <a class="dash-card featured" href="customer-360/">
         <h3>👥 Customer 360 <span class="status">D1</span></h3>
-        <p><span data-lang="uk">CRM-аналітика: RFM сегментація, Active/Churning/Lost клієнти, LTV, динаміка бази по місяцях, день тижня, ТОП клієнтів за виручкою.</span><span data-lang="en">CRM analytics with RFM, LTV, customer base dynamics.</span></p>
+        <p><span data-lang="uk">CRM-аналітика: RFM сегментація, Active/Churning/Lost клієнти, LTV, динаміка бази по місяцях, день тижня, ТОП клієнтів за виручкою. Клік на клієнта → деталі (історія, продукти, тренд).</span><span data-lang="en">CRM analytics with RFM, LTV, customer base dynamics. Click row → drill-down modal.</span></p>
         <div class="meta"><strong>Дані:</strong> v_customer_metrics · v_customer_timeline · v_customer_dow · <strong>156 унікальних клієнтів</strong> · <strong>Sync:</strong> cron щогодини</div>
       </a>
 
       <a class="dash-card" href="sales-performance/">
         <h3>📈 Sales Performance <span class="status live">LIVE</span></h3>
-        <p><span data-lang="uk">Виручка та динаміка продажів: KPI, ТОП-SKU, ABC-аналіз, період chips (7/30/90/180/365/Все). 3 вкладки.</span><span data-lang="en">Revenue dynamics, ABC analysis, top SKUs.</span></p>
-        <div class="meta"><strong>Дані:</strong> v_sales_by_day · v_sales_by_sku · 1955 продажів · 5.2M ₴ виручка lifetime</div>
+        <p><span data-lang="uk">Виручка та динаміка продажів: KPI, ТОП-SKU з назвами + категоріями, ABC-аналіз, період chips (7/30/90/180/365/Все). 3 вкладки.</span><span data-lang="en">Revenue dynamics, ABC analysis, top SKUs з назвами.</span></p>
+        <div class="meta"><strong>Дані:</strong> v_sales_by_day · v_sales_by_sku (з sku_name + category) · 1955 продажів · 5.2M ₴ виручка lifetime</div>
       </a>
 
       <a class="dash-card" href="financial/">
-        <h3>💵 Financial — Real P&L <span class="status new">REBUILT</span></h3>
-        <p><span data-lang="uk">P&L: Revenue − Supplies (COGS) − OpEx − Losses = Net Profit. Cash Flow, реальна маржа з paymentin/paymentout.</span><span data-lang="en">Full P&L with real cogs/paid joins.</span></p>
-        <div class="meta"><strong>Дані:</strong> v_pnl_monthly (real cogs+collected) · v_cash_flow · 168 поставок · 11 статей витрат · 896 виплат</div>
+        <h3>💵 Financial v5 — Real P&L <span class="status new">REBUILT</span></h3>
+        <p><span data-lang="uk">P&L: Revenue − Supplies (COGS) − OpEx − Losses = Net Profit. Period chips (30/90/180/365/Все). Категорії витрат (paymentout JOIN expense_items), категорії надходжень (paymentin by клієнтах), ТОП постачальники, Grouped chart Revenue/COGS/OpEx.</span><span data-lang="en">Full P&L with period filters, expense/income categories, supplier rankings.</span></p>
+        <div class="meta"><strong>Дані:</strong> v_pnl_monthly · v_expenses_by_item · v_supplies_by_supplier · v_paymentin_by_agent · 11 категорій · 168 поставок · 896 виплат · 1121 надходжень</div>
       </a>
 
       <a class="dash-card" href="production/">
@@ -75,23 +75,10 @@
         <p><span data-lang="uk">Залишки на складах: stock_level (critical/low/normal/high), retail value, cost value, по категоріях. Auto-flag критичних позицій.</span><span data-lang="en">Stock levels by SKU and category.</span></p>
         <div class="meta"><strong>Дані:</strong> v_inventory_extended · 94 SKU live · sync щогодини</div>
       </a>
-    </div>
 
-    <div class="dash-section-title"><span data-lang="uk">🚀 SMM & Операції</span><span data-lang="en">🚀 SMM & Operations</span></div>
-    <div class="dash-grid">
-      <a class="dash-card" href="hq/">
-        <h3>🚀 Barpi HQ — Стіл SMM <span class="status beta">BETA</span></h3>
-        <p><span data-lang="uk">SMM-платформа: календар, картка з 16 полями, дошка погоджень, креативи, запуски.</span><span data-lang="en">SMM platform.</span></p>
-        <div class="meta"><strong>Стек:</strong> локальний state (LocalStorage) + майбутній CF D1</div>
-      </a>
-      <a class="dash-card" href="smm/">
-        <h3>📊 SMM Dashboard (v1) <span class="status live">LIVE</span></h3>
-        <p><span data-lang="uk">Content Log, Weekly/Monthly, Stories, Reels, Direct, UGC, Pillars.</span><span data-lang="en">SMM reports.</span></p>
-        <div class="meta"><strong>Дані:</strong> localStorage</div>
-      </a>
       <a class="dash-card" href="events/">
-        <h3>🎪 Events Dashboard <span class="status live">LIVE</span></h3>
-        <p><span data-lang="uk">Фестивалі, дегустації, ROI. 17 подій у 2026.</span><span data-lang="en">Events, ROI.</span></p>
+        <h3>🎪 Events <span class="status live">LIVE</span></h3>
+        <p><span data-lang="uk">Фестивалі, дегустації, ROI. 17 подій у 2026.</span><span data-lang="en">Events calendar, ROI.</span></p>
         <div class="meta"><strong>Доступ:</strong> Олександр + Альона + Вадим</div>
       </a>
     </div>
@@ -111,7 +98,7 @@
     </div>
 
     <div class="dash-legend">
-      <strong><span data-lang="uk">Архітектура (v4.1, з 02.06.2026):</span><span data-lang="en">Architecture (v4.1, since 02.06.2026):</span></strong>
+      <strong><span data-lang="uk">Архітектура (v4.2, з 02.06.2026):</span><span data-lang="en">Architecture (v4.2, since 02.06.2026):</span></strong>
       <span data-lang="uk">Brand Bible (статичний HTML на GitHub Pages) + Cloudflare D1 (SQLite на edge) + Worker <code>barpi-api</code> (REST proxy) + Worker <code>barpi-sync</code> (cron-trigger щогодини) + МойСклад API.</span>
       <span data-lang="en">Brand Bible (static HTML on GitHub Pages) + Cloudflare D1 (edge SQLite) + Worker <code>barpi-api</code> (REST proxy) + Worker <code>barpi-sync</code> (hourly cron) + MoySklad API.</span>
       <br><br>
@@ -120,9 +107,13 @@
       <strong><span data-lang="uk">Auth:</span><span data-lang="en">Auth:</span></strong>
       <span data-lang="uk">Cloudflare Access (Zero Trust) на edge — One-time PIN на email, 5 emails allowlist (vg@abrisart.com, office@barpi.com.ua, aksonov@barpi.com.ua, vg@sneco.ua, fg@abrisart.com), сесія 30 днів.</span>
       <span data-lang="en">Cloudflare Access (Zero Trust) at edge — OTP via email, 5-email allowlist, 30-day session.</span>
+      <br><br>
+      <strong><span data-lang="uk">SMM-платформу (HQ + SMM v1) видалено</span><span data-lang="en">SMM platform deleted</span></strong>
+      <span data-lang="uk">02.06.2026: Supabase project барpi-hq видалено повністю разом з усіма даними HQ (5 користувачів, рубрики, запуски, креативи). Локальна SMM (localStorage) теж видалена.</span>
+      <span data-lang="en">02.06.2026: Supabase project deleted along with HQ data. SMM v1 dashboard removed.</span>
     </div>
 
-    <div class="page-foot"><div>© ТОВ «ПЕТ КОРП» · v4.1 · 2026</div></div>
+    <div class="page-foot"><div>© ТОВ «ПЕТ КОРП» · v4.2 · 2026</div></div>
   </main>
 </div>
 <script src="/assets/bb.js"></script>
