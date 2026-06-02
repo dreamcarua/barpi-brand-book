@@ -46,6 +46,23 @@ table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0}.dt td.num{text-ali
 .tag.tg{background:var(--g-soft);color:var(--g)}.tag.tr{background:var(--r-soft);color:var(--r)}.tag.ty{background:var(--y-soft);color:var(--y)}.tag.tb{background:rgba(59,130,246,.13);color:var(--bl)}
 .loading{text-align:center;padding:60px;color:var(--muted)}
 .empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+tr.clickable{cursor:pointer;transition:background .12s}
+tr.clickable:hover{background:#FBFAF0!important}
+tr.clickable:hover td:first-child{color:var(--y);font-weight:700}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:flex-start;justify-content:center;padding:40px 20px;overflow:auto;backdrop-filter:blur(4px)}
+.modal-bg.shown{display:flex}
+.modal{background:#fff;border-radius:14px;max-width:1200px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.modal-h{position:sticky;top:0;background:var(--d);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:16px;z-index:10;border-radius:14px 14px 0 0}
+.modal-h h2{margin:0;font-size:20px;font-weight:800}
+.modal-h .close{margin-left:auto;background:transparent;border:none;color:#fff;font-size:24px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.modal-h .close:hover{background:rgba(255,255,255,.15)}
+.modal-body{padding:24px}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font-size:13px}
+.kv .k{color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:10px;padding-top:3px}
+.kv .v{font-weight:600}
+.modal-loading{padding:60px;text-align:center;color:var(--muted)}
+.spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--y-soft);border-top-color:var(--y);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -58,15 +75,29 @@ table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0}.dt td.num{text-ali
   <div id="loadingBox" class="loading">Завантаження…</div>
   <div id="contentBox" style="display:none"></div>
 </div>
+
+<!-- Drill-down modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modal">
+    <div class="modal-h">
+      <h2 id="modalTitle">…</h2>
+      <button class="close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"><div class="modal-loading"><div class="spinner"></div><p>Завантажую історію…</p></div></div>
+  </div>
+</div>
+
 <script src="../../assets/bb.js"></script>
 <script>
 const API_URL='https://barpi-api.vg-ab6.workers.dev';
 const $=(id)=>document.getElementById(id);
-const fmt={uah:(n)=>new Intl.NumberFormat('uk-UA').format(Math.round(n||0))+' ₴',uahK:(n)=>n>=1e6?(n/1e6).toFixed(1)+'M ₴':n>=1e3?(n/1e3).toFixed(0)+'K ₴':Math.round(n||0)+' ₴',num:(n)=>new Intl.NumberFormat('uk-UA').format(n||0),date:(s)=>{if(!s)return '—';const d=new Date(s);return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit'});},month:(s)=>{const d=new Date(s);return d.toLocaleDateString('uk-UA',{month:'short',year:'2-digit'});}};
+const fmt={uah:(n)=>new Intl.NumberFormat('uk-UA').format(Math.round(n||0))+' ₴',uahK:(n)=>n>=1e6?(n/1e6).toFixed(1)+'M ₴':n>=1e3?(n/1e3).toFixed(0)+'K ₴':Math.round(n||0)+' ₴',num:(n)=>new Intl.NumberFormat('uk-UA').format(n||0),date:(s)=>{if(!s)return '—';const d=new Date(s);return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit'});},dateTime:(s)=>{if(!s)return '—';const d=new Date(s);return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});},month:(s)=>{const d=new Date(s);return d.toLocaleDateString('uk-UA',{month:'short',year:'2-digit'});}};
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function truncate(s,n){return (s||'').length>n?s.slice(0,n)+'…':s;}
 async function api(p){const r=await fetch(API_URL+'/'+p,{headers:{'Content-Type':'application/json'}});if(!r.ok){if(r.status===404)return [];throw new Error('API '+r.status);}return r.json();}
-let charts={};
+
+let charts={}, allMetrics=[];
+
 async function load(){
   try{
     const [metrics,timeline,dow,kpis,sync]=await Promise.all([
@@ -76,13 +107,14 @@ async function load(){
       api('v_dashboard_kpis?select=*'),
       api('sync_state?entity=eq.demand&select=last_synced_at&limit=1'),
     ]);
+    allMetrics=metrics;
     $('loadingBox').style.display='none';$('contentBox').style.display='block';
     if(sync[0]&&sync[0].last_synced_at){const h=Math.floor((Date.now()-new Date(sync[0].last_synced_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${metrics.length} клієнтів`;}else{$('syncLabel').textContent=`${metrics.length} клієнтів · D1 live`;}
     render({metrics,timeline,dow,kpis:kpis[0]||{}});
   }catch(e){console.error(e);$('syncLabel').textContent='Помилка: '+e.message;}
 }
+
 function rfmScore(m){
-  // R: дні з останньої покупки (менше = краще)
   const r = m.days_since_last_purchase ?? 999;
   const recencyScore = r<=30?5 : r<=60?4 : r<=90?3 : r<=180?2 : 1;
   const f = m.total_orders ?? 0;
@@ -108,7 +140,6 @@ function render(d){
   const lost = metrics.filter(m => (m.days_since_last_purchase??0) > 180).length;
   const lifetime = metrics.reduce((s,m) => s+Number(m.lifetime_revenue||0), 0);
   const avgLtv = totalCust>0 ? lifetime/totalCust : 0;
-  // Segments
   const segs={};
   metrics.forEach(m => {
     const score = rfmScore(m);
@@ -152,13 +183,13 @@ function render(d){
       </div>
     </div>
 
-    <div class="sec"><h2>🏆 ТОП клієнтів за LTV</h2><span class="badge">${metrics.length}</span></div>
+    <div class="sec"><h2>🏆 ТОП клієнтів за LTV — клікни рядок для деталей</h2><span class="badge">${metrics.length}</span></div>
     <div class="cc"><div class="tbl-scroll"><table class="dt">
       <thead><tr><th>#</th><th>Клієнт</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">LTV ₴</th><th class="num">Avg чек</th><th>Перше</th><th>Останнє</th><th class="num">Днів</th><th>Сегмент</th></tr></thead>
       <tbody>${metrics.slice(0,200).map((m,i) => {
         const score = rfmScore(m);
         const seg = segment(score);
-        return `<tr>
+        return `<tr class="clickable" onclick="openCustomer('${m.agent_ms_id}')">
           <td>${i+1}</td>
           <td><strong>${escapeHtml(truncate(m.counterparty_name||'— невідомий —',32))}</strong></td>
           <td class="num">${m.total_orders||0}</td>
@@ -192,6 +223,128 @@ function render(d){
     });
   },50);
 }
+
+// === DRILL-DOWN MODAL ===
+async function openCustomer(agentMsId){
+  const m = allMetrics.find(x => x.agent_ms_id === agentMsId);
+  if (!m) return;
+  $('modalTitle').innerHTML = `👤 ${escapeHtml(m.counterparty_name||'— невідомий —')}`;
+  $('modalBody').innerHTML = `<div class="modal-loading"><div class="spinner"></div><p>Завантажую історію продажів…</p></div>`;
+  $('modalBg').classList.add('shown');
+  document.body.style.overflow = 'hidden';
+  try {
+    const sales = await api(`sales_sku?agent_ms_id=eq.${agentMsId}&select=demand_ms_id,moment,sku_id,qty,price_uah,sum_uah&order=moment.desc&limit=500`);
+    // Map sku_id → name from v_sales_by_sku (cached) or call directly
+    const skus = await api(`v_sales_by_sku?select=sku_id,sku_name&limit=500`);
+    const skuNameMap = {};
+    skus.forEach(s => { skuNameMap[s.sku_id] = s.sku_name; });
+    renderCustomerDetails(m, sales, skuNameMap);
+  } catch(e) {
+    console.error(e);
+    $('modalBody').innerHTML = `<div class="empty">Помилка завантаження: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderCustomerDetails(m, sales, skuNameMap){
+  const score = rfmScore(m);
+  const seg = segment(score);
+
+  // Aggregate by SKU
+  const bySku = {};
+  sales.forEach(s => {
+    if (!s.sku_id) return;
+    if (!bySku[s.sku_id]) bySku[s.sku_id] = {qty:0, sum:0, orders:new Set(), name:skuNameMap[s.sku_id]||s.sku_id};
+    bySku[s.sku_id].qty += Number(s.qty||0);
+    bySku[s.sku_id].sum += Number(s.sum_uah||0);
+    bySku[s.sku_id].orders.add(s.demand_ms_id);
+  });
+  const skuRows = Object.entries(bySku).map(([id,v])=>({sku_id:id, qty:v.qty, sum:v.sum, ordersCount:v.orders.size, name:v.name})).sort((a,b)=>b.sum-a.sum);
+
+  // Aggregate by month (orders count, revenue)
+  const byMonth = {};
+  sales.forEach(s => {
+    if (!s.moment) return;
+    const month = s.moment.slice(0,7);
+    if (!byMonth[month]) byMonth[month] = {sum:0, orders:new Set(), qty:0};
+    byMonth[month].sum += Number(s.sum_uah||0);
+    byMonth[month].orders.add(s.demand_ms_id);
+    byMonth[month].qty += Number(s.qty||0);
+  });
+  const monthRows = Object.entries(byMonth).map(([m,v])=>({month:m, sum:v.sum, orders:v.orders.size, qty:v.qty})).sort((a,b)=>a.month.localeCompare(b.month));
+
+  // Recent orders (unique demand_ms_id)
+  const recentOrders = {};
+  sales.forEach(s => {
+    if (!s.demand_ms_id) return;
+    if (!recentOrders[s.demand_ms_id]) recentOrders[s.demand_ms_id] = {moment:s.moment, items:0, sum:0};
+    recentOrders[s.demand_ms_id].items += 1;
+    recentOrders[s.demand_ms_id].sum += Number(s.sum_uah||0);
+    if (s.moment > recentOrders[s.demand_ms_id].moment) recentOrders[s.demand_ms_id].moment = s.moment;
+  });
+  const recentRows = Object.entries(recentOrders).map(([id,v])=>({id, ...v})).sort((a,b)=>(b.moment||'').localeCompare(a.moment||'')).slice(0,30);
+
+  $('modalBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+      <div>
+        <div class="kv">
+          <div class="k">MS ID</div><div class="v" style="font-family:monospace;font-size:11px">${m.agent_ms_id}</div>
+          <div class="k">LTV</div><div class="v" style="font-size:18px;color:var(--y)">${fmt.uah(m.lifetime_revenue)}</div>
+          <div class="k">Замовлень</div><div class="v">${m.total_orders||0}</div>
+          <div class="k">Всього шт</div><div class="v">${Number(m.total_qty||0).toFixed(0)}</div>
+          <div class="k">Avg чек</div><div class="v">${fmt.uah(m.avg_order_value||0)}</div>
+          <div class="k">Сегмент</div><div class="v"><span class="tag ${seg.cls}">${seg.name}</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="kv">
+          <div class="k">Перша покупка</div><div class="v">${fmt.date(m.first_purchase)}</div>
+          <div class="k">Остання</div><div class="v">${fmt.date(m.last_purchase)} <small style="color:#999">(${m.days_since_last_purchase??'—'} днів тому)</small></div>
+          <div class="k">Активний</div><div class="v">${Number(m.days_active||0).toFixed(0)} днів</div>
+          <div class="k">RFM</div><div class="v">R:${score.r} F:${score.f} V:${score.v} <span style="color:#999">(${score.total}/15)</span></div>
+          <div class="k">Унікальних SKU</div><div class="v">${skuRows.length}</div>
+          <div class="k">Активних місяців</div><div class="v">${monthRows.length}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec"><h2>📈 Тренд по місяцях</h2></div>
+    <div class="cc" style="margin-bottom:24px"><div class="chart-wrap"><canvas id="custTrendChart"></canvas></div></div>
+
+    <div class="sec"><h2>🦴 Що купив клієнт (SKU ranking)</h2><span class="badge">${skuRows.length}</span></div>
+    <div class="cc" style="margin-bottom:24px"><div class="tbl-scroll" style="max-height:380px"><table class="dt">
+      <thead><tr><th>#</th><th>SKU</th><th>Назва</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">Сума ₴</th><th class="num">Avg ₴/од</th></tr></thead>
+      <tbody>${skuRows.map((s,i)=>`<tr><td>${i+1}</td><td><code style="font-size:11px">${s.sku_id}</code></td><td><strong>${escapeHtml(truncate(s.name||'—',60))}</strong></td><td class="num">${s.ordersCount}</td><td class="num">${s.qty.toFixed(0)}</td><td class="num">${fmt.uah(s.sum)}</td><td class="num">${s.qty>0?fmt.uah(s.sum/s.qty):'—'}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">Немає</td></tr>'}</tbody>
+    </table></div></div>
+
+    <div class="sec"><h2>📋 Останні 30 замовлень</h2></div>
+    <div class="cc"><div class="tbl-scroll" style="max-height:380px"><table class="dt">
+      <thead><tr><th>Дата</th><th>Demand ID</th><th class="num">Позицій</th><th class="num">Сума ₴</th></tr></thead>
+      <tbody>${recentRows.map(r=>`<tr><td>${fmt.dateTime(r.moment)}</td><td style="font-family:monospace;font-size:10px">${r.id.slice(0,8)}…</td><td class="num">${r.items}</td><td class="num"><strong>${fmt.uah(r.sum)}</strong></td></tr>`).join('')||'<tr><td colspan="4" class="empty">Немає</td></tr>'}</tbody>
+    </table></div></div>
+  `;
+
+  setTimeout(()=>{
+    if(charts.custTrend)charts.custTrend.destroy();
+    charts.custTrend=new Chart($('custTrendChart'),{
+      type:'bar',
+      data:{labels:monthRows.map(m=>fmt.month(m.month)),datasets:[
+        {label:'Виручка ₴',data:monthRows.map(m=>m.sum),backgroundColor:'#39B44A',borderRadius:4,yAxisID:'y'},
+        {label:'Замовлень',data:monthRows.map(m=>m.orders),type:'line',borderColor:'#001154',backgroundColor:'transparent',borderWidth:2.5,tension:.3,pointRadius:3,yAxisID:'y1'},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{position:'left',ticks:{callback:(v)=>fmt.uahK(v)}},y1:{position:'right',grid:{drawOnChartArea:false}}}}
+    });
+  },50);
+}
+
+function closeModal(){
+  $('modalBg').classList.remove('shown');
+  document.body.style.overflow = '';
+  if (charts.custTrend) { charts.custTrend.destroy(); delete charts.custTrend; }
+}
+
+$('modalBg').addEventListener('click', (e) => { if (e.target.id === 'modalBg') closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('modalBg').classList.contains('shown')) closeModal(); });
+
 load();
 </script>
 </body>
