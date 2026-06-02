@@ -125,8 +125,7 @@ table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:5
 <div id="toast" class="toast"></div>
 <script src="../../assets/bb.js"></script>
 <script>
-const SUPA_URL='https://barpi-api.vg-ab6.workers.dev';
-const SUPA_KEY='';
+const API_URL='https://barpi-api.vg-ab6.workers.dev';
 const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
 const fmt = {
@@ -137,6 +136,8 @@ const fmt = {
   date: (s) => { const d = new Date(s); return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit'}); },
   month: (s) => { const [y, m] = s.split('-'); return new Date(parseInt(y), parseInt(m)-1, 1).toLocaleDateString('uk-UA',{month:'short',year:'2-digit'}); },
 };
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function truncate(s,n){return (s||'').length>n?s.slice(0,n)+'…':s;}
 function deltaTag(pct){
   if (pct == null || !isFinite(pct)) return '<span class="delta neu">—</span>';
   const cls = pct > 0.5 ? 'up' : pct < -0.5 ? 'dn' : 'neu';
@@ -149,7 +150,7 @@ function toast(msg, isErr=false){
   setTimeout(() => t.className = 'toast', 2800);
 }
 async function api(path){
-  const r = await fetch(SUPA_URL + '/' + path, { headers: { 'Content-Type': 'application/json' } });
+  const r = await fetch(API_URL + '/' + path, { headers: { 'Content-Type': 'application/json' } });
   if(!r.ok){if(r.status===404)return [];throw new Error('API ' + r.status);}
   return r.json();
 }
@@ -196,6 +197,12 @@ function aggKPI(rows){
   const paid = rows.reduce((s,r) => s + Number(r.paid||0), 0);
   return { revenue, qty, tx, paid, aov: tx ? revenue/tx : 0 };
 }
+function shortCategory(cat){
+  if (!cat) return '—';
+  // ms_path like "Готова продукція/Апетайзери" → take last segment
+  const parts = cat.split('/');
+  return parts[parts.length-1] || cat;
+}
 function render(){
   const tab = state.tab;
   if (tab === 'overview') renderOverview();
@@ -239,7 +246,7 @@ function renderOverview(){
   html.push(`<div class="cc">
     <div class="cc-head"><h3>🏆 ТОП SKU за виручкою</h3><span class="pill" id="skuCnt"></span></div>
     <div class="tbl-scroll"><table class="dt" id="skuTable">
-      <thead><tr><th>#</th><th>SKU</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Сер.ціна</th></tr></thead>
+      <thead><tr><th>#</th><th>SKU</th><th>Назва</th><th>Категорія</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Сер.ціна</th></tr></thead>
       <tbody></tbody>
     </table></div>
   </div>`);
@@ -278,7 +285,7 @@ function renderTrendChart(mode){
 function renderTopSKU(){
   const arr = state.skuList.slice(0, 30);
   if ($('skuCnt')) $('skuCnt').textContent = arr.length;
-  if ($('skuTable')) $('skuTable').querySelector('tbody').innerHTML = arr.map((s,i) => `<tr><td>${i+1}</td><td><code>${s.sku_id||'—'}</code></td><td class="num">${s.orders||0}</td><td class="num">${s.qty||0}</td><td class="num">${fmt.uah(s.revenue)}</td><td class="num">${fmt.uah(s.avg_price||0)}</td></tr>`).join('');
+  if ($('skuTable')) $('skuTable').querySelector('tbody').innerHTML = arr.map((s,i) => `<tr><td>${i+1}</td><td><code style="font-size:11px">${s.sku_id||'—'}</code></td><td title="${escapeHtml(s.sku_name||'')}"><strong>${escapeHtml(truncate(s.sku_name||'—',55))}</strong></td><td><small style="color:#888">${escapeHtml(shortCategory(s.category))}</small></td><td class="num">${s.orders||0}</td><td class="num">${Number(s.qty||0).toFixed(0)}</td><td class="num">${fmt.uah(s.revenue)}</td><td class="num">${fmt.uah(s.avg_price||0)}</td></tr>`).join('');
 }
 function renderDynamics(){
   const html = [];
@@ -307,8 +314,8 @@ function renderProducts(){
   $('contentBox').innerHTML = `
     <div class="sec"><h2>🏆 Всі продукти за виручкою (lifetime)</h2><span class="badge">${arr.length} SKU</span></div>
     <div class="cc"><div class="tbl-scroll" style="max-height:none"><table class="dt">
-      <thead><tr><th>ABC</th><th>#</th><th>SKU</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Частка</th><th class="num">Сер.ціна</th></tr></thead>
-      <tbody>${enriched.map((s,i) => `<tr><td><span class="abc abc-${s.abc}">${s.abc}</span></td><td>${i+1}</td><td><code>${s.sku_id||'—'}</code></td><td class="num">${s.orders||0}</td><td class="num">${s.qty||0}</td><td class="num">${fmt.uah(s.revenue)}</td><td class="num">${fmt.pct(s.share)}</td><td class="num">${fmt.uah(s.avg_price||0)}</td></tr>`).join('')}</tbody>
+      <thead><tr><th>ABC</th><th>#</th><th>SKU</th><th>Назва</th><th>Категорія</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Частка</th><th class="num">Сер.ціна</th></tr></thead>
+      <tbody>${enriched.map((s,i) => `<tr><td><span class="abc abc-${s.abc}">${s.abc}</span></td><td>${i+1}</td><td><code style="font-size:11px">${s.sku_id||'—'}</code></td><td title="${escapeHtml(s.sku_name||'')}"><strong>${escapeHtml(truncate(s.sku_name||'—',55))}</strong></td><td><small style="color:#888">${escapeHtml(shortCategory(s.category))}</small></td><td class="num">${s.orders||0}</td><td class="num">${Number(s.qty||0).toFixed(0)}</td><td class="num">${fmt.uah(s.revenue)}</td><td class="num">${fmt.pct(s.share)}</td><td class="num">${fmt.uah(s.avg_price||0)}</td></tr>`).join('')}</tbody>
     </table></div></div>
     <div class="sec"><h2>📊 ABC аналіз (Pareto)</h2></div>
     <div class="cc"><div class="chart-wrap tall"><canvas id="abcChart"></canvas></div></div>
@@ -316,7 +323,7 @@ function renderProducts(){
   if (state.charts.abc) state.charts.abc.destroy();
   state.charts.abc = new Chart($('abcChart'), {
     type: 'bar',
-    data: { labels: enriched.map(s => s.sku_id||'—'),
+    data: { labels: enriched.map(s => truncate(s.sku_name || s.sku_id || '—', 22)),
       datasets: [
         { label: 'Виручка', type: 'bar', data: enriched.map(s => Number(s.revenue||0)), backgroundColor: enriched.map(s => s.abc === 'A' ? '#39B44A' : s.abc === 'B' ? '#F59E0B' : '#94a3b8'), yAxisID: 'y' },
         { label: 'Кумулятивний %', type: 'line', data: enriched.map(s => s.cumPct), borderColor: '#001154', backgroundColor: 'transparent', borderWidth: 2.5, pointRadius: 3, tension: 0.2, yAxisID: 'y1' },
