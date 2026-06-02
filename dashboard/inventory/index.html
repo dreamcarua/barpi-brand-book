@@ -53,22 +53,22 @@ table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0}.dt td.num{text-ali
 </div>
 <script src="../../assets/bb.js"></script>
 <script>
-const SUPA_URL='https://zrcqmwlpsggiqgipvxhv.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const SUPA_URL='https://barpi-api.vg-ab6.workers.dev';
+const SUPA_KEY='';
 const $=(id)=>document.getElementById(id);
 const fmt={uah:(n)=>new Intl.NumberFormat('uk-UA').format(Math.round(n||0))+' ₴',uahK:(n)=>n>=1e6?(n/1e6).toFixed(1)+'M ₴':n>=1e3?(n/1e3).toFixed(0)+'K ₴':Math.round(n||0)+' ₴',num:(n)=>new Intl.NumberFormat('uk-UA').format(n||0)};
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function truncate(s,n){return (s||'').length>n?s.slice(0,n)+'…':s;}
-async function api(p){const r=await fetch(SUPA_URL+'/rest/v1/'+p,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});if(!r.ok)throw new Error('API '+r.status);return r.json();}
+async function api(p){const r=await fetch(SUPA_URL+'/'+p,{headers:{'Content-Type':'application/json'}});if(!r.ok){if(r.status===404)return [];throw new Error('API '+r.status);}return r.json();}
 let charts={};
 async function load(){
   try{
     const [inv,sync]=await Promise.all([
       api('v_inventory_extended?select=*&order=quantity.desc'),
-      api('moysklad_sync_log?select=created_at&order=created_at.desc&limit=1'),
+      api('sync_state?entity=eq.stock_by_store&select=last_synced_at&limit=1'),
     ]);
     $('loadingBox').style.display='none';$('contentBox').style.display='block';
-    if(sync[0]){const h=Math.floor((Date.now()-new Date(sync[0].created_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${inv.length} SKU`;}
+    if(sync[0]&&sync[0].last_synced_at){const h=Math.floor((Date.now()-new Date(sync[0].last_synced_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${inv.length} SKU`;}else{$('syncLabel').textContent=`${inv.length} SKU live`;}
     render(inv);
   }catch(e){console.error(e);$('syncLabel').textContent='Помилка: '+e.message;}
 }
