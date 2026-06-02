@@ -1,6 +1,7 @@
 /* ============================================================
-   Barpi Brand Bible v3.2 — Global JS
-   v3.2: menu-toggle now has visible "Меню/Menu" label + icon
+   Barpi Brand Bible v3.3 — Global JS
+   v3.3: Google OAuth backup auth (signInWithGoogle + UI button)
+   v3.2: "Меню/Menu" label у hamburger button
    v3.1: BB.initMobileMenu (backdrop, ESC, auto-close, ARIA)
    v3.0: /products/ + /ambassadors/
    v2.9: /downloads/
@@ -14,7 +15,7 @@ BB.SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 
 BB.LOGO_DATA = 'data:image/webp;base64,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';
 
-/* === BB.AUTH unchanged === */
+/* === BB.AUTH v3.3 — Magic Link + Google OAuth === */
 BB.AUTH = {
   ALLOWED: ['vg@abrisart.com','office@barpi.com.ua','aksonov@barpi.com.ua','pylyp@abrisart.com','office@abrisart.com','vg@dreamcar.ua'],
   SESSION_KEY: 'bb_auth_session', RETURN_KEY: 'bb_auth_returnTo', SEVEN_DAYS_MS: 7*24*60*60*1000,
@@ -22,16 +23,37 @@ BB.AUTH = {
   logout() { localStorage.removeItem(this.SESSION_KEY); location.reload(); },
   isAllowed(email) { if (!email) return false; return this.ALLOWED.includes(email.trim().toLowerCase()); },
   async sendMagicLink(email) { email = email.trim().toLowerCase(); if (!this.isAllowed(email)) return { error: 'NOT_ALLOWED' }; localStorage.setItem(this.RETURN_KEY, location.pathname + location.search); const redirectTo = location.origin + '/auth-callback/'; try { const r = await fetch(BB.SUPABASE_URL + '/auth/v1/otp', { method: 'POST', headers: { 'apikey': BB.SUPABASE_ANON, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, create_user: true, gotrue_meta_security: {}, options: { emailRedirectTo: redirectTo } }) }); if (!r.ok) return { error: (await r.text()).slice(0, 200) }; return { ok: true }; } catch(e) { return { error: e.message || 'NETWORK' }; } },
+  signInWithGoogle() {
+    // Зберігаємо куди повернутись після auth
+    localStorage.setItem(this.RETURN_KEY, location.pathname + location.search);
+    const redirectTo = location.origin + '/auth-callback/';
+    const params = new URLSearchParams({
+      provider: 'google',
+      redirect_to: redirectTo,
+    });
+    // Перенаправлення на Supabase authorize → Google consent screen
+    location.href = `${BB.SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
+  },
   async requireAuth() { const s = this.getSession(); if (s && this.isAllowed(s.email)) { this.injectUserBadge(s.email); return s; } if (s) localStorage.removeItem(this.SESSION_KEY); document.documentElement.classList.add('bb-auth-locked'); this.injectGate(); return new Promise(resolve => { window.addEventListener('bb-auth-success', () => { document.documentElement.classList.remove('bb-auth-locked'); const s2 = this.getSession(); if (s2) this.injectUserBadge(s2.email); resolve(s2); }); }); },
   injectGate() {
     if (document.getElementById('bb-auth-gate')) return;
-    const html = `<style>html.bb-auth-locked main, html.bb-auth-locked .bb-topnav, html.bb-auth-locked .sidebar { visibility: hidden !important; } #bb-auth-gate { position: fixed; inset: 0; background: rgba(10,10,10,0.95); z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: Rubik, -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; backdrop-filter: blur(8px); } .bb-auth-card { background: #fff; border-radius: 16px; padding: 32px; width: 400px; max-width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); } .bb-auth-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; color: #0a0a0a; } .bb-auth-card p { margin: 0; color: #666; font-size: 13px; line-height: 1.5; } .bb-auth-card input { width: 100%; padding: 13px 14px; border: 1.5px solid #e2e2e2; border-radius: 10px; font-size: 14px; font-family: inherit; box-sizing: border-box; transition: border-color .15s; outline: none; } .bb-auth-card input:focus { border-color: #FEBF27; } .bb-auth-card button.primary { width: 100%; padding: 13px; background: #FEBF27; color: #0a0a0a; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; font-family: inherit; transition: transform .1s; } .bb-auth-card button.primary:hover { transform: translateY(-1px); } .bb-auth-card button.primary:disabled { opacity: .5; cursor: wait; transform: none; } .bb-auth-card .meta { color: #999; font-size: 11px; text-align: center; margin-top: 14px; line-height: 1.5; } .bb-auth-card .err { color: #c62828; font-size: 12px; margin-top: 12px; text-align: center; min-height: 16px; } .bb-auth-head { text-align: center; margin-bottom: 22px; } .bb-auth-logo { width: 56px; height: 56px; background: #FEBF27; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 12px; }</style><div id="bb-auth-gate" role="dialog" aria-modal="true" aria-labelledby="bb-auth-title"><div class="bb-auth-card"><div class="bb-auth-head"><div class="bb-auth-logo">🔒</div><h2 id="bb-auth-title"><span data-lang="uk">Доступ обмежено</span><span data-lang="en">Restricted access</span></h2><p><span data-lang="uk">Дашборди містять конфіденційні дані. Введіть свій робочий email — ми надішлемо посилання для входу.</span><span data-lang="en">Dashboards contain confidential data. Enter your work email — we'll send a sign-in link.</span></p></div><div id="bb-auth-step-email"><label style="display:block;font-size:11px;font-weight:600;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Email</label><input type="email" id="bb-auth-email" placeholder="you@barpi.com.ua" autocomplete="email" autofocus /><div style="height:12px"></div><button class="primary" id="bb-auth-send"><span data-lang="uk">Надіслати посилання</span><span data-lang="en">Send link</span></button></div><div id="bb-auth-step-sent" style="display:none"><div style="text-align:center;padding:8px 0"><div style="font-size:40px;margin-bottom:8px">📩</div><p style="font-size:14px;color:#0a0a0a;margin-bottom:6px"><strong><span data-lang="uk">Перевірте пошту</span><span data-lang="en">Check your email</span></strong></p><p><span data-lang="uk">Посилання надіслано на</span><span data-lang="en">Link sent to</span> <strong id="bb-auth-sent-email"></strong></p><p style="margin-top:12px"><span data-lang="uk">Клікніть на посилання у листі — і ви автоматично увійдете. Посилання діє 1 годину.</span><span data-lang="en">Click the link in the email — you'll be signed in automatically. Link expires in 1 hour.</span></p><div style="height:18px"></div><button id="bb-auth-back" style="background:none;color:#999;border:1px solid #e2e2e2;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit"><span data-lang="uk">← Інший email</span><span data-lang="en">← Different email</span></button></div></div><div class="err" id="bb-auth-err"></div><div class="meta">Barpi Brand Bible · Pet Corp LLC<br><span data-lang="uk">Сесія діє 7 днів</span><span data-lang="en">Session lasts 7 days</span></div></div></div>`;
+    const html = `<style>html.bb-auth-locked main, html.bb-auth-locked .bb-topnav, html.bb-auth-locked .sidebar { visibility: hidden !important; } #bb-auth-gate { position: fixed; inset: 0; background: rgba(10,10,10,0.95); z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: Rubik, -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; backdrop-filter: blur(8px); } .bb-auth-card { background: #fff; border-radius: 16px; padding: 32px; width: 400px; max-width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); } .bb-auth-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; color: #0a0a0a; } .bb-auth-card p { margin: 0; color: #666; font-size: 13px; line-height: 1.5; } .bb-auth-card input { width: 100%; padding: 13px 14px; border: 1.5px solid #e2e2e2; border-radius: 10px; font-size: 14px; font-family: inherit; box-sizing: border-box; transition: border-color .15s; outline: none; } .bb-auth-card input:focus { border-color: #FEBF27; } .bb-auth-card button.primary { width: 100%; padding: 13px; background: #FEBF27; color: #0a0a0a; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; font-family: inherit; transition: transform .1s; } .bb-auth-card button.primary:hover { transform: translateY(-1px); } .bb-auth-card button.primary:disabled { opacity: .5; cursor: wait; transform: none; } .bb-auth-card button.google { width: 100%; padding: 12px 14px; background: #fff; color: #1f1f1f; border: 1.5px solid #dadce0; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all .15s; } .bb-auth-card button.google:hover { background: #f8f9fa; border-color: #4285F4; box-shadow: 0 1px 3px rgba(0,0,0,0.08); } .bb-auth-card button.google svg { width: 18px; height: 18px; flex-shrink: 0; } .bb-auth-card .divider { display: flex; align-items: center; gap: 10px; color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin: 16px 0; font-weight: 600; } .bb-auth-card .divider::before, .bb-auth-card .divider::after { content: ''; flex: 1; height: 1px; background: #e2e2e2; } .bb-auth-card .meta { color: #999; font-size: 11px; text-align: center; margin-top: 14px; line-height: 1.5; } .bb-auth-card .err { color: #c62828; font-size: 12px; margin-top: 12px; text-align: center; min-height: 16px; } .bb-auth-head { text-align: center; margin-bottom: 22px; } .bb-auth-logo { width: 56px; height: 56px; background: #FEBF27; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 12px; }</style><div id="bb-auth-gate" role="dialog" aria-modal="true" aria-labelledby="bb-auth-title"><div class="bb-auth-card"><div class="bb-auth-head"><div class="bb-auth-logo">🔒</div><h2 id="bb-auth-title"><span data-lang="uk">Доступ обмежено</span><span data-lang="en">Restricted access</span></h2><p><span data-lang="uk">Дашборди містять конфіденційні дані. Увійдіть через Google або отримайте посилання на email.</span><span data-lang="en">Dashboards contain confidential data. Sign in with Google or get an email link.</span></p></div><div id="bb-auth-step-email"><button class="google" id="bb-auth-google" type="button"><svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><span data-lang="uk">Увійти через Google</span><span data-lang="en">Continue with Google</span></button><div class="divider"><span data-lang="uk">або</span><span data-lang="en">or</span></div><label style="display:block;font-size:11px;font-weight:600;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Email</label><input type="email" id="bb-auth-email" placeholder="you@barpi.com.ua" autocomplete="email" /><div style="height:12px"></div><button class="primary" id="bb-auth-send"><span data-lang="uk">Надіслати посилання на email</span><span data-lang="en">Send email link</span></button></div><div id="bb-auth-step-sent" style="display:none"><div style="text-align:center;padding:8px 0"><div style="font-size:40px;margin-bottom:8px">📩</div><p style="font-size:14px;color:#0a0a0a;margin-bottom:6px"><strong><span data-lang="uk">Перевірте пошту</span><span data-lang="en">Check your email</span></strong></p><p><span data-lang="uk">Посилання надіслано на</span><span data-lang="en">Link sent to</span> <strong id="bb-auth-sent-email"></strong></p><p style="margin-top:12px"><span data-lang="uk">Клікніть на посилання у листі — і ви автоматично увійдете. Посилання діє 1 годину.</span><span data-lang="en">Click the link in the email — you'll be signed in automatically. Link expires in 1 hour.</span></p><div style="height:18px"></div><button id="bb-auth-back" style="background:none;color:#999;border:1px solid #e2e2e2;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit"><span data-lang="uk">← Інший email</span><span data-lang="en">← Different email</span></button></div></div><div class="err" id="bb-auth-err"></div><div class="meta">Barpi Brand Bible · Pet Corp LLC<br><span data-lang="uk">Сесія діє 7 днів</span><span data-lang="en">Session lasts 7 days</span></div></div></div>`;
     document.body.insertAdjacentHTML('beforeend', html);
     const lang = localStorage.getItem('bb_lang') || 'uk';
     document.body.classList.remove('lang-uk','lang-en'); document.body.classList.add('lang-' + lang);
     const $ = id => document.getElementById(id);
     const errBox = $('bb-auth-err');
     const setErr = msg => { errBox.textContent = msg || ''; };
+    // Google OAuth button
+    $('bb-auth-google').onclick = () => {
+      setErr('');
+      const btn = $('bb-auth-google');
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      btn.style.cursor = 'wait';
+      this.signInWithGoogle();
+    };
+    // Magic link path
     $('bb-auth-send').onclick = async () => {
       const email = $('bb-auth-email').value.trim().toLowerCase();
       if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setErr(lang === 'uk' ? 'Невалідний email' : 'Invalid email');
@@ -63,15 +85,15 @@ if (typeof location !== 'undefined' && location.pathname.startsWith('/dashboard/
   document.addEventListener('DOMContentLoaded', async () => { await BB.AUTH.requireAuth(); const prel = document.getElementById('bb-auth-prelock'); if (prel) prel.remove(); });
 }
 
-/* ===== SIDEBAR HTML v3.2 ===== */
+/* ===== SIDEBAR HTML v3.3 ===== */
 BB.SIDEBAR_HTML = `
 <nav class="sidebar" id="bb-sidebar-nav" aria-label="Brand Bible navigation">
   <div class="sidebar-head">
     <a class="sidebar-brand" href="/">
       <img src="${BB.LOGO_DATA}" alt="Barpi" width="200" height="96" loading="eager">
       <div class="brand-text-sub">
-        <span data-lang="uk">Brand Bible · v3.2</span>
-        <span data-lang="en">Brand Bible · v3.2</span>
+        <span data-lang="uk">Brand Bible · v3.3</span>
+        <span data-lang="en">Brand Bible · v3.3</span>
       </div>
     </a>
     <div class="sidebar-search" style="position:relative">
@@ -170,82 +192,29 @@ BB.markActiveNav = function() {
   });
 };
 
-/* ============================================================
-   BB.initMobileMenu — v3.2 with visible "Меню/Menu" label
-   ============================================================ */
 BB.initMobileMenu = function() {
   const toggle = document.querySelector('.menu-toggle');
   const sidebar = document.querySelector('.sidebar');
   if (!toggle || !sidebar) return;
-
-  // Detect dashboards (has topnav) — CSS hides hamburger via body class
-  if (document.querySelector('.bb-topnav')) {
-    document.body.classList.add('has-topnav');
-  }
-
-  // Replace button content with proper label + icon spans
-  // (was just "☰" in HTML — now we get bilingual label + animated icon)
-  toggle.innerHTML = `
-    <span class="mt-label">
-      <span data-lang="uk">Меню</span><span data-lang="en">Menu</span>
-    </span>
-    <span class="mt-icon" aria-hidden="true"></span>
-  `;
-
-  // Backdrop
+  if (document.querySelector('.bb-topnav')) { document.body.classList.add('has-topnav'); }
+  toggle.innerHTML = `<span class="mt-label"><span data-lang="uk">Меню</span><span data-lang="en">Menu</span></span><span class="mt-icon" aria-hidden="true"></span>`;
   let backdrop = document.querySelector('.menu-backdrop');
-  if (!backdrop) {
-    backdrop = document.createElement('div');
-    backdrop.className = 'menu-backdrop';
-    backdrop.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(backdrop);
-  }
-
-  // ARIA
+  if (!backdrop) { backdrop = document.createElement('div'); backdrop.className = 'menu-backdrop'; backdrop.setAttribute('aria-hidden', 'true'); document.body.appendChild(backdrop); }
   toggle.setAttribute('aria-label', 'Toggle navigation menu');
   toggle.setAttribute('aria-controls', 'bb-sidebar-nav');
   toggle.setAttribute('aria-expanded', 'false');
   toggle.setAttribute('type', 'button');
-
   const isOpen = () => sidebar.classList.contains('open');
-
-  const openMenu = () => {
-    sidebar.classList.add('open');
-    toggle.classList.add('is-open');
-    backdrop.classList.add('shown');
-    document.body.classList.add('menu-open');
-    toggle.setAttribute('aria-expanded', 'true');
-    const firstLink = sidebar.querySelector('.nav-link');
-    if (firstLink) setTimeout(() => firstLink.focus({preventScroll: true}), 320);
-  };
-
-  const closeMenu = () => {
-    sidebar.classList.remove('open');
-    toggle.classList.remove('is-open');
-    backdrop.classList.remove('shown');
-    document.body.classList.remove('menu-open');
-    toggle.setAttribute('aria-expanded', 'false');
-  };
-
+  const openMenu = () => { sidebar.classList.add('open'); toggle.classList.add('is-open'); backdrop.classList.add('shown'); document.body.classList.add('menu-open'); toggle.setAttribute('aria-expanded', 'true'); const firstLink = sidebar.querySelector('.nav-link'); if (firstLink) setTimeout(() => firstLink.focus({preventScroll: true}), 320); };
+  const closeMenu = () => { sidebar.classList.remove('open'); toggle.classList.remove('is-open'); backdrop.classList.remove('shown'); document.body.classList.remove('menu-open'); toggle.setAttribute('aria-expanded', 'false'); };
   const toggleMenu = e => { if (e) e.preventDefault(); if (isOpen()) closeMenu(); else openMenu(); };
-
   toggle.onclick = null;
   toggle.addEventListener('click', toggleMenu);
   backdrop.addEventListener('click', closeMenu);
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && isOpen()) { closeMenu(); toggle.focus(); }
-  });
-
-  sidebar.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => { if (window.innerWidth <= 900) setTimeout(closeMenu, 180); });
-  });
-
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen()) { closeMenu(); toggle.focus(); } });
+  sidebar.querySelectorAll('.nav-link').forEach(link => { link.addEventListener('click', () => { if (window.innerWidth <= 900) setTimeout(closeMenu, 180); }); });
   let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { if (window.innerWidth > 900 && isOpen()) closeMenu(); }, 150);
-  });
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (window.innerWidth > 900 && isOpen()) closeMenu(); }, 150); });
 };
 
 BB.SEARCH_INDEX = [
