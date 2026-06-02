@@ -1,6 +1,7 @@
 name = "barpi-sync"
 main = "src/index.js"
 compatibility_date = "2026-06-01"
+account_id = "ab63a85bdfbf5894c28efe7076acbd82"
 
 # Hourly cron trigger
 [triggers]
@@ -14,7 +15,7 @@ database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
 
 # Secrets (set via `wrangler secret put MOYSKLAD_TOKEN`):
 # - MOYSKLAD_TOKEN
-# - SYNC_API_KEY (optional shared key for manual trigger via HTTP)
+# - SYNC_API_KEY (shared key for manual /sync trigger)
 
 [vars]
 MS_BASE_URL = "https://api.moysklad.ru/api/remap/1.2"
