@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboards · Barpi Brand Bible</title>
+<meta name="description" content="Внутрішні дашборди Barpi: Customer 360, Sales Performance, Financial P&L, Production, Inventory, SMM, Events. Дані з МойСклад через Cloudflare D1, оновлення щогодини.">
+<link rel="canonical" href="https://brand.barpi.ua/dashboard/">
 <link rel="icon" href="/favicon.ico">
 <link rel="stylesheet" href="/assets/bb.css">
 <style>
@@ -38,40 +40,40 @@
     <span class="chapter-num">16 · <span data-lang="uk">Сервіс</span><span data-lang="en">Service</span></span>
     <h1>📊 <span data-lang="uk">Дашборди</span><span data-lang="en">Dashboards</span></h1>
     <p class="lead">
-      <span data-lang="uk">Внутрішні інструменти команди Barpi. 9 дашбордів — Sales, Customer 360, Financial P&L, Production, Inventory, SMM HQ.</span>
-      <span data-lang="en">Internal Barpi team tools. 9 dashboards.</span>
+      <span data-lang="uk">Внутрішні інструменти команди Barpi. 8 дашбордів — Sales Performance, Customer 360, Financial P&L, Production, Inventory, HQ SMM, Events, SMM v1.</span>
+      <span data-lang="en">Internal Barpi team tools. 8 dashboards covering Sales, Customer, Financial, Production, Inventory, SMM.</span>
     </p>
 
-    <div class="dash-section-title"><span data-lang="uk">🏢 Sales Intelligence (МойСклад)</span><span data-lang="en">🏢 Sales Intelligence (MoySklad)</span></div>
+    <div class="dash-section-title"><span data-lang="uk">🏢 Sales Intelligence (МойСклад → D1)</span><span data-lang="en">🏢 Sales Intelligence (MoySklad → D1)</span></div>
     <div class="dash-grid">
       <a class="dash-card featured" href="customer-360/">
-        <h3>👥 Customer 360 v4 <span class="status">NEW</span></h3>
-        <p><span data-lang="uk">CRM-аналітика з 30+ блоками: Health Score, RFM, Лост-когорти, AR Aging, Дебіторка, Cross-sell, Auto-insights, Promo response, Контактні особи. Period chips (30/90/180/365/Все).</span><span data-lang="en">Full CRM analytics with 30+ blocks.</span></p>
-        <div class="meta"><strong>Дані:</strong> 9203 транзакції · 1109 платежів · 1516 рахунків · 614 клієнтів · 28 повернень · <strong>Sync:</strong> 06:00 UTC щодня</div>
+        <h3>👥 Customer 360 <span class="status">D1</span></h3>
+        <p><span data-lang="uk">CRM-аналітика: RFM сегментація, Active/Churning/Lost клієнти, LTV, динаміка бази по місяцях, день тижня, ТОП клієнтів за виручкою.</span><span data-lang="en">CRM analytics with RFM, LTV, customer base dynamics.</span></p>
+        <div class="meta"><strong>Дані:</strong> v_customer_metrics · v_customer_timeline · v_customer_dow · <strong>156 унікальних клієнтів</strong> · <strong>Sync:</strong> cron щогодини</div>
       </a>
 
       <a class="dash-card" href="sales-performance/">
         <h3>📈 Sales Performance <span class="status live">LIVE</span></h3>
-        <p><span data-lang="uk">Виручка та динаміка продажів: 4 вкладки (Огляд / Динаміка / Продукти / Канали). KPI, графіки, ТОП-SKU, ABC-аналіз.</span><span data-lang="en">Revenue dynamics.</span></p>
-        <div class="meta"><strong>Дані:</strong> МС demand (06.01.2025+)</div>
+        <p><span data-lang="uk">Виручка та динаміка продажів: KPI, ТОП-SKU, ABC-аналіз, період chips (7/30/90/180/365/Все). 3 вкладки.</span><span data-lang="en">Revenue dynamics, ABC analysis, top SKUs.</span></p>
+        <div class="meta"><strong>Дані:</strong> v_sales_by_day · v_sales_by_sku · 1955 продажів · 5.2M ₴ виручка lifetime</div>
       </a>
 
       <a class="dash-card" href="financial/">
-        <h3>💵 Financial v3 — Real P&L <span class="status new">NEW</span></h3>
-        <p><span data-lang="uk">Повний P&L: Revenue − Supplies (COGS) − OpEx − Losses = Net Profit. Cash Flow, витрати по статтях, постачальники, Purchase Orders pipeline.</span><span data-lang="en">Full P&L with real МС data.</span></p>
-        <div class="meta"><strong>Дані:</strong> 5.32M ₴ виплат · 1.79M ₴ закупок · 11 статей · 163 supply · 162 PO</div>
+        <h3>💵 Financial — Real P&L <span class="status new">REBUILT</span></h3>
+        <p><span data-lang="uk">P&L: Revenue − Supplies (COGS) − OpEx − Losses = Net Profit. Cash Flow, реальна маржа з paymentin/paymentout.</span><span data-lang="en">Full P&L with real cogs/paid joins.</span></p>
+        <div class="meta"><strong>Дані:</strong> v_pnl_monthly (real cogs+collected) · v_cash_flow · 168 поставок · 11 статей витрат · 896 виплат</div>
       </a>
 
       <a class="dash-card" href="production/">
-        <h3>🏭 Production <span class="status new">NEW</span></h3>
-        <p><span data-lang="uk">Виробництво: 39 тех.карт, 1822 виробничих актів, ефективність по плану, місячна динаміка, списання, ТОП сировини. Markup материали → готова продукція.</span><span data-lang="en">Production: tech cards, acts, efficiency.</span></p>
-        <div class="meta"><strong>Дані:</strong> МС processing + processingplan · 45 списань · 274K ₴ losses</div>
+        <h3>🏭 Production <span class="status live">LIVE</span></h3>
+        <p><span data-lang="uk">Виробництво: 39 тех.карт, 1841 виробничих актів, ефективність по плану, місячна динаміка, списання, ТОП сировини.</span><span data-lang="en">Production: tech cards, acts, efficiency, losses.</span></p>
+        <div class="meta"><strong>Дані:</strong> moysklad_processing_plans + processing_acts · 47 списань</div>
       </a>
 
       <a class="dash-card" href="inventory/">
-        <h3>📦 Inventory <span class="status new">NEW</span></h3>
+        <h3>📦 Inventory <span class="status live">LIVE</span></h3>
         <p><span data-lang="uk">Залишки на складах: stock_level (critical/low/normal/high), retail value, cost value, по категоріях. Auto-flag критичних позицій.</span><span data-lang="en">Stock levels by SKU and category.</span></p>
-        <div class="meta"><strong>Дані:</strong> МС /report/stock/all · 27 SKU live · щоденний sync</div>
+        <div class="meta"><strong>Дані:</strong> v_inventory_extended · 94 SKU live · sync щогодини</div>
       </a>
     </div>
 
@@ -80,7 +82,7 @@
       <a class="dash-card" href="hq/">
         <h3>🚀 Barpi HQ — Стіл SMM <span class="status beta">BETA</span></h3>
         <p><span data-lang="uk">SMM-платформа: календар, картка з 16 полями, дошка погоджень, креативи, запуски.</span><span data-lang="en">SMM platform.</span></p>
-        <div class="meta"><strong>Стек:</strong> Supabase Postgres + Auth + RLS + Realtime</div>
+        <div class="meta"><strong>Стек:</strong> локальний state (LocalStorage) + майбутній CF D1</div>
       </a>
       <a class="dash-card" href="smm/">
         <h3>📊 SMM Dashboard (v1) <span class="status live">LIVE</span></h3>
@@ -90,35 +92,37 @@
       <a class="dash-card" href="events/">
         <h3>🎪 Events Dashboard <span class="status live">LIVE</span></h3>
         <p><span data-lang="uk">Фестивалі, дегустації, ROI. 17 подій у 2026.</span><span data-lang="en">Events, ROI.</span></p>
-        <div class="meta"><strong>Доступ:</strong> Альона + Мар'яна + Вадим</div>
+        <div class="meta"><strong>Доступ:</strong> Олександр + Альона + Вадим</div>
       </a>
     </div>
 
     <div class="dash-section-title"><span data-lang="uk">📦 Заплановано (P3)</span><span data-lang="en">📦 Planned (P3)</span></div>
     <div class="dash-grid">
-      <a class="dash-card" href="#" onclick="alert('Procurement pipeline: 162 PO + 163 supply вже в БД, треба тільки UI');return false">
+      <a class="dash-card" href="#" onclick="alert('Procurement pipeline: 162 PO + 168 supply вже в D1, треба тільки UI');return false">
         <h3>🤝 Procurement <span class="status planned">PLANNED</span></h3>
         <p><span data-lang="uk">Pipeline закупок: replan з фактом, lead time на сировину, alert якщо PO ще не приїхав.</span><span data-lang="en">Purchase pipeline.</span></p>
-        <div class="meta"><strong>Дані готові:</strong> 162 purchase_orders + 163 supplies</div>
+        <div class="meta"><strong>Дані готові:</strong> 162 purchase_orders + 168 supplies</div>
       </a>
-      <a class="dash-card" href="#" onclick="alert('B2B Partners pipeline');return false">
+      <a class="dash-card" href="#" onclick="alert('B2B Partners pipeline — coming soon');return false">
         <h3>📞 Partner Pipeline <span class="status planned">PLANNED</span></h3>
-        <p><span data-lang="uk">B2B-вирва: 1488 customer_orders (Status / Funnel chart). Win rate, conversion stages.</span><span data-lang="en">B2B funnel.</span></p>
-        <div class="meta"><strong>Дані готові:</strong> 1488 customer_orders</div>
+        <p><span data-lang="uk">B2B-вирва: 1502 customer_orders (Status / Funnel chart). Win rate, conversion stages.</span><span data-lang="en">B2B funnel.</span></p>
+        <div class="meta"><strong>Дані готові:</strong> 1502 customer_orders</div>
       </a>
     </div>
 
     <div class="dash-legend">
-      <strong><span data-lang="uk">Архітектура:</span><span data-lang="en">Architecture:</span></strong>
-      <span data-lang="uk">Brand Bible (статичний HTML на GitHub Pages) + Supabase (Postgres + Edge Functions + pg_cron) + МойСклад API.</span><br><br>
-      <strong><span data-lang="uk">Daily sync 06:00 UTC:</span><span data-lang="en">Daily sync 06:00 UTC:</span></strong>
-      products · counterparties · demand · paymentin · invoiceout · salesreturn · paymentout · supply · processing · loss · customer_orders · purchase_orders · stock
-      → <strong>30K+ документів</strong> у БД. Live дані для всіх дашбордів.<br><br>
-      <strong>v9 Edge Function:</strong> 24 endpoints (P0+P1+P2 повністю). Manual sync доступний через
-      <code>POST /functions/v1/moysklad-sync?action={type}</code>.
+      <strong><span data-lang="uk">Архітектура (v4.1, з 02.06.2026):</span><span data-lang="en">Architecture (v4.1, since 02.06.2026):</span></strong>
+      <span data-lang="uk">Brand Bible (статичний HTML на GitHub Pages) + Cloudflare D1 (SQLite на edge) + Worker <code>barpi-api</code> (REST proxy) + Worker <code>barpi-sync</code> (cron-trigger щогодини) + МойСклад API.</span>
+      <span data-lang="en">Brand Bible (static HTML on GitHub Pages) + Cloudflare D1 (edge SQLite) + Worker <code>barpi-api</code> (REST proxy) + Worker <code>barpi-sync</code> (hourly cron) + MoySklad API.</span>
+      <br><br>
+      <strong><span data-lang="uk">Sync щогодини:</span><span data-lang="en">Hourly sync:</span></strong>
+      products · counterparties · demand · paymentin · paymentout · supply · customerorder · purchaseorder · processing · loss · stock — <strong>усі 19 entities</strong> з МС → D1. Live дані для всіх дашбордів.<br><br>
+      <strong><span data-lang="uk">Auth:</span><span data-lang="en">Auth:</span></strong>
+      <span data-lang="uk">Cloudflare Access (Zero Trust) на edge — One-time PIN на email, 5 emails allowlist (vg@abrisart.com, office@barpi.com.ua, aksonov@barpi.com.ua, vg@sneco.ua, fg@abrisart.com), сесія 30 днів.</span>
+      <span data-lang="en">Cloudflare Access (Zero Trust) at edge — OTP via email, 5-email allowlist, 30-day session.</span>
     </div>
 
-    <div class="page-foot"><div>© ТОВ «ПЕТ КОРП» · v2.5 · 2026</div></div>
+    <div class="page-foot"><div>© ТОВ «ПЕТ КОРП» · v4.1 · 2026</div></div>
   </main>
 </div>
 <script src="/assets/bb.js"></script>
