@@ -61,28 +61,28 @@ table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:5
 </div>
 <script src="../../assets/bb.js"></script>
 <script>
-const SUPA_URL='https://zrcqmwlpsggiqgipvxhv.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const SUPA_URL='https://barpi-api.vg-ab6.workers.dev';
+const SUPA_KEY='';
 const $=(id)=>document.getElementById(id);
 const fmt={uah:(n)=>new Intl.NumberFormat('uk-UA').format(Math.round(n||0))+' ₴',uahK:(n)=>n>=1e6?(n/1e6).toFixed(1)+'M ₴':n>=1e3?(n/1e3).toFixed(0)+'K ₴':Math.round(n||0)+' ₴',num:(n)=>new Intl.NumberFormat('uk-UA').format(n||0),date:(s)=>{if(!s)return '—';const d=new Date(s);return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit'});}};
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function truncate(s,n){return (s||'').length>n?s.slice(0,n)+'…':s;}
-async function api(path){const r=await fetch(SUPA_URL+'/rest/v1/'+path,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});if(!r.ok)throw new Error('API '+r.status);return r.json();}
+async function api(path){const r=await fetch(SUPA_URL+'/'+path,{headers:{'Content-Type':'application/json'}});if(!r.ok){if(r.status===404)return [];throw new Error('API '+r.status);}return r.json();}
 let charts={};
 async function load(){
   try{
     $('syncLabel').textContent='Завантаження…';
     const [plans,acts,eff,monthly,losses,supByProd,sync]=await Promise.all([
-      api('moysklad_processing_plans?select=ms_id,ms_name,archived&order=ms_name'),
-      api('moysklad_processing_acts?select=ms_id,ms_name,doc_type,moment,plan_ms_id,materials_sum_uah,products_sum_uah,state_name&order=moment.desc&limit=2000'),
+      api('moysklad_processing_plans?select=ms_id,ms_name&order=ms_name'),
+      api('moysklad_processing_acts?select=ms_id,moment,plan_ms_id,materials_sum_uah,store_ms_id&order=moment.desc&limit=2000'),
       api('v_production_efficiency?select=*&order=total_materials_uah.desc'),
       api('v_production_monthly?select=*&order=month'),
       api('v_losses_monthly?select=*&order=month'),
       api('v_supplies_by_product?select=*&order=total_sum_uah.desc&limit=30'),
-      api('moysklad_sync_log?select=created_at&order=created_at.desc&limit=1'),
+      api('sync_state?entity=eq.processing&select=last_synced_at&limit=1'),
     ]);
     $('loadingBox').style.display='none'; $('contentBox').style.display='block';
-    if(sync[0]){const h=Math.floor((Date.now()-new Date(sync[0].created_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${acts.length} актів · ${plans.length} тех.карт`;}
+    if(sync[0]&&sync[0].last_synced_at){const h=Math.floor((Date.now()-new Date(sync[0].last_synced_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${acts.length} актів · ${plans.length} тех.карт`;}else{$('syncLabel').textContent=`${acts.length} актів · ${plans.length} тех.карт · D1 live`;}
     render({plans,acts,eff,monthly,losses,supByProd});
   }catch(e){console.error(e);$('syncLabel').textContent='Помилка: '+e.message;}
 }
@@ -93,12 +93,12 @@ function render(d){
   const markup=totalMaterials>0?((totalProducts-totalMaterials)/totalMaterials*100):0;
   const totalLosses=losses.reduce((s,l)=>s+Number(l.losses_uah||0),0);
   const totalLossQty=losses.reduce((s,l)=>s+Number(l.qty_lost||0),0);
-  const activePlan=plans.filter(p=>!p.archived).length;
+  const activePlan=plans.length;
   const lastAct=acts[0];
   $('contentBox').innerHTML=`
     <div class="sec"><h2>🏭 Виробництво · KPI</h2></div>
     <div class="g4">
-      <div class="kpi cy"><div class="lbl">📋 Тех.карти</div><div class="val">${plans.length}</div><div class="sub">${activePlan} активних</div></div>
+      <div class="kpi cy"><div class="lbl">📋 Тех.карти</div><div class="val">${plans.length}</div><div class="sub">${activePlan} в роботі</div></div>
       <div class="kpi cb"><div class="lbl">🔧 Виробничих актів</div><div class="val">${acts.length}</div><div class="sub">з ${lastAct?fmt.date(lastAct.moment):'—'}</div></div>
       <div class="kpi cg"><div class="lbl">💰 Собівартість матеріалів</div><div class="val">${fmt.uahK(totalMaterials)}</div><div class="sub">Сировина</div></div>
       <div class="kpi co"><div class="lbl">📈 Markup</div><div class="val">${markup.toFixed(1)}%</div><div class="sub">матеріали → готова</div></div>
@@ -124,7 +124,7 @@ function render(d){
         <div class="cc-head"><h3>📦 ТОП-20 закупленої сировини</h3><span class="pill">${supByProd.length}</span></div>
         <div class="tbl-scroll" style="max-height:380px"><table class="dt">
           <thead><tr><th>#</th><th>SKU сировини</th><th class="num">Кг/Шт</th><th class="num">₴ total</th><th class="num">₴/од.</th></tr></thead>
-          <tbody>${supByProd.slice(0,20).map((s,i)=>`<tr><td>${i+1}</td><td title="${escapeHtml(s.product_name||'')}">${escapeHtml(truncate(s.product_name||'—',32))}</td><td class="num">${Number(s.total_qty).toFixed(0)}</td><td class="num">${fmt.uahK(s.total_sum_uah)}</td><td class="num">${fmt.uah(s.avg_cost_per_unit)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">Немає</td></tr>'}</tbody>
+          <tbody>${supByProd.slice(0,20).map((s,i)=>`<tr><td>${i+1}</td><td title="${escapeHtml(s.product_name||'')}">${escapeHtml(truncate(s.product_name||'—',32))}</td><td class="num">${Number(s.total_qty).toFixed(0)}</td><td class="num">${fmt.uahK(s.total_sum_uah)}</td><td class="num">${fmt.uah(s.avg_cost_per_unit)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">View v_supplies_by_product ще не створено у D1</td></tr>'}</tbody>
         </table></div>
       </div>
       <div class="cc">
@@ -135,8 +135,8 @@ function render(d){
 
     <div class="sec"><h2>🔧 Останні виробничі акти</h2></div>
     <div class="cc"><div class="tbl-scroll"><table class="dt">
-      <thead><tr><th>Дата</th><th>Документ</th><th>Тип</th><th>Тех.карта</th><th class="num">Матеріали ₴</th><th class="num">Готова ₴</th><th>Статус</th></tr></thead>
-      <tbody>${acts.slice(0,80).map(a=>{const plan=plans.find(p=>p.ms_id===a.plan_ms_id);return `<tr><td>${fmt.date(a.moment)}</td><td><strong>${escapeHtml(truncate(a.ms_name||'—',28))}</strong></td><td><small>${a.doc_type}</small></td><td><small>${escapeHtml(truncate(plan?.ms_name||'—',30))}</small></td><td class="num">${fmt.uahK(a.materials_sum_uah)}</td><td class="num">${fmt.uahK(a.products_sum_uah)}</td><td><small>${a.state_name||'—'}</small></td></tr>`;}).join('')}</tbody>
+      <thead><tr><th>Дата</th><th>Тех.карта</th><th class="num">Матеріали ₴</th><th>Склад</th></tr></thead>
+      <tbody>${acts.slice(0,80).map(a=>{const plan=plans.find(p=>p.ms_id===a.plan_ms_id);return `<tr><td>${fmt.date(a.moment)}</td><td><small>${escapeHtml(truncate(plan?.ms_name||'—',40))}</small></td><td class="num">${fmt.uahK(a.materials_sum_uah)}</td><td><small>${a.store_ms_id?a.store_ms_id.slice(0,8):'—'}</small></td></tr>`;}).join('')}</tbody>
     </table></div></div>
   `;
   setTimeout(()=>{
