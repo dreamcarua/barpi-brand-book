@@ -70,13 +70,13 @@ table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:5
 </div>
 <script src="../../assets/bb.js"></script>
 <script>
-const SUPA_URL='https://zrcqmwlpsggiqgipvxhv.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const SUPA_URL='https://barpi-api.vg-ab6.workers.dev';
+const SUPA_KEY='';
 const $=(id)=>document.getElementById(id);
 const fmt={uah:(n)=>new Intl.NumberFormat('uk-UA').format(Math.round(n||0))+' ₴',uahK:(n)=>n>=1e6?(n/1e6).toFixed(1)+'M ₴':n>=1e3?(n/1e3).toFixed(0)+'K ₴':Math.round(n||0)+' ₴',num:(n)=>new Intl.NumberFormat('uk-UA').format(n||0),date:(s)=>{if(!s)return '—';const d=new Date(s);return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit'});},month:(s)=>{const d=new Date(s);return d.toLocaleDateString('uk-UA',{month:'short',year:'2-digit'});}};
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function truncate(s,n){return (s||'').length>n?s.slice(0,n)+'…':s;}
-async function api(p){const r=await fetch(SUPA_URL+'/rest/v1/'+p,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});if(!r.ok)throw new Error('API '+r.status);return r.json();}
+async function api(p){const r=await fetch(SUPA_URL+'/'+p,{headers:{'Content-Type':'application/json'}});if(!r.ok){if(r.status===404)return [];throw new Error('API '+r.status);}return r.json();}
 let charts={};
 async function load(){
   try{
@@ -87,21 +87,21 @@ async function load(){
       api('v_supplies_by_supplier?select=*&order=month.desc&limit=100'),
       api('v_supplies_by_product?select=*&order=total_sum_uah.desc&limit=20'),
       api('v_purchase_orders_pipeline?select=*&order=month'),
-      api('moysklad_sync_log?select=created_at&order=created_at.desc&limit=1'),
+      api('sync_state?entity=eq.demand&select=last_synced_at&limit=1'),
     ]);
     $('loadingBox').style.display='none';$('contentBox').style.display='block';
-    if(sync[0]){const h=Math.floor((Date.now()-new Date(sync[0].created_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${pnl.length} міс · real МС`;}
+    if(sync[0]&&sync[0].last_synced_at){const h=Math.floor((Date.now()-new Date(sync[0].last_synced_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${pnl.length} міс · D1`;}else{$('syncLabel').textContent=`${pnl.length} міс · D1 live`;}
     render({pnl,cf,expByItem,supBySup,supByProd,porders});
   }catch(e){console.error(e);$('syncLabel').textContent='Помилка: '+e.message;}
 }
 function render(d){
   const {pnl,cf,expByItem,supBySup,supByProd,porders}=d;
-  const totalRev=pnl.reduce((s,m)=>s+Number(m.revenue_uah||0),0);
-  const totalSupplies=pnl.reduce((s,m)=>s+Number(m.supplies_uah||0),0);
-  const totalOpex=pnl.reduce((s,m)=>s+Number(m.opex_uah||0),0);
+  const totalRev=pnl.reduce((s,m)=>s+Number(m.revenue_uah||m.revenue||0),0);
+  const totalSupplies=pnl.reduce((s,m)=>s+Number(m.supplies_uah||m.cogs||0),0);
+  const totalOpex=pnl.reduce((s,m)=>s+Number(m.opex_uah||m.opex||0),0);
   const totalLosses=pnl.reduce((s,m)=>s+Number(m.losses_uah||0),0);
   const totalCollected=pnl.reduce((s,m)=>s+Number(m.collected_uah||0),0);
-  const totalNet=pnl.reduce((s,m)=>s+Number(m.net_profit_uah||0),0);
+  const totalNet=pnl.reduce((s,m)=>s+Number(m.net_profit_uah||m.net_profit||0),0);
   const totalMarginPct=totalRev>0?((totalRev-totalSupplies-totalOpex)/totalRev*100):0;
   const expAgg={};
   expByItem.forEach(e=>{const k=e.expense_item||'— без статті —';if(!expAgg[k])expAgg[k]={sum:0,cnt:0};expAgg[k].sum+=Number(e.sum_uah||0);expAgg[k].cnt+=e.payments_count;});
@@ -137,8 +137,13 @@ function render(d){
     <div class="cc">
       <div class="pnl-row head"><div class="lbl">Місяць</div><div class="num">Виручка</div><div class="num">Сировина</div><div class="num">OpEx</div><div class="num">Списання</div><div class="num">Net Profit</div><div class="num">Маржа</div><div class="num">Отримано</div></div>
       ${pnl.slice(-12).reverse().map(m=>{
-        const np=Number(m.net_profit_uah||0);
-        return `<div class="pnl-row"><div class="lbl">${fmt.month(m.month)}</div><div class="num neut">${fmt.uahK(m.revenue_uah)}</div><div class="num neg">${fmt.uahK(m.supplies_uah)}</div><div class="num neg">${fmt.uahK(m.opex_uah)}</div><div class="num neg">${fmt.uahK(m.losses_uah)}</div><div class="num ${np>=0?'pos':'neg'}">${fmt.uahK(np)}</div><div class="num ${Number(m.margin_pct)>=0?'pos':'neg'}">${m.margin_pct}%</div><div class="num neut">${fmt.uahK(m.collected_uah)}</div></div>`;
+        const rev=Number(m.revenue_uah||m.revenue||0);
+        const sup=Number(m.supplies_uah||m.cogs||0);
+        const opex=Number(m.opex_uah||m.opex||0);
+        const loss=Number(m.losses_uah||0);
+        const np=Number(m.net_profit_uah||m.net_profit||(rev-sup-opex-loss));
+        const margin=rev>0?(((rev-sup-opex)/rev)*100).toFixed(1):0;
+        return `<div class="pnl-row"><div class="lbl">${fmt.month(m.month)}</div><div class="num neut">${fmt.uahK(rev)}</div><div class="num neg">${fmt.uahK(sup)}</div><div class="num neg">${fmt.uahK(opex)}</div><div class="num neg">${fmt.uahK(loss)}</div><div class="num ${np>=0?'pos':'neg'}">${fmt.uahK(np)}</div><div class="num ${Number(margin)>=0?'pos':'neg'}">${margin}%</div><div class="num neut">${fmt.uahK(m.collected_uah)}</div></div>`;
       }).join('')}
     </div>
 
@@ -147,14 +152,14 @@ function render(d){
         <div class="cc-head"><h3>💸 Витрати по статтях (lifetime)</h3><span class="pill">${expRows.length}</span></div>
         <div class="tbl-scroll"><table class="dt">
           <thead><tr><th>#</th><th>Стаття</th><th class="num">Платежів</th><th class="num">Сума ₴</th><th class="num">% від OpEx</th></tr></thead>
-          <tbody>${expRows.map((r,i)=>`<tr><td>${i+1}</td><td><strong>${escapeHtml(r.item)}</strong></td><td class="num">${r.cnt}</td><td class="num">${fmt.uahK(r.sum)}</td><td class="num">${totalOpex>0?(r.sum/totalOpex*100).toFixed(1):0}%</td></tr>`).join('')||'<tr><td colspan="5" class="empty">Немає</td></tr>'}</tbody>
+          <tbody>${expRows.map((r,i)=>`<tr><td>${i+1}</td><td><strong>${escapeHtml(r.item)}</strong></td><td class="num">${r.cnt}</td><td class="num">${fmt.uahK(r.sum)}</td><td class="num">${totalOpex>0?(r.sum/totalOpex*100).toFixed(1):0}%</td></tr>`).join('')||'<tr><td colspan="5" class="empty">Немає даних — view v_expenses_by_item ще не створено у D1</td></tr>'}</tbody>
         </table></div>
       </div>
       <div class="cc">
         <div class="cc-head"><h3>🏭 Постачальники (lifetime)</h3><span class="pill">${supRows.length}</span></div>
         <div class="tbl-scroll"><table class="dt">
           <thead><tr><th>#</th><th>Постачальник</th><th class="num">#</th><th class="num">Сума</th><th class="num">Опл.</th><th class="num">Борг</th></tr></thead>
-          <tbody>${supRows.map((r,i)=>`<tr><td>${i+1}</td><td><strong>${escapeHtml(truncate(r.sup,24))}</strong></td><td class="num">${r.cnt}</td><td class="num">${fmt.uahK(r.sum)}</td><td class="num">${fmt.uahK(r.paid)}</td><td class="num"><span class="tag ${r.debt>0?'tr':'tg'}">${fmt.uahK(r.debt)}</span></td></tr>`).join('')||'<tr><td colspan="6" class="empty">Немає</td></tr>'}</tbody>
+          <tbody>${supRows.map((r,i)=>`<tr><td>${i+1}</td><td><strong>${escapeHtml(truncate(r.sup,24))}</strong></td><td class="num">${r.cnt}</td><td class="num">${fmt.uahK(r.sum)}</td><td class="num">${fmt.uahK(r.paid)}</td><td class="num"><span class="tag ${r.debt>0?'tr':'tg'}">${fmt.uahK(r.debt)}</span></td></tr>`).join('')||'<tr><td colspan="6" class="empty">Немає даних — view v_supplies_by_supplier ще не створено у D1</td></tr>'}</tbody>
         </table></div>
       </div>
     </div>
@@ -162,7 +167,7 @@ function render(d){
     <div class="sec"><h2>📦 ТОП-20 закупленої сировини</h2></div>
     <div class="cc"><div class="tbl-scroll"><table class="dt">
       <thead><tr><th>#</th><th>SKU</th><th class="num">Разів</th><th class="num">Кількість</th><th class="num">Сума ₴</th><th class="num">₴/од.</th></tr></thead>
-      <tbody>${supByProd.map((s,i)=>`<tr><td>${i+1}</td><td title="${escapeHtml(s.product_name||'')}">${escapeHtml(truncate(s.product_name||'—',40))}</td><td class="num">${s.times_bought}</td><td class="num">${Number(s.total_qty).toFixed(0)}</td><td class="num">${fmt.uahK(s.total_sum_uah)}</td><td class="num">${fmt.uah(s.avg_cost_per_unit)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">Немає</td></tr>'}</tbody>
+      <tbody>${supByProd.map((s,i)=>`<tr><td>${i+1}</td><td title="${escapeHtml(s.product_name||'')}">${escapeHtml(truncate(s.product_name||'—',40))}</td><td class="num">${s.times_bought}</td><td class="num">${Number(s.total_qty).toFixed(0)}</td><td class="num">${fmt.uahK(s.total_sum_uah)}</td><td class="num">${fmt.uah(s.avg_cost_per_unit)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">Немає даних — view v_supplies_by_product ще не створено у D1</td></tr>'}</tbody>
     </table></div></div>
 
     <div class="sec"><h2>📥 Purchase Orders pipeline (замовлено / отримано / оплачено)</h2></div>
@@ -173,11 +178,11 @@ function render(d){
     charts.pnl=new Chart($('pnlChart'),{
       type:'bar',
       data:{labels:pnl.map(m=>fmt.month(m.month)),datasets:[
-        {label:'Виручка',data:pnl.map(m=>Number(m.revenue_uah||0)),backgroundColor:'#39B44A',stack:'a',borderRadius:2},
-        {label:'Сировина',data:pnl.map(m=>-Number(m.supplies_uah||0)),backgroundColor:'#3B82F6',stack:'a',borderRadius:2},
-        {label:'OpEx',data:pnl.map(m=>-Number(m.opex_uah||0)),backgroundColor:'#F59E0B',stack:'a',borderRadius:2},
+        {label:'Виручка',data:pnl.map(m=>Number(m.revenue_uah||m.revenue||0)),backgroundColor:'#39B44A',stack:'a',borderRadius:2},
+        {label:'Сировина',data:pnl.map(m=>-Number(m.supplies_uah||m.cogs||0)),backgroundColor:'#3B82F6',stack:'a',borderRadius:2},
+        {label:'OpEx',data:pnl.map(m=>-Number(m.opex_uah||m.opex||0)),backgroundColor:'#F59E0B',stack:'a',borderRadius:2},
         {label:'Списання',data:pnl.map(m=>-Number(m.losses_uah||0)),backgroundColor:'#E84040',stack:'a',borderRadius:2},
-        {label:'Net Profit',data:pnl.map(m=>Number(m.net_profit_uah||0)),type:'line',borderColor:'#001154',backgroundColor:'transparent',borderWidth:3,tension:.3,pointRadius:4,pointBackgroundColor:'#001154'},
+        {label:'Net Profit',data:pnl.map(m=>Number(m.net_profit_uah||m.net_profit||0)),type:'line',borderColor:'#001154',backgroundColor:'transparent',borderWidth:3,tension:.3,pointRadius:4,pointBackgroundColor:'#001154'},
       ]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:(ctx)=>ctx.dataset.label+': '+fmt.uah(Math.abs(ctx.parsed.y))}}},scales:{y:{ticks:{callback:(v)=>fmt.uahK(v)}}}}
     });
