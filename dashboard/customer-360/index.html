@@ -5,437 +5,194 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Customer 360 · Barpi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/bb.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-:root{--y:#001154;--y-soft:rgba(0,17,84,.13);--y-light:#BAD9F4;--g:#39B44A;--g-soft:rgba(57,180,74,.13);--r:#E84040;--r-soft:rgba(232,64,64,.10);--bl:#3B82F6;--bl-soft:rgba(59,130,246,.10);--or:#F59E0B;--or-soft:rgba(245,158,11,.13);--d:#1A1A1A;--bg:#FAF7F7;--card:#fff;--muted:#888;--border:#E5E5DC;--line:#EEE;--vi:#8B5CF6;--vi-soft:rgba(139,92,246,.13)}
+:root{--y:#001154;--y-soft:rgba(0,17,84,.13);--g:#39B44A;--g-soft:rgba(57,180,74,.13);--r:#E84040;--r-soft:rgba(232,64,64,.10);--bl:#3B82F6;--or:#F59E0B;--d:#1A1A1A;--bg:#FAF7F7;--card:#fff;--muted:#888;--border:#E5E5DC;--line:#EEE}
 body{background:var(--bg);font-family:Rubik,-apple-system,sans-serif;color:var(--d);margin:0}
-.cp-topbar{position:sticky;top:0;z-index:200;background:var(--d);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--y)}
-.cp-topbar h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
-.cp-topbar .sub{font-size:11px;opacity:.6;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
-.cp-topbar .spacer{flex:1}
-.cp-topbar .sync{font-size:12px;opacity:.7;display:flex;align-items:center;gap:6px}
-.cp-topbar .dot{width:8px;height:8px;border-radius:50%;background:var(--g)}
-.cp-selector{position:sticky;top:48px;z-index:150;background:#fff;border-bottom:1px solid var(--line);padding:14px 24px;display:flex;gap:10px;align-items:center;justify-content:center}
-.cp-selector .search{flex:1;max-width:520px;position:relative}
-.cp-selector input{width:100%;font-family:Rubik;font-size:14px;padding:10px 14px 10px 38px;border:1px solid var(--border);border-radius:99px;background:#fff;color:var(--d);outline:none}
-.cp-selector input:focus{border-color:var(--y);box-shadow:0 0 0 3px var(--y-soft)}
-.cp-selector .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--muted)}
-.cp-selector .back{font-family:Rubik;font-size:13px;font-weight:600;padding:8px 16px;border-radius:99px;border:none;background:var(--y);color:#fff;cursor:pointer}
-.autocomplete{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;margin-top:4px;max-height:340px;overflow:auto;box-shadow:0 8px 24px rgba(0,17,84,.08);z-index:100;display:none}
-.autocomplete.show{display:block}
-.ac-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13px;display:flex;align-items:center;gap:8px}
-.ac-item:hover{background:var(--y-soft)}
-.ac-item .name{flex:1;font-weight:600}
-.ac-item .ch{font-size:10px;padding:2px 6px;border-radius:99px;background:var(--y-soft);color:var(--y)}
-.cp-wrap{max-width:1440px;margin:0 auto;padding:20px 24px 40px}
+.c360-top{position:sticky;top:0;z-index:200;background:var(--d);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--y)}
+.c360-top h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.c360-top .sub{font-size:11px;opacity:.6;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.c360-top .spacer{flex:1}
+.c360-top .sync{font-size:12px;opacity:.7;display:flex;align-items:center;gap:6px}
+.c360-top .dot{width:8px;height:8px;border-radius:50%;background:var(--g)}
+.c360-wrap{max-width:1440px;margin:0 auto;padding:20px 24px 40px}
 .sec{margin:24px 0 12px;display:flex;align-items:center;gap:10px}
 .sec h2{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .sec::after{content:"";flex:1;height:1px;background:var(--line)}
 .sec .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--y-soft);color:var(--y)}
-.g1{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:900px){.g2,.g3,.g4,.g5{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:all .2s}
-.kpi:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,17,84,.06)}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
 .kpi .lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
 .kpi .val{font-size:22px;font-weight:800;color:var(--d);letter-spacing:-.02em;line-height:1.1}
 .kpi .sub{font-size:11px;color:var(--muted);margin-top:6px}
-.kpi.cy{border-bottom:3px solid var(--y)}.kpi.cg{border-bottom:3px solid var(--g)}.kpi.cr{border-bottom:3px solid var(--r)}.kpi.cb{border-bottom:3px solid var(--bl)}.kpi.co{border-bottom:3px solid var(--or)}.kpi.cv{border-bottom:3px solid var(--vi)}
-.delta{display:inline-flex;align-items:center;gap:3px;font-weight:700;font-size:11px;padding:2px 7px;border-radius:99px}
-.delta.up{background:var(--g-soft);color:var(--g)}.delta.dn{background:var(--r-soft);color:var(--r)}.delta.neu{background:#f3f3f3;color:#777}
+.kpi.cy{border-bottom:3px solid var(--y)}.kpi.cg{border-bottom:3px solid var(--g)}.kpi.cr{border-bottom:3px solid var(--r)}.kpi.cb{border-bottom:3px solid var(--bl)}.kpi.co{border-bottom:3px solid var(--or)}
 .cc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
 .cc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.cc-head h3{margin:0;font-size:14px;font-weight:700;color:var(--d)}
-.cc-head .pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--y-soft);color:var(--y);text-transform:uppercase}
-.rfm-grid{display:grid;grid-template-columns:120px repeat(3,1fr);gap:6px;font-size:12px}
-.rfm-cell{padding:14px 12px;text-align:center;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;transition:all .15s}
-.rfm-cell:hover{transform:scale(1.02);box-shadow:0 4px 12px rgba(0,0,0,.12)}
-.rfm-cell .cnt{font-size:22px;line-height:1}
-.rfm-cell .lbl{font-size:10px;opacity:.9;margin-top:4px}
-.rfm-row-lbl{display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase}
-.rfm-col-lbl{text-align:center;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;padding-bottom:4px}
-.mover-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
-.mover-card h4{margin:0 0 10px;font-size:13px;font-weight:700;color:var(--d)}
-.mover-row{display:grid;grid-template-columns:24px 1fr 90px 70px;gap:8px;font-size:12px;padding:6px 4px;border-bottom:1px solid var(--line);align-items:center;cursor:pointer}
-.mover-row:hover{background:var(--y-soft);border-radius:4px}
-.mover-row .rk{color:var(--muted);font-weight:700;font-size:11px}
-.mover-row .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mover-row .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--y);font-weight:700}
-table.dt{width:100%;border-collapse:collapse;font-size:13px}
-table.dt th{text-align:left;padding:8px 12px;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--muted);background:#FAFAF5;border-bottom:1px solid var(--line);letter-spacing:.05em}
-table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0;color:var(--d)}
-table.dt tbody tr{cursor:pointer}
-table.dt tbody tr:hover{background:#FBFAF5}
-table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
-.tbl-scroll{max-height:400px;overflow:auto;border-radius:8px;border:1px solid var(--line)}
-.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.04em}
-.tag.ty{background:var(--y-soft);color:var(--y)}.tag.tg{background:var(--g-soft);color:var(--g)}.tag.tr{background:var(--r-soft);color:var(--r)}.tag.tor{background:var(--or-soft);color:var(--or)}.tag.tv{background:var(--vi-soft);color:var(--vi)}
-.cust-header{background:linear-gradient(135deg,var(--d) 0%,#2A2A2A 100%);color:#fff;padding:28px 32px;border-radius:16px;margin-bottom:20px;position:relative;overflow:hidden}
-.cust-header::before{content:"";position:absolute;top:-50%;right:-10%;width:400px;height:400px;background:radial-gradient(circle,rgba(186,217,244,.15),transparent 70%);pointer-events:none}
-.cust-header .cust-name{font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px;position:relative}
-.cust-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;opacity:.85;position:relative}
-.cust-tags{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap;position:relative}
-.cust-tag{font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px;background:rgba(186,217,244,.2);border:1px solid rgba(186,217,244,.3);color:#fff}
-.cust-tag.seg{background:var(--y-light);color:var(--y)}
-.health-hero{display:flex;align-items:center;gap:24px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:16px}
-.health-circle{width:120px;height:120px;flex-shrink:0;position:relative}
-.health-circle svg{transform:rotate(-90deg)}
-.health-circle .val{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:800;color:var(--d);letter-spacing:-.02em}
-.health-circle .lbl{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.health-info{flex:1}
-.health-info h3{margin:0 0 8px;font-size:18px;font-weight:700;color:var(--d)}
-.health-info .components{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-.health-comp{padding:6px 12px;background:#FAFAF5;border-radius:8px;font-size:12px;color:var(--muted)}
-.health-comp strong{color:var(--d);font-weight:700}
-.timeline{max-height:480px;overflow:auto;border-radius:8px;border:1px solid var(--line)}
-.tl-item{display:grid;grid-template-columns:80px 1fr 120px;gap:14px;padding:10px 14px;border-bottom:1px solid var(--line);align-items:center;font-size:13px}
-.tl-item:hover{background:#FBFAF5}
-.tl-item .date{font-size:11px;font-weight:600;color:var(--muted)}
-.tl-item .desc{font-weight:500;color:var(--d)}
-.tl-item .qty{font-size:11px;color:var(--muted);margin-top:2px}
-.tl-item .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--y);font-weight:700}
-.insight{padding:14px;background:#fff;border:1px solid var(--line);border-radius:10px;border-left:4px solid var(--y)}
-.insight.green{border-left-color:var(--g);background:#F6FDF7}
-.insight.red{border-left-color:var(--r);background:#FEF6F6}
-.insight.yellow{border-left-color:var(--or);background:#FFFBEE}
-.insight h4{margin:0 0 6px;font-size:13px;font-weight:700;color:var(--d);display:flex;align-items:center;gap:6px}
-.insight p{margin:0;font-size:12px;color:#555;line-height:1.5}
-.empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
-.placeholder{padding:20px;background:#FBFAF5;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:13px;text-align:center}
-.toast{position:fixed;bottom:24px;right:24px;background:var(--d);color:#fff;padding:14px 22px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:all .25s;z-index:1000}
-.toast.show{opacity:1;transform:translateY(0)}
-.toast.err{background:var(--r)}
+.cc-head h3{margin:0;font-size:14px;font-weight:700}.cc-head .pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--y-soft);color:var(--y);text-transform:uppercase}
 .chart-wrap{position:relative;height:280px}
-.chart-wrap.tall{height:340px}
-.chart-wrap.xl{height:380px}
-.dow-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-.dow-cell{padding:14px 6px;text-align:center;border-radius:6px;color:#fff;font-weight:700;font-size:12px}
-.dow-cell.empty{background:#F4F4F0;color:#bbb}
-.dow-cell .dow-name{font-size:9px;opacity:.85;text-transform:uppercase;margin-bottom:4px}
-.dow-cell .dow-cnt{font-size:14px;line-height:1}
-.crm-row{display:grid;grid-template-columns:90px 110px 1fr 140px 30px;gap:10px;padding:10px 0;border-bottom:1px dashed var(--border);align-items:start;font-size:13px}
-.crm-row:last-child{border:none}
-.crm-row .crm-date{font-weight:700;color:var(--d);font-size:12px}
-.crm-row .crm-type{font-size:11px;font-weight:600;color:#555;padding:2px 8px;border-radius:8px;background:#F1F1EB;white-space:nowrap;text-align:center}
-.crm-row .crm-text{color:#333;line-height:1.5}
-.crm-row .crm-text strong{display:block;color:var(--d);margin-top:4px;font-size:11.5px}
-.crm-row .crm-next{font-size:11px;color:var(--muted);text-align:right}
-.crm-row .crm-next.due{color:var(--r);font-weight:700}
-.crm-del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px;opacity:.4}
-.crm-row:hover .crm-del{opacity:1}
-.crm-add{background:var(--y);color:#fff;border:0;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
-.crm-add:hover{background:#0a1f7a}
-.crm-modal{position:fixed;inset:0;background:rgba(30,30,30,.7);z-index:9990;display:none;align-items:center;justify-content:center;padding:20px}
-.crm-modal.open{display:flex}
-.crm-modal-card{background:#fff;border-radius:14px;padding:24px 26px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
-.crm-modal-title{font-size:16px;font-weight:800;color:var(--d);margin-bottom:14px}
-.crm-modal label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:10px 0 4px}
-.crm-modal input,.crm-modal textarea,.crm-modal select{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box}
-.crm-modal input:focus,.crm-modal textarea:focus,.crm-modal select:focus{border-color:var(--y)}
-.crm-modal textarea{min-height:70px;resize:vertical}
-.crm-modal-actions{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
-.crm-modal-btn{padding:9px 18px;border-radius:8px;border:0;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px}
-.crm-modal-btn.cancel{background:#F1F1EB;color:#666}
-.crm-modal-btn.save{background:var(--y);color:#fff}
-.cs-row{display:grid;grid-template-columns:24px 1fr 100px 80px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
-.cs-row:last-child{border:none}
-.cs-row .rk{color:var(--muted);font-weight:700;font-size:11px}
-.cs-row .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cs-row .val{text-align:right;font-weight:700;color:var(--y)}
-.cs-row .cat{font-size:10px;padding:2px 6px;border-radius:99px;background:var(--y-soft);color:var(--y)}
-.period-chips{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.chip{font-family:Rubik;font-size:12px;font-weight:600;padding:7px 16px;border-radius:99px;border:1px solid var(--border);background:#fff;color:var(--d);cursor:pointer;transition:all .15s}
-.chip:hover:not(.active){background:var(--y-soft);border-color:var(--y)}
-.chip.active{background:var(--y);color:#fff;border-color:var(--y);box-shadow:0 2px 8px rgba(0,17,84,.2)}
-.period-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
-.prod-row{display:grid;grid-template-columns:30px 1fr 90px 70px 90px 70px;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line);font-size:12.5px;cursor:default}
-.prod-row:hover{background:#FBFAF5}
-.prod-row .rk{color:var(--muted);font-weight:700;font-size:11px;text-align:center}
-.prod-row .nm{font-weight:600;color:var(--d);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.prod-row .cat{font-size:10px;padding:2px 8px;border-radius:99px;background:var(--y-soft);color:var(--y);text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.prod-row .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
-.prod-row .num.rev{color:var(--y);font-weight:800}
-.prod-row .num.cust{color:var(--g);font-weight:700}
-.prod-bar{position:relative;height:4px;background:var(--y-soft);border-radius:99px;margin-top:4px;overflow:hidden}
-.prod-bar-fill{position:absolute;top:0;left:0;height:100%;background:var(--y);border-radius:99px;transition:width .25s}
-.hmap{display:grid;grid-template-columns:160px repeat(3,1fr);gap:4px;font-size:11px}
-.hmap-cell{padding:14px 8px;text-align:center;border-radius:6px;font-weight:700;cursor:pointer;transition:all .15s}
-.hmap-cell:hover{transform:scale(1.03);box-shadow:0 4px 12px rgba(0,0,0,.1)}
-.hmap-cell .cnt{font-size:18px;line-height:1;display:block}
-.hmap-cell .pct{font-size:9px;opacity:.85;margin-top:3px;display:block}
-.hmap-lbl{display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-weight:700;color:var(--muted);font-size:11px;text-transform:uppercase}
-.hmap-col-lbl{text-align:center;font-weight:700;color:var(--muted);font-size:10px;text-transform:uppercase;padding-bottom:6px}
-.ar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.ar-cell{padding:18px 14px;border-radius:10px;text-align:center;color:#fff;font-weight:700;cursor:pointer;transition:all .15s}
-.ar-cell:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.12)}
-.ar-cell .ar-name{font-size:11px;opacity:.9;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
-.ar-cell .ar-sum{font-size:18px;font-weight:800;line-height:1}
-.ar-cell .ar-cnt{font-size:10px;opacity:.85;margin-top:4px}
-.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:14px}
-.tab{font-family:Rubik;font-size:12px;font-weight:700;padding:10px 18px;border:0;background:none;color:var(--muted);cursor:pointer;text-transform:uppercase;letter-spacing:.04em;border-bottom:3px solid transparent;margin-bottom:-1px}
-.tab:hover{color:var(--d)}
-.tab.active{color:var(--y);border-bottom-color:var(--y)}
-.lc-card{padding:18px;border-radius:12px;border:1px solid var(--line);text-align:center;cursor:pointer;transition:all .15s}
-.lc-card:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.08)}
-.lc-card .lc-cnt{font-size:32px;font-weight:800;line-height:1}
-.lc-card .lc-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:6px}
-.lc-card .lc-sum{font-size:11px;color:var(--y);font-weight:700;margin-top:4px}
-.lc-card.c1{border-top:3px solid var(--g)} .lc-card.c2{border-top:3px solid var(--or)} .lc-card.c3{border-top:3px solid #E07F00} .lc-card.c4{border-top:3px solid var(--r)}
-.cp-card{padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#FBFAF5}
-.cp-card .cp-name{font-weight:700;color:var(--d);font-size:13px;margin-bottom:3px}
-.cp-card .cp-pos{font-size:11px;color:var(--muted);margin-bottom:6px}
-.cp-card .cp-contact{font-size:11px;color:#444;display:flex;align-items:center;gap:5px;margin-top:3px}
-.addr{padding:12px 14px;background:#FBFAF5;border:1px solid var(--line);border-radius:10px;font-size:12.5px;line-height:1.6}
-.addr-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
-.ar-row{display:grid;grid-template-columns:120px 1fr 90px 100px 80px 70px;gap:10px;font-size:12px;padding:8px 4px;border-bottom:1px solid var(--line);align-items:center}
-.ar-row .dt{font-weight:600;font-size:11px;color:var(--muted)}
-.ar-row .nm{font-weight:600}
-.ar-row .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
-.ar-row .num.unpaid{color:var(--r)}
-.ar-row .num.paid{color:var(--g)}
-.ar-row .ag{text-align:center;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px}
-.ar-row .ag.current{background:var(--g-soft);color:var(--g)}
-.ar-row .ag.b1{background:var(--or-soft);color:var(--or)}
-.ar-row .ag.b2{background:rgba(224,127,0,.13);color:#E07F00}
-.ar-row .ag.b3{background:rgba(232,64,64,.13);color:var(--r)}
-.ar-row .ag.b4{background:#3A0000;color:#fff}
-@media print{.cp-topbar,.cp-selector,.toast,.crm-modal{display:none}.cp-wrap{max-width:none;padding:0}body{background:#fff}.cc{box-shadow:none;page-break-inside:avoid}}
+.chart-wrap.tall{height:360px}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}
+table.dt th{text-align:left;padding:8px 12px;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--muted);background:#FAFAF5;border-bottom:1px solid var(--line)}
+table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0}.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.tbl-scroll{max-height:560px;overflow:auto;border-radius:8px;border:1px solid var(--line)}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
+.tag.tg{background:var(--g-soft);color:var(--g)}.tag.tr{background:var(--r-soft);color:var(--r)}.tag.ty{background:var(--y-soft);color:var(--y)}.tag.tb{background:rgba(59,130,246,.13);color:var(--bl)}
+.loading{text-align:center;padding:60px;color:var(--muted)}
+.empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
 </style>
 </head>
 <body>
-<div id="bb-shell"></div>
-<main class="bb-main" id="bb-main" style="padding:0">
-<header class="cp-topbar">
-  <h1>👥 Barpi · <span class="sub">Customer 360 v4</span></h1>
+<header class="c360-top">
+  <h1>👥 Barpi · <span class="sub">Customer 360</span></h1>
   <span class="spacer"></span>
   <span class="sync"><span class="dot"></span><span id="syncLabel">Завантаження…</span></span>
 </header>
-<div class="cp-selector">
-  <div class="search">
-    <span class="ico">🔍</span>
-    <input type="text" id="searchInput" placeholder="Пошук клієнта: ім'я, ЄДРПОУ…" autocomplete="off">
-    <div id="autocomplete" class="autocomplete"></div>
-  </div>
-  <button class="back" id="backBtn" style="display:none">← Назад до огляду</button>
+<div class="c360-wrap">
+  <div id="loadingBox" class="loading">Завантаження…</div>
+  <div id="contentBox" style="display:none"></div>
 </div>
-<div class="cp-wrap" id="contentWrap"></div>
-</main>
-<div class="crm-modal" id="crmModal">
-  <div class="crm-modal-card">
-    <div class="crm-modal-title">📝 Новий запис у CRM-лог</div>
-    <input type="hidden" id="crmEditId" value="">
-    <label>Дата</label><input type="date" id="crmDate">
-    <label>Тип</label>
-    <select id="crmType">
-      <option>📞 Дзвінок</option><option>📧 Email</option><option>💬 Чат / Telegram</option>
-      <option>🤝 Зустріч</option><option>📦 Відвантаження</option><option>💰 Оплата</option>
-      <option>⚠️ Скарга / повернення</option><option>📋 Пропозиція</option><option>📝 Інше</option>
-    </select>
-    <label>Про що</label><textarea id="crmSummary" placeholder="Про що говорили, які домовленості…"></textarea>
-    <label>Наступний крок</label><input type="text" id="crmNextStep" placeholder="Напр.: підготувати КП на нову лінійку">
-    <label>Дата наступного кроку</label><input type="date" id="crmNextDate">
-    <div class="crm-modal-actions">
-      <button class="crm-modal-btn cancel" onclick="closeCrm()">Скасувати</button>
-      <button class="crm-modal-btn save" onclick="saveCrm()">Зберегти</button>
-    </div>
-  </div>
-</div>
-<div id="toast" class="toast"></div>
 <script src="../../assets/bb.js"></script>
 <script>
-const SUPA_URL='https://zrcqmwlpsggiqgipvxhv.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const API_URL='https://barpi-api.vg-ab6.workers.dev';
 const $=(id)=>document.getElementById(id);
-const fmt={uah:(n)=>new Intl.NumberFormat('uk-UA').format(Math.round(n||0))+' ₴',uahK:(n)=>n>=1e6?(n/1e6).toFixed(1)+'M ₴':n>=1e3?(n/1e3).toFixed(0)+'K ₴':Math.round(n||0)+' ₴',num:(n)=>new Intl.NumberFormat('uk-UA').format(n||0),date:(s)=>{if(!s)return '—';const d=new Date(s);return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit'});}};
-function ago(d){if(!d)return '—';const days=Math.floor((Date.now()-new Date(d).getTime())/86400000);if(days<1)return 'сьогодні';if(days<2)return 'вчора';if(days<30)return days+' дн.';if(days<60)return '~1 міс';return Math.floor(days/30)+' міс';}
-function deltaPct(c,p){if(!p)return null;return ((c-p)/p*100);}
-function deltaTag(p){if(p==null)return '<span class="delta neu">—</span>';const c=p>0.5?'up':p<-0.5?'dn':'neu';const s=p>0?'↑':p<0?'↓':'→';return `<span class="delta ${c}">${s} ${Math.abs(p).toFixed(1)}%</span>`;}
-function toast(m,e=false){const t=$('toast');t.textContent=m;t.className='toast show'+(e?' err':'');setTimeout(()=>t.className='toast',2800);}
+const fmt={uah:(n)=>new Intl.NumberFormat('uk-UA').format(Math.round(n||0))+' ₴',uahK:(n)=>n>=1e6?(n/1e6).toFixed(1)+'M ₴':n>=1e3?(n/1e3).toFixed(0)+'K ₴':Math.round(n||0)+' ₴',num:(n)=>new Intl.NumberFormat('uk-UA').format(n||0),date:(s)=>{if(!s)return '—';const d=new Date(s);return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit'});},month:(s)=>{const d=new Date(s);return d.toLocaleDateString('uk-UA',{month:'short',year:'2-digit'});}};
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function truncate(s,n){return (s||'').length>n?s.slice(0,n)+'…':s;}
-function healthBadge(s){if(s==null)return '—';const c=s>=70?'tg':s>=40?'tor':'tr';return `<span class="tag ${c}">${s}</span>`;}
-async function api(p,o={}){const r=await fetch(SUPA_URL+'/rest/v1/'+p,{...o,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation',...(o.headers||{})}});if(!r.ok)throw new Error('API '+r.status+': '+(await r.text()).slice(0,200));return r.json();}
-let state={mode:'overview',period:90,moverTab:'abs',customer:null,customerSkus:[],customerTimeline:[],customerDow:[],customerCrm:[],crossSell:[],customerInvoices:[],customerPayments:[],customerContacts:[],customerHealth:[],customerYoY:[],customerPromo:[],benchmarks:{},payRatio:{},returns:{},data:null,charts:{}};
-async function loadAll(){
+async function api(p){const r=await fetch(API_URL+'/'+p,{headers:{'Content-Type':'application/json'}});if(!r.ok){if(r.status===404)return [];throw new Error('API '+r.status);}return r.json();}
+let charts={};
+async function load(){
   try{
-    $('syncLabel').textContent='Завантаження…';
-    const [customers,benchmarks,sync,allTx,trend12m,yoy,lostCohorts,payRatio,returns,arAging]=await Promise.all([
+    const [metrics,timeline,dow,kpis,sync]=await Promise.all([
       api('v_customer_metrics?select=*&order=lifetime_revenue.desc'),
-      api('v_channel_benchmarks?select=*'),
-      api('moysklad_sync_log?select=created_at&order=created_at.desc&limit=1'),
-      api('sales_extended?select=date,counterparty_ms_id,sku_id,sku_name,sku_category,channel_id,channel_name,revenue_uah,quantity&counterparty_ms_id=not.is.null&order=date.desc'),
-      api('v_portfolio_trend_12m?select=*'),
-      api('v_yoy_monthly?select=*'),
-      api('v_lost_cohorts?select=*'),
-      api('v_pay_ratio?select=*'),
-      api('v_returns_rate?select=*'),
-      api('v_ar_aging?select=*'),
+      api('v_customer_timeline?select=*&order=month'),
+      api('v_customer_dow?select=*'),
+      api('v_dashboard_kpis?select=*'),
+      api('sync_state?entity=eq.demand&select=last_synced_at&limit=1'),
     ]);
-    const bMap={};benchmarks.forEach(b=>bMap[b.channel_id]=b);
-    const prMap={};payRatio.forEach(p=>prMap[p.counterparty_ms_id]=p);
-    const rtMap={};returns.forEach(r=>rtMap[r.counterparty_ms_id]=r);
-    state.benchmarks=bMap;state.payRatio=prMap;state.returns=rtMap;
-    state.data={customers,allTx,trend12m,yoy,lostCohorts,arAging};
-    if(sync[0]){const h=Math.floor((Date.now()-new Date(sync[0].created_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${customers.length} клієнтів · ${allTx.length} тр · ${arAging.length} рахунків`;}
-    renderOverview();
-  }catch(e){console.error(e);toast('Помилка: '+e.message,true);}
+    $('loadingBox').style.display='none';$('contentBox').style.display='block';
+    if(sync[0]&&sync[0].last_synced_at){const h=Math.floor((Date.now()-new Date(sync[0].last_synced_at).getTime())/3600000);$('syncLabel').textContent=`Sync ${h}h тому · ${metrics.length} клієнтів`;}else{$('syncLabel').textContent=`${metrics.length} клієнтів · D1 live`;}
+    render({metrics,timeline,dow,kpis:kpis[0]||{}});
+  }catch(e){console.error(e);$('syncLabel').textContent='Помилка: '+e.message;}
 }
-function setPeriod(p){state.period=p;renderOverview();}
-function setMoverTab(t){state.moverTab=t;renderOverview();}
-function aggByPeriod(period){
-  const tx=state.data.allTx||[];const now=Date.now();
-  const cutoff=period>0?now-period*86400000:null;
-  const prevCutoffStart=period>0?now-2*period*86400000:null;
-  const curr=cutoff?tx.filter(t=>new Date(t.date).getTime()>=cutoff):tx;
-  const prev=period>0?tx.filter(t=>{const d=new Date(t.date).getTime();return d<cutoff&&d>=prevCutoffStart;}):[];
-  const skuMap={};
-  curr.forEach(t=>{if(!t.sku_id)return;const k=t.sku_id;if(!skuMap[k])skuMap[k]={sku_id:k,sku_name:t.sku_name||'—',sku_category:t.sku_category||'—',revenue:0,qty:0,tx:0,customers:new Set()};skuMap[k].revenue+=Number(t.revenue_uah||0);skuMap[k].qty+=Number(t.quantity||0);skuMap[k].tx+=1;if(t.counterparty_ms_id)skuMap[k].customers.add(t.counterparty_ms_id);});
-  const topSku=Object.values(skuMap).map(s=>({...s,customers:s.customers.size})).sort((a,b)=>b.revenue-a.revenue);
-  const custMap={};curr.forEach(t=>{if(!t.counterparty_ms_id)return;const k=t.counterparty_ms_id;if(!custMap[k])custMap[k]={rev:0,tx:0};custMap[k].rev+=Number(t.revenue_uah||0);custMap[k].tx+=1;});
-  const prevCustMap={};prev.forEach(t=>{if(!t.counterparty_ms_id)return;const k=t.counterparty_ms_id;if(!prevCustMap[k])prevCustMap[k]={rev:0};prevCustMap[k].rev+=Number(t.revenue_uah||0);});
-  return {curr,prev,topSku,custMap,prevCustMap,revCurr:curr.reduce((s,t)=>s+Number(t.revenue_uah||0),0),revPrev:prev.reduce((s,t)=>s+Number(t.revenue_uah||0),0),txCount:curr.length};
+function rfmScore(m){
+  // R: дні з останньої покупки (менше = краще)
+  const r = m.days_since_last_purchase ?? 999;
+  const recencyScore = r<=30?5 : r<=60?4 : r<=90?3 : r<=180?2 : 1;
+  const f = m.total_orders ?? 0;
+  const frequencyScore = f>=10?5 : f>=5?4 : f>=3?3 : f>=2?2 : 1;
+  const v = m.lifetime_revenue ?? 0;
+  const valueScore = v>=100000?5 : v>=50000?4 : v>=10000?3 : v>=5000?2 : 1;
+  return {r:recencyScore, f:frequencyScore, v:valueScore, total:recencyScore+frequencyScore+valueScore};
 }
-function renderOverview(){
-  state.mode='overview';$('backBtn').style.display='none';$('searchInput').value='';
-  const cs=state.data.customers;const period=state.period;const periodLabel=period===0?'весь час':`${period} днів`;
-  const agg=aggByPeriod(period);const cutoffMs=period>0?Date.now()-period*86400000:0;
-  const activeIds=new Set(Object.keys(agg.custMap));const active=cs.filter(c=>activeIds.has(c.counterparty_ms_id));
-  const news=period===0?cs.filter(c=>c.tx_count===1):cs.filter(c=>c.first_order_date&&new Date(c.first_order_date).getTime()>=cutoffMs);
-  const lost=cs.filter(c=>c.days_since_last_order>180);
-  const avgH=cs.length?Math.round(cs.reduce((s,c)=>s+(c.health_score||0),0)/cs.length):0;
-  const crit=cs.filter(c=>(c.health_score||0)<40).length;
-  const totalShipped=Object.values(state.payRatio).reduce((s,p)=>s+Number(p.shipped_uah||0),0);
-  const totalPaid=Object.values(state.payRatio).reduce((s,p)=>s+Number(p.paid_uah||0),0);
-  const totalDebt=Object.values(state.payRatio).reduce((s,p)=>s+Number(p.debt_uah||0),0);
-  const totalReturns=Object.values(state.returns).reduce((s,r)=>s+Number(r.returned_uah||0),0);
-  const payRatioAvg=totalShipped>0?totalPaid/totalShipped*100:0;
-  const arBuckets={'current':{count:0,sum:0},'1-30':{count:0,sum:0},'31-60':{count:0,sum:0},'61-90':{count:0,sum:0},'90+':{count:0,sum:0}};
-  state.data.arAging.forEach(a=>{if(a.aging_bucket!=='paid'&&arBuckets[a.aging_bucket]){arBuckets[a.aging_bucket].count++;arBuckets[a.aging_bucket].sum+=Number(a.unpaid_uah||0);}});
-  const cohortCounts={'31-60':0,'61-90':0,'91-180':0,'180+':0};
-  state.data.lostCohorts.forEach(c=>{if(cohortCounts[c.cohort]!==undefined)cohortCounts[c.cohort]++;});
-  const cohortSum={'31-60':0,'61-90':0,'91-180':0,'180+':0};
-  const cohortIds={'31-60':new Set(),'61-90':new Set(),'91-180':new Set(),'180+':new Set()};
-  state.data.lostCohorts.forEach(c=>{if(cohortIds[c.cohort])cohortIds[c.cohort].add(c.counterparty_ms_id);});
-  cs.forEach(c=>{for(const k of Object.keys(cohortIds))if(cohortIds[k].has(c.counterparty_ms_id))cohortSum[k]+=Number(c.lifetime_revenue||0);});
-  const cmAug=cs.map(c=>({...c,period_rev:agg.custMap[c.counterparty_ms_id]?.rev||0,period_tx:agg.custMap[c.counterparty_ms_id]?.tx||0,prev_rev:agg.prevCustMap[c.counterparty_ms_id]?.rev||0}));
-  const topCust20=[...cmAug].sort((a,b)=>b.period_rev-a.period_rev).slice(0,20);
-  const top5RevPeriod=topCust20.slice(0,5).reduce((s,c)=>s+c.period_rev,0);
-  const top5Share=agg.revCurr>0?top5RevPeriod/agg.revCurr*100:0;
-  const moversPeriod=cmAug.filter(c=>c.period_rev>0||c.prev_rev>0).map(c=>({...c,delta_uah:c.period_rev-c.prev_rev,delta_pct:c.prev_rev>0?((c.period_rev-c.prev_rev)/c.prev_rev*100):(c.period_rev>0?999:0)})).filter(c=>Math.abs(c.delta_uah)>100);
-  let moverList=[];
-  if(state.moverTab==='abs')moverList=[...moversPeriod].sort((a,b)=>b.delta_uah-a.delta_uah).slice(0,100);
-  else if(state.moverTab==='pct_up')moverList=[...moversPeriod].filter(m=>m.prev_rev>0).sort((a,b)=>b.delta_pct-a.delta_pct).slice(0,100);
-  else if(state.moverTab==='pct_dn')moverList=[...moversPeriod].filter(m=>m.prev_rev>0).sort((a,b)=>a.delta_pct-b.delta_pct).slice(0,100);
-  const topSku=agg.topSku.slice(0,15);const maxSkuRev=topSku[0]?.revenue||1;
-  const segments=[...new Set(cs.map(c=>c.segment_label).filter(Boolean))].sort();
-  const healthBkt=(h)=>h>=70?'good':h>=40?'warn':'bad';
-  const hmap={};segments.forEach(s=>{hmap[s]={good:0,warn:0,bad:0};});
-  cs.forEach(c=>{if(c.segment_label&&hmap[c.segment_label])hmap[c.segment_label][healthBkt(c.health_score||0)]++;});
-  const overdueCritical=state.data.arAging.filter(a=>a.aging_bucket==='31-60'||a.aging_bucket==='61-90'||a.aging_bucket==='90+').sort((a,b)=>Number(b.unpaid_uah)-Number(a.unpaid_uah)).slice(0,15);
-  const chip=(p,lbl)=>`<button class="chip ${p===period?'active':''}" onclick="setPeriod(${p})">${lbl}</button>`;
-  const tab=(k,lbl)=>`<button class="tab ${state.moverTab===k?'active':''}" onclick="setMoverTab('${k}')">${lbl}</button>`;
-  $('contentWrap').innerHTML=`
-    <div class="sec"><h2>📊 Огляд портфелю</h2><span class="badge">${cs.length} клієнтів</span><span class="spacer" style="flex:1"></span><div class="period-chips"><span class="period-label">Період:</span>${chip(30,'30д')}${chip(90,'90д')}${chip(180,'180д')}${chip(365,'365д')}${chip(0,'Весь час')}</div></div>
+function segment(score){
+  if (score.total >= 13) return {name:'🏆 Champions', cls:'tg'};
+  if (score.r >= 4 && score.f >= 4) return {name:'💎 Loyal', cls:'tb'};
+  if (score.r >= 4 && score.v >= 4) return {name:'⭐ Big spenders', cls:'ty'};
+  if (score.r <= 2 && score.f >= 3) return {name:'😟 At risk', cls:'tr'};
+  if (score.r <= 2) return {name:'💤 Sleeping', cls:'tr'};
+  return {name:'🆕 New / Casual', cls:'tb'};
+}
+
+function render(d){
+  const {metrics,timeline,dow,kpis}=d;
+  const totalCust = metrics.length;
+  const activeCust = metrics.filter(m => (m.days_since_last_purchase??999) <= 90).length;
+  const churning = metrics.filter(m => (m.days_since_last_purchase??0) > 90 && (m.days_since_last_purchase??0) <= 180).length;
+  const lost = metrics.filter(m => (m.days_since_last_purchase??0) > 180).length;
+  const lifetime = metrics.reduce((s,m) => s+Number(m.lifetime_revenue||0), 0);
+  const avgLtv = totalCust>0 ? lifetime/totalCust : 0;
+  // Segments
+  const segs={};
+  metrics.forEach(m => {
+    const score = rfmScore(m);
+    const seg = segment(score);
+    if (!segs[seg.name]) segs[seg.name] = {cls:seg.cls, count:0, rev:0};
+    segs[seg.name].count++;
+    segs[seg.name].rev += Number(m.lifetime_revenue||0);
+  });
+  const segRows = Object.entries(segs).map(([k,v])=>({name:k,...v})).sort((a,b)=>b.rev-a.rev);
+
+  $('contentBox').innerHTML=`
+    <div class="sec"><h2>👥 KPI клієнтів</h2></div>
     <div class="g5">
-      <div class="kpi cy"><div class="lbl">👥 Активні (${periodLabel})</div><div class="val">${active.length}</div><div class="sub">з ${cs.length} всього</div></div>
-      <div class="kpi cg"><div class="lbl">🆕 Нові (${periodLabel})</div><div class="val">${news.length}</div><div class="sub">перше замовлення</div></div>
-      <div class="kpi cb"><div class="lbl">💰 Виручка (${periodLabel})</div><div class="val">${fmt.uahK(agg.revCurr)}</div><div class="sub">${period>0?`${agg.txCount} тр · ${deltaTag(deltaPct(agg.revCurr,agg.revPrev))}`:`${agg.txCount} тр`}</div></div>
-      <div class="kpi"><div class="lbl">🩺 Avg Health</div><div class="val">${avgH}/100</div><div class="sub">${crit} критичних</div></div>
-      <div class="kpi cr"><div class="lbl">💔 Lost (>180д)</div><div class="val">${lost.length}</div><div class="sub">давно не купляли</div></div>
+      <div class="kpi cy"><div class="lbl">👥 Всього клієнтів</div><div class="val">${fmt.num(totalCust)}</div><div class="sub">lifetime</div></div>
+      <div class="kpi cg"><div class="lbl">✅ Активні (90д)</div><div class="val">${fmt.num(activeCust)}</div><div class="sub">${totalCust?(activeCust/totalCust*100).toFixed(0):0}%</div></div>
+      <div class="kpi co"><div class="lbl">⚠ Churning (90-180д)</div><div class="val">${fmt.num(churning)}</div><div class="sub">потенц. лост</div></div>
+      <div class="kpi cr"><div class="lbl">💤 Лост (180+д)</div><div class="val">${fmt.num(lost)}</div><div class="sub">не купували</div></div>
+      <div class="kpi cb"><div class="lbl">💰 Avg LTV</div><div class="val">${fmt.uahK(avgLtv)}</div><div class="sub">грн/клієнт</div></div>
     </div>
-    <div class="sec"><h2>💵 Фінансові показники (МойСклад)</h2></div>
-    <div class="g5">
-      <div class="kpi cg"><div class="lbl">💰 Відвантажено всього</div><div class="val">${fmt.uahK(totalShipped)}</div><div class="sub">lifetime</div></div>
-      <div class="kpi cb"><div class="lbl">💵 Отримано грошей</div><div class="val">${fmt.uahK(totalPaid)}</div><div class="sub">paymentin</div></div>
-      <div class="kpi cr"><div class="lbl">🔴 Дебіторка</div><div class="val">${fmt.uahK(totalDebt)}</div><div class="sub">не оплачено</div></div>
-      <div class="kpi co"><div class="lbl">↩️ Повернення</div><div class="val">${fmt.uahK(totalReturns)}</div><div class="sub">${Object.values(state.returns).reduce((s,r)=>s+(r.returns_count||0),0)} док.</div></div>
-      <div class="kpi cv"><div class="lbl">📊 Pay ratio</div><div class="val">${payRatioAvg.toFixed(1)}%</div><div class="sub">оплати/відвантаження</div></div>
+
+    <div class="sec"><h2>🎯 RFM сегментація</h2></div>
+    <div class="cc">
+      <table class="dt">
+        <thead><tr><th>Сегмент</th><th class="num">Клієнтів</th><th class="num">% від базу</th><th class="num">Виручка</th><th class="num">% виручки</th></tr></thead>
+        <tbody>${segRows.map(s => `<tr><td><span class="tag ${s.cls}">${s.name}</span></td><td class="num">${s.count}</td><td class="num">${totalCust?(s.count/totalCust*100).toFixed(1):0}%</td><td class="num">${fmt.uahK(s.rev)}</td><td class="num">${lifetime?(s.rev/lifetime*100).toFixed(1):0}%</td></tr>`).join('')}</tbody>
+      </table>
     </div>
-    ${top5Share>50?`<div style="margin-top:14px;padding:14px 18px;background:#FFFBEE;border-left:4px solid var(--or);border-radius:8px;font-size:13px"><strong>⚠ Концентрація:</strong> TOP-5 = <strong>${top5Share.toFixed(1)}%</strong> виручки за ${periodLabel}.</div>`:''}
-    <div class="sec"><h2>📈 Тренд виручки портфелю · 12 місяців</h2></div>
-    <div class="cc"><div class="chart-wrap xl"><canvas id="trendChart"></canvas></div></div>
-    <div class="sec"><h2>📅 YoY · поточний рік vs попередній</h2></div>
-    <div class="cc"><div class="chart-wrap tall"><canvas id="yoyChart"></canvas></div></div>
-    <div class="sec"><h2>🔥 Heatmap портфелю · сегмент × health</h2></div>
-    <div class="cc"><div class="hmap"><div class="hmap-col-lbl"></div><div class="hmap-col-lbl" style="color:var(--g)">🟢 Good (≥70)</div><div class="hmap-col-lbl" style="color:var(--or)">🟡 Warn (40-70)</div><div class="hmap-col-lbl" style="color:var(--r)">🔴 Bad (&lt;40)</div>${segments.map(s=>{const row=hmap[s];const tot=row.good+row.warn+row.bad;return `<div class="hmap-lbl">${escapeHtml(s)}</div><div class="hmap-cell" style="background:rgba(57,180,74,${Math.min(0.9,0.2+(row.good/Math.max(tot,1))*0.7)});color:#fff"><span class="cnt">${row.good}</span><span class="pct">${tot>0?(row.good/tot*100).toFixed(0):0}%</span></div><div class="hmap-cell" style="background:rgba(245,158,11,${Math.min(0.9,0.2+(row.warn/Math.max(tot,1))*0.7)});color:#fff"><span class="cnt">${row.warn}</span><span class="pct">${tot>0?(row.warn/tot*100).toFixed(0):0}%</span></div><div class="hmap-cell" style="background:rgba(232,64,64,${Math.min(0.9,0.2+(row.bad/Math.max(tot,1))*0.7)});color:#fff"><span class="cnt">${row.bad}</span><span class="pct">${tot>0?(row.bad/tot*100).toFixed(0):0}%</span></div>`;}).join('')}</div></div>
-    <div class="sec"><h2>🛒 ТОП-15 продуктів · ${periodLabel}</h2><span class="badge">${agg.topSku.length} SKU</span></div>
-    <div class="cc"><div class="prod-row" style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;background:#FAFAF5;border-radius:6px;letter-spacing:.05em;padding:8px 4px;cursor:default"><div class="rk">#</div><div class="nm">SKU</div><div style="text-align:center">КАТЕГ.</div><div class="num">ШТ</div><div class="num">ВИРУЧКА</div><div class="num">КЛІЄНТІВ</div></div>${topSku.length===0?'<div class="empty">Немає даних за період</div>':topSku.map((s,i)=>`<div class="prod-row"><div class="rk">${i+1}</div><div class="nm" title="${escapeHtml(s.sku_name)}">${truncate(s.sku_name,40)}<div class="prod-bar"><div class="prod-bar-fill" style="width:${(s.revenue/maxSkuRev*100).toFixed(1)}%"></div></div></div><div><span class="cat">${s.sku_category||'—'}</span></div><div class="num">${fmt.num(s.qty)}</div><div class="num rev">${fmt.uahK(s.revenue)}</div><div class="num cust">${s.customers}</div></div>`).join('')}</div>
-    <div class="sec"><h2>📈 ТОП-100 Movers · ${periodLabel} vs попередні ${periodLabel}</h2></div>
-    ${period===0?'<div class="placeholder">Movers недоступні для періоду «Весь час».</div>':`<div class="cc"><div class="tabs">${tab('abs','💰 Абсолютний ріст ₴')}${tab('pct_up','🚀 % ріст')}${tab('pct_dn','📉 % падіння')}</div><div class="tbl-scroll" style="max-height:480px"><table class="dt"><thead><tr><th>#</th><th>Клієнт</th><th>Канал</th><th class="num">Зараз</th><th class="num">Попер.</th><th class="num">Δ ₴</th><th class="num">Δ %</th></tr></thead><tbody>${moverList.slice(0,100).map((m,i)=>`<tr onclick="selectCustomer('${m.counterparty_ms_id}')"><td>${i+1}</td><td><strong>${truncate(m.name,32)}</strong></td><td><small>${m.channel_name||'—'}</small></td><td class="num">${fmt.uahK(m.period_rev)}</td><td class="num"><small>${fmt.uahK(m.prev_rev)}</small></td><td class="num" style="color:${m.delta_uah>=0?'var(--g)':'var(--r)'};font-weight:700">${m.delta_uah>=0?'+':''}${fmt.uahK(m.delta_uah)}</td><td class="num">${deltaTag(m.delta_pct===999?null:m.delta_pct)}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">Немає</td></tr>'}</tbody></table></div></div>`}
-    <div class="sec"><h2>🔥 RFM Heatmap · lifetime</h2></div>
-    <div class="cc">${renderRFM(cs)}<div style="margin-top:10px;font-size:11px;color:var(--muted)">RFM рахується по всій історії. Клікніть клітинку → побачите клієнтів сегменту.</div></div>
-    <div class="sec"><h2>💔 Лост-когорти · давність останнього замовлення</h2></div>
-    <div class="g4">${Object.entries(cohortCounts).map(([k,v],i)=>`<div class="lc-card c${i+1}" onclick="filterByCohort('${k}')"><div class="lc-cnt">${v}</div><div class="lc-lbl">${k} дн.</div><div class="lc-sum">${fmt.uahK(cohortSum[k])}</div></div>`).join('')}</div>
-    <div class="sec"><h2>📊 AR Aging · структура дебіторки за віком</h2></div>
-    <div class="cc"><div class="ar-grid">${Object.entries(arBuckets).map(([k,v],i)=>{const colors={'current':'var(--g)','1-30':'var(--or)','31-60':'#E07F00','61-90':'var(--r)','90+':'#3A0000'};return `<div class="ar-cell" style="background:${colors[k]}"><div class="ar-name">${k==='current'?'У строку':k+' дн.'}</div><div class="ar-sum">${fmt.uahK(v.sum)}</div><div class="ar-cnt">${v.count} рах.</div></div>`;}).join('')}</div></div>
-    <div class="sec"><h2>🎯 Прострочена дебіторка · дзвонити сьогодні</h2><span class="badge">TOP-15</span></div>
-    <div class="cc">${overdueCritical.length===0?'<div class="empty">✓ Немає прострочених рахунків.</div>':`<div class="tbl-scroll"><table class="dt"><thead><tr><th>Клієнт</th><th>Рахунок</th><th class="num">Сума</th><th class="num">Не оплачено</th><th class="num">Прострочка</th></tr></thead><tbody>${overdueCritical.map(a=>`<tr onclick="selectCustomer('${a.counterparty_ms_id}')"><td><strong>${escapeHtml(truncate(a.counterparty_name||'—',32))}</strong></td><td><small>${escapeHtml(a.invoice_name||'—')}</small></td><td class="num">${fmt.uahK(a.sum_uah)}</td><td class="num" style="color:var(--r);font-weight:700">${fmt.uahK(a.unpaid_uah)}</td><td class="num"><span class="tag tr">${a.days_overdue} дн.</span></td></tr>`).join('')}</tbody></table></div>`}</div>
-    <div class="sec"><h2>🎯 Концентрація — TOP-20 за ${periodLabel}</h2></div>
-    <div class="cc"><div class="tbl-scroll"><table class="dt"><thead><tr><th>#</th><th>Клієнт</th><th>Канал</th><th>Сегмент</th><th class="num">Виручка</th><th class="num">Тр</th><th class="num">Δ vs попер.</th><th class="num">Lifetime</th><th class="num">Health</th><th class="num">Last</th></tr></thead><tbody>${topCust20.map((c,i)=>`<tr onclick="selectCustomer('${c.counterparty_ms_id}')"><td>${i+1}</td><td><strong>${truncate(c.name,30)}</strong></td><td><span class="tag" style="background:${c.channel_color}22;color:${c.channel_color}">${c.channel_name||'—'}</span></td><td><small>${c.segment_label||'—'}</small></td><td class="num">${fmt.uahK(c.period_rev)}</td><td class="num">${c.period_tx}</td><td class="num">${period>0?deltaTag(c.prev_rev>0?((c.period_rev-c.prev_rev)/c.prev_rev*100):null):'—'}</td><td class="num"><small>${fmt.uahK(c.lifetime_revenue)}</small></td><td class="num">${healthBadge(c.health_score)}</td><td class="num"><small>${ago(c.last_order_date)}</small></td></tr>`).join('')}</tbody></table></div></div>
-    <div class="sec"><h2>⚠ Action items</h2></div>
-    <div class="g2"><div class="cc"><div class="cc-head"><h3>😴 Сонні (>90д, lifetime >10k)</h3></div><div class="tbl-scroll" style="max-height:280px"><table class="dt"><thead><tr><th>Клієнт</th><th class="num">Lifetime</th><th class="num">Last</th></tr></thead><tbody>${cs.filter(c=>c.days_since_last_order>90&&c.days_since_last_order<180&&Number(c.lifetime_revenue||0)>10000).slice(0,12).map(c=>`<tr onclick="selectCustomer('${c.counterparty_ms_id}')"><td><strong>${truncate(c.name,30)}</strong></td><td class="num">${fmt.uahK(c.lifetime_revenue)}</td><td class="num"><small>${c.days_since_last_order} дн.</small></td></tr>`).join('')||'<tr><td colspan="3" class="empty">Немає</td></tr>'}</tbody></table></div></div><div class="cc"><div class="cc-head"><h3>🆕 Нові — слідкуйте за 2-м замовленням</h3></div><div class="tbl-scroll" style="max-height:280px"><table class="dt"><thead><tr><th>Клієнт</th><th class="num">Канал</th><th class="num">Дата</th></tr></thead><tbody>${news.slice(0,12).map(c=>`<tr onclick="selectCustomer('${c.counterparty_ms_id}')"><td><strong>${truncate(c.name,30)}</strong></td><td class="num"><small>${c.channel_name||'—'}</small></td><td class="num"><small>${fmt.date(c.first_order_date)}</small></td></tr>`).join('')||'<tr><td colspan="3" class="empty">Немає</td></tr>'}</tbody></table></div></div></div>
-    <div class="sec"><h2>📚 Навігація</h2></div>
-    <div class="cc"><p style="margin:0;font-size:12px;color:var(--muted)"><a href="../sales-performance/" style="color:var(--y);font-weight:600;text-decoration:none">📈 Sales Performance →</a> · <a href="../financial/" style="color:var(--y);text-decoration:none">💵 Financial →</a> · <a href="../hq/" style="color:var(--y);text-decoration:none">🏢 HQ SMM →</a></p></div>`;
-  setTimeout(()=>{drawTrendChart();drawYoyChart();},50);
+
+    <div class="sec"><h2>📈 Динаміка клієнтської бази (по місяцях)</h2></div>
+    <div class="cc"><div class="chart-wrap tall"><canvas id="timelineChart"></canvas></div></div>
+
+    <div class="sec"><h2>📅 День тижня · виручка</h2></div>
+    <div class="g2">
+      <div class="cc"><div class="chart-wrap"><canvas id="dowChart"></canvas></div></div>
+      <div class="cc">
+        <div class="cc-head"><h3>📊 По днях</h3></div>
+        <table class="dt">
+          <thead><tr><th>День</th><th class="num">Замовлень</th><th class="num">Виручка</th><th class="num">Avg</th></tr></thead>
+          <tbody>${dow.map(d => `<tr><td><strong>${d.dow_name||'—'}</strong></td><td class="num">${d.orders||0}</td><td class="num">${fmt.uahK(d.revenue||0)}</td><td class="num">${fmt.uah(d.avg_order||0)}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">Немає</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sec"><h2>🏆 ТОП клієнтів за LTV</h2><span class="badge">${metrics.length}</span></div>
+    <div class="cc"><div class="tbl-scroll"><table class="dt">
+      <thead><tr><th>#</th><th>Клієнт</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">LTV ₴</th><th class="num">Avg чек</th><th>Перше</th><th>Останнє</th><th class="num">Днів</th><th>Сегмент</th></tr></thead>
+      <tbody>${metrics.slice(0,200).map((m,i) => {
+        const score = rfmScore(m);
+        const seg = segment(score);
+        return `<tr>
+          <td>${i+1}</td>
+          <td><strong>${escapeHtml(truncate(m.counterparty_name||'— невідомий —',32))}</strong></td>
+          <td class="num">${m.total_orders||0}</td>
+          <td class="num">${Number(m.total_qty||0).toFixed(0)}</td>
+          <td class="num">${fmt.uahK(m.lifetime_revenue)}</td>
+          <td class="num">${fmt.uah(m.avg_order_value||0)}</td>
+          <td><small>${fmt.date(m.first_purchase)}</small></td>
+          <td><small>${fmt.date(m.last_purchase)}</small></td>
+          <td class="num">${m.days_since_last_purchase??'—'}</td>
+          <td><span class="tag ${seg.cls}">${seg.name}</span></td>
+        </tr>`;
+      }).join('')||'<tr><td colspan="10" class="empty">Немає</td></tr>'}</tbody>
+    </table></div></div>
+  `;
+  setTimeout(()=>{
+    if(charts.timeline)charts.timeline.destroy();
+    charts.timeline=new Chart($('timelineChart'),{
+      type:'bar',
+      data:{labels:timeline.map(t=>fmt.month(t.month)),datasets:[
+        {label:'Активні клієнти',data:timeline.map(t=>Number(t.active_customers||0)),backgroundColor:'#39B44A',borderRadius:4,yAxisID:'y'},
+        {label:'Нові клієнти',data:timeline.map(t=>Number(t.new_customers||0)),backgroundColor:'#3B82F6',borderRadius:4,yAxisID:'y'},
+        {label:'Виручка ₴',data:timeline.map(t=>Number(t.revenue||0)),type:'line',borderColor:'#001154',backgroundColor:'transparent',borderWidth:2.5,tension:.3,pointRadius:3,yAxisID:'y1'},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{position:'left',title:{display:true,text:'Клієнти'}},y1:{position:'right',ticks:{callback:(v)=>fmt.uahK(v)},grid:{drawOnChartArea:false}}}}
+    });
+    if(charts.dow)charts.dow.destroy();
+    charts.dow=new Chart($('dowChart'),{
+      type:'bar',
+      data:{labels:dow.map(d=>d.dow_name||'—'),datasets:[{label:'Виручка',data:dow.map(d=>Number(d.revenue||0)),backgroundColor:'#001154',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:(v)=>fmt.uahK(v)}}}}
+    });
+  },50);
 }
-function drawTrendChart(){const ctx=$('trendChart');if(!ctx)return;const d=state.data.trend12m||[];if(state.charts.trend)state.charts.trend.destroy();state.charts.trend=new Chart(ctx,{type:'line',data:{labels:d.map(x=>{const[y,m]=x.month.split('-');return new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString('uk-UA',{month:'short',year:'2-digit'});}),datasets:[{label:'Виручка ₴',data:d.map(x=>Number(x.revenue_uah||0)),backgroundColor:'rgba(0,17,84,.13)',borderColor:'#001154',borderWidth:2,tension:.3,fill:true,yAxisID:'y'},{label:'Активних клієнтів',data:d.map(x=>Number(x.active_customers||0)),backgroundColor:'transparent',borderColor:'#39B44A',borderWidth:2,tension:.3,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{position:'left',title:{display:true,text:'Виручка ₴'},ticks:{callback:(v)=>fmt.uahK(v)}},y1:{position:'right',title:{display:true,text:'Клієнтів'},grid:{drawOnChartArea:false}}}}});}
-function drawYoyChart(){const ctx=$('yoyChart');if(!ctx)return;const yoy=state.data.yoy||[];const years=[...new Set(yoy.map(x=>x.y))].sort();const colors={2025:'#3B82F6',2026:'#001154',2024:'#94a3b8'};const mn=['Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру'];const datasets=years.map(y=>({label:String(y),data:mn.map((_,i)=>{const r=yoy.find(x=>x.y===y&&x.m===i+1);return r?Number(r.revenue_uah||0):0;}),backgroundColor:colors[y]||'#888',borderRadius:4}));if(state.charts.yoy)state.charts.yoy.destroy();state.charts.yoy=new Chart(ctx,{type:'bar',data:{labels:mn,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:(v)=>fmt.uahK(v)}}}}});}
-function renderRFM(cs){const grid={};cs.forEach(c=>{const key=`${c.r_score}-${c.f_score}`;grid[key]=(grid[key]||0)+1;});const cellHTML=(r,f)=>{const cnt=grid[`${r}-${f}`]||0;let color='#94a3b8',lbl='💀 Lost';if(r===1&&f===3){color='#39B44A';lbl='💎 Чемпіони';}else if(r===1&&f===2){color='#39B44A';lbl='🟢 Лояльні';}else if(r===1&&f===1){color='#3B82F6';lbl='🆕 Нові';}else if(r===2&&f===3){color='#F59E0B';lbl='⚠ Втрачаємо';}else if(r===2&&f===2){color='#F59E0B';lbl='🟡 At-risk';}else if(r===2&&f===1){color='#F59E0B';lbl='😴 Засинають';}else if(r===3&&f===3){color='#E84040';lbl='🚨 Чемпіони лост';}else if(r===3&&f===2){color='#E84040';lbl='🔴 Лояльні лост';}return `<div class="rfm-cell" style="background:${color}" onclick="filterByRF(${r},${f})"><div class="cnt">${cnt}</div><div class="lbl">${lbl}</div></div>`;};return `<div class="rfm-grid"><div class="rfm-col-lbl"></div><div class="rfm-col-lbl">F=1 (1-2)</div><div class="rfm-col-lbl">F=2 (3-9)</div><div class="rfm-col-lbl">F=3 (10+)</div><div class="rfm-row-lbl">R=1 (≤30д)</div>${cellHTML(1,1)}${cellHTML(1,2)}${cellHTML(1,3)}<div class="rfm-row-lbl">R=2 (30-90д)</div>${cellHTML(2,1)}${cellHTML(2,2)}${cellHTML(2,3)}<div class="rfm-row-lbl">R=3 (>90д)</div>${cellHTML(3,1)}${cellHTML(3,2)}${cellHTML(3,3)}</div>`;}
-function filterByRF(r,f){const matches=state.data.customers.filter(c=>c.r_score===r&&c.f_score===f);if(matches.length===0)return toast('Немає клієнтів у сегменті');if(matches.length===1)return selectCustomer(matches[0].counterparty_ms_id);toast(`Сегмент R=${r} F=${f}: ${matches.length} клієнтів`);}
-function filterByCohort(c){toast(`Лост ${c}: ${state.data.lostCohorts.filter(x=>x.cohort===c).length} клієнтів`);}
-async function selectCustomer(ms_id){const c=state.data.customers.find(x=>x.counterparty_ms_id===ms_id);if(!c)return toast('Не знайдено',true);try{const [skus,timeline,dow,crm,cross,invoices,payments,contacts,healthHist,yoy,promo,cpRaw]=await Promise.all([api(`v_customer_skus?counterparty_ms_id=eq.${ms_id}&select=*&order=revenue.desc`),api(`v_customer_timeline?counterparty_ms_id=eq.${ms_id}&select=*&order=date.desc&limit=300`),api(`v_customer_dow?counterparty_ms_id=eq.${ms_id}&select=*`),api(`crm_notes?counterparty_ms_id=eq.${ms_id}&select=*&order=note_date.desc`),api(`v_cross_sell?counterparty_ms_id=eq.${ms_id}&select=*&order=peer_revenue.desc&limit=10`),api(`v_ar_aging?counterparty_ms_id=eq.${ms_id}&select=*&order=invoice_date.desc`),api(`moysklad_payments?counterparty_ms_id=eq.${ms_id}&select=*&order=moment.desc&limit=100`),api(`customer_contacts?counterparty_ms_id=eq.${ms_id}&select=*`),api(`v_customer_health_history?counterparty_ms_id=eq.${ms_id}&select=*&order=month.asc`),api(`v_customer_yoy?counterparty_ms_id=eq.${ms_id}&select=*`),api(`v_promo_response?counterparty_ms_id=eq.${ms_id}&select=*&order=promo_date.desc&limit=10`),api(`moysklad_counterparties?ms_id=eq.${ms_id}&select=*`)]);state.customer=c;state.customerSkus=skus;state.customerTimeline=timeline;state.customerDow=dow;state.customerCrm=crm;state.crossSell=cross;state.customerInvoices=invoices;state.customerPayments=payments;state.customerContacts=contacts;state.customerHealth=healthHist;state.customerYoY=yoy;state.customerPromo=promo;state.customerRaw=cpRaw[0]||{};renderDetail();window.scrollTo({top:0,behavior:'smooth'});}catch(e){toast('Помилка: '+e.message,true);}}
-function renderDetail(){state.mode='detail';$('backBtn').style.display='block';$('searchInput').value='';const c=state.customer,skus=state.customerSkus,timeline=state.customerTimeline,dow=state.customerDow,crm=state.customerCrm,cross=state.crossSell;const invoices=state.customerInvoices||[],payments=state.customerPayments||[],contacts=state.customerContacts||[];const healthHist=state.customerHealth||[],yoy=state.customerYoY||[],promo=state.customerPromo||[];const raw=state.customerRaw||{};const all=state.data.customers;const bench=state.benchmarks[c.channel_id]||{};const avgLifetime=bench.avg_lifetime||(all.reduce((s,x)=>s+Number(x.lifetime_revenue||0),0)/all.length);const avgAov=bench.avg_aov||(all.reduce((s,x)=>s+Number(x.aov||0),0)/all.length);const avgHealth=bench.avg_health||(all.reduce((s,x)=>s+Number(x.health_score||0),0)/all.length);const avgTx=bench.avg_tx_count||(all.reduce((s,x)=>s+Number(x.tx_count||0),0)/all.length);const sorted=[...all].sort((a,b)=>Number(b.lifetime_revenue||0)-Number(a.lifetime_revenue||0));const rank=sorted.findIndex(x=>x.counterparty_ms_id===c.counterparty_ms_id)+1;const totalAll=sorted.reduce((s,x)=>s+Number(x.lifetime_revenue||0),0);const sharePct=totalAll>0?(Number(c.lifetime_revenue||0)/totalAll*100):0;const pr=state.payRatio[c.counterparty_ms_id]||{shipped_uah:0,paid_uah:0,debt_uah:0,pay_ratio_pct:0};const rt=state.returns[c.counterparty_ms_id]||{returned_uah:0,returns_count:0,return_rate_pct:0};const insights=[];if(c.days_since_last_order>60)insights.push({cls:'red',icon:'😴',title:'Спить',body:`Не замовляли ${c.days_since_last_order} днів.`});if(c.growth_90d_pct!=null&&c.growth_90d_pct>30)insights.push({cls:'green',icon:'🚀',title:'Швидко росте',body:`+${c.growth_90d_pct}% за 90д.`});if(c.growth_90d_pct!=null&&c.growth_90d_pct<-30)insights.push({cls:'red',icon:'📉',title:'Падає',body:`${c.growth_90d_pct}% за 90д.`});if(Number(c.lifetime_revenue)>=avgLifetime*3)insights.push({cls:'green',icon:'💎',title:'VIP',body:`${(c.lifetime_revenue/avgLifetime).toFixed(1)}× від середнього.`});if(c.health_score<40)insights.push({cls:'red',icon:'🩺',title:'Health критичний',body:`Score = ${c.health_score}/100.`});if(Number(pr.debt_uah)>10000)insights.push({cls:'red',icon:'🔴',title:'Велика дебіторка',body:`${fmt.uahK(pr.debt_uah)} не оплачено.`});if(Number(pr.pay_ratio_pct)<70&&Number(pr.shipped_uah)>0)insights.push({cls:'yellow',icon:'💵',title:'Низький pay ratio',body:`Оплачено лише ${Number(pr.pay_ratio_pct).toFixed(0)}% від відвантаженого.`});if(Number(rt.return_rate_pct)>5)insights.push({cls:'yellow',icon:'↩️',title:'Підвищені повернення',body:`${Number(rt.return_rate_pct).toFixed(1)}% — норма до 5%.`});if(c.skus_purchased<5&&c.tx_count>=5)insights.push({cls:'yellow',icon:'🎯',title:'Вузький асортимент',body:`${c.skus_purchased} SKU.`});if(cross.length>=3)insights.push({cls:'yellow',icon:'🛒',title:`${cross.length} cross-sell`,body:`Peers купляють що цей клієнт ще ні.`});if(insights.length===0)insights.push({cls:'green',icon:'✓',title:'Все добре',body:'Клієнт без алертів.'});const byMonth={};timeline.forEach(t=>{const m=t.date.slice(0,7);byMonth[m]=(byMonth[m]||0)+Number(t.revenue_uah||0);});const months=Object.keys(byMonth).sort();const dowMap={0:'Нд',1:'Пн',2:'Вт',3:'Ср',4:'Чт',5:'Пт',6:'Сб'};const dowGrid=[1,2,3,4,5,6,0].map(d=>({d,name:dowMap[d],cnt:0,rev:0}));dow.forEach(x=>{const idx=dowGrid.findIndex(g=>g.d===x.dow);if(idx>=0){dowGrid[idx].cnt=x.tx_count;dowGrid[idx].rev=Number(x.revenue||0);}});const maxDow=Math.max(...dowGrid.map(d=>d.cnt),1);const unpaidInvoices=invoices.filter(i=>i.aging_bucket!=='paid');const totalUnpaid=unpaidInvoices.reduce((s,i)=>s+Number(i.unpaid_uah||0),0);
-  $('contentWrap').innerHTML=`
-    <div class="cust-header"><h1 class="cust-name">${escapeHtml(c.name)}</h1><div class="cust-meta"><span>📋 ${c.company_type==='individual'?'Фізособа':c.company_type==='entrepreneur'?'ФОП':c.company_type==='legal'?'Юр.особа':'—'}</span>${c.inn?`<span>🧾 ${c.inn}</span>`:''}${raw.phone?`<span>📞 ${escapeHtml(raw.phone)}</span>`:''}${raw.email?`<span>📧 ${escapeHtml(raw.email)}</span>`:''}<span>📍 <strong>${c.channel_name||'—'}</strong></span>${c.price_type?`<span>💰 ${c.price_type}</span>`:''}${c.state?`<span>🏷 ${c.state}</span>`:''}</div><div class="cust-tags"><span class="cust-tag seg">${c.segment_label||'—'}</span><span class="cust-tag">Health ${c.health_score}/100</span><span class="cust-tag">Rank #${rank}/${all.length}</span><span class="cust-tag">Частка ${sharePct.toFixed(2)}%</span>${totalUnpaid>0?`<span class="cust-tag" style="background:rgba(232,64,64,.3);border-color:rgba(232,64,64,.5)">🔴 Борг ${fmt.uahK(totalUnpaid)}</span>`:''}</div></div>
-    <div class="health-hero"><div class="health-circle">${healthCircle(c.health_score)}<div class="val">${c.health_score}</div><div class="lbl">Health</div></div><div class="health-info"><h3>${c.segment_label||'—'}</h3><p style="margin:0;color:var(--muted);font-size:13px">Health = 40·Recency + 30·Frequency + 20·Growth + 10·Spend</p><div class="components"><div class="health-comp">⏱ Recency: <strong>${c.days_since_last_order} дн.</strong></div><div class="health-comp">🔁 Транзакцій: <strong>${c.tx_count}</strong></div><div class="health-comp">📈 Growth 90д: <strong>${c.growth_90d_pct!=null?c.growth_90d_pct+'%':'—'}</strong></div><div class="health-comp">💰 Lifetime: <strong>${fmt.uahK(c.lifetime_revenue)}</strong></div><div class="health-comp">🩺 vs peer: <strong>${avgHealth?Math.round(c.health_score/avgHealth*100):'—'}%</strong></div></div></div></div>
-    <div class="sec"><h2>📊 Основні метрики</h2></div>
-    <div class="g4"><div class="kpi cy"><div class="lbl">💰 Lifetime</div><div class="val">${fmt.uah(c.lifetime_revenue)}</div><div class="sub">${c.tx_count} тр · ${c.lifetime_qty} шт</div></div><div class="kpi cg"><div class="lbl">🛒 AOV</div><div class="val">${fmt.uah(c.aov)}</div><div class="sub">avg order value</div></div><div class="kpi"><div class="lbl">📅 Перше замовлення</div><div class="val" style="font-size:16px">${fmt.date(c.first_order_date)}</div><div class="sub">${c.customer_lifetime_days} дн як клієнт</div></div><div class="kpi"><div class="lbl">⏱ Останнє замовлення</div><div class="val" style="font-size:16px">${fmt.date(c.last_order_date)}</div><div class="sub">${ago(c.last_order_date)}</div></div></div>
-    <div class="g4" style="margin-top:14px"><div class="kpi cb"><div class="lbl">📊 Виручка 90д</div><div class="val">${fmt.uahK(c.revenue_90d)}</div><div class="sub">${c.tx_90d} тр</div></div><div class="kpi ${c.growth_90d_pct>0?'cg':c.growth_90d_pct<0?'cr':''}"><div class="lbl">📈 Growth 90д</div><div class="val">${c.growth_90d_pct!=null?c.growth_90d_pct+'%':'—'}</div><div class="sub">vs попер. 90д</div></div><div class="kpi"><div class="lbl">🔁 Cadence</div><div class="val">${c.avg_days_between_orders?Math.round(c.avg_days_between_orders)+' дн':'—'}</div><div class="sub">avg між замовл.</div></div><div class="kpi"><div class="lbl">🏷 Асортимент</div><div class="val">${c.skus_purchased}</div><div class="sub">унікальних SKU</div></div></div>
-    <div class="sec"><h2>💵 Фінансові показники МойСклад</h2></div>
-    <div class="g5"><div class="kpi cg"><div class="lbl">💰 Відвантажено</div><div class="val">${fmt.uahK(pr.shipped_uah)}</div><div class="sub">lifetime ₴</div></div><div class="kpi cb"><div class="lbl">💵 Отримано грошей</div><div class="val">${fmt.uahK(pr.paid_uah)}</div><div class="sub">${pr.pay_count||0} платежів</div></div><div class="kpi ${Number(pr.debt_uah)>10000?'cr':''}"><div class="lbl">🔴 Дебіторка</div><div class="val">${fmt.uahK(pr.debt_uah)}</div><div class="sub">не оплачено</div></div><div class="kpi cv"><div class="lbl">📊 Pay ratio</div><div class="val">${Number(pr.pay_ratio_pct).toFixed(1)}%</div><div class="sub">оплата/відвантаж.</div></div><div class="kpi ${Number(rt.return_rate_pct)>5?'cr':'co'}"><div class="lbl">↩️ Returns rate</div><div class="val">${Number(rt.return_rate_pct).toFixed(1)}%</div><div class="sub">${rt.returns_count||0} повернень</div></div></div>
-    <div class="sec"><h2>🧠 Auto-insights</h2></div>
-    <div class="g3">${insights.map(i=>`<div class="insight ${i.cls}"><h4>${i.icon} ${i.title}</h4><p>${i.body}</p></div>`).join('')}</div>
-    <div class="g2" style="margin-top:18px"><div class="cc"><div class="cc-head"><h3>📈 Тренд виручки клієнта</h3></div><div class="chart-wrap"><canvas id="custTrendChart"></canvas></div></div><div class="cc"><div class="cc-head"><h3>📈 Health Trend · 12 міс</h3></div><div class="chart-wrap"><canvas id="custHealthChart"></canvas></div></div></div>
-    <div class="g2" style="margin-top:14px"><div class="cc"><div class="cc-head"><h3>📅 YoY · поточний рік vs попередній</h3></div><div class="chart-wrap"><canvas id="custYoyChart"></canvas></div></div><div class="cc"><div class="cc-head"><h3>💵 Відвантаження vs Надходження</h3></div><div class="chart-wrap"><canvas id="custShipPayChart"></canvas></div></div></div>
-    <div class="g2" style="margin-top:14px"><div class="cc"><div class="cc-head"><h3>🛒 ТОП SKU клієнта</h3><span class="pill">${skus.length}</span></div><div class="tbl-scroll"><table class="dt"><thead><tr><th>#</th><th>SKU</th><th>Кат</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Разів</th></tr></thead><tbody>${skus.slice(0,30).map((s,i)=>`<tr><td>${i+1}</td><td title="${escapeHtml(s.sku_name)}">${truncate(s.sku_name,28)}</td><td><small>${s.sku_category||'—'}</small></td><td class="num">${s.qty}</td><td class="num">${fmt.uah(s.revenue)}</td><td class="num">${s.times_ordered}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">Немає</td></tr>'}</tbody></table></div></div><div class="cc"><div class="cc-head"><h3>📊 Peer-клієнт каналу</h3><span class="pill">${c.channel_name||'—'}</span></div><div class="g1" style="gap:10px"><div class="kpi"><div class="lbl">💰 Lifetime vs peer</div><div class="val">${avgLifetime?(c.lifetime_revenue/avgLifetime).toFixed(1):'—'}×</div><div class="sub">peer: ${fmt.uahK(avgLifetime)}</div></div><div class="kpi"><div class="lbl">🛒 AOV vs peer</div><div class="val">${avgAov?(Number(c.aov)/avgAov).toFixed(1):'—'}×</div><div class="sub">peer: ${fmt.uah(avgAov)}</div></div><div class="kpi"><div class="lbl">🔁 Транзакції vs peer</div><div class="val">${avgTx?(c.tx_count/avgTx).toFixed(1):'—'}×</div><div class="sub">peer: ${avgTx.toFixed(0)}</div></div><div class="kpi"><div class="lbl">🏆 Rank у каналі</div><div class="val">#${rank}</div><div class="sub">з ${all.length} клієнтів</div></div></div></div></div>
-    <div class="sec"><h2>🎯 Cross-sell · SKU що peers купляють, а цей клієнт ще ні</h2><span class="badge">${cross.length}</span></div>
-    <div class="cc">${cross.length===0?'<div class="empty">Усі SKU вже куплено або немає peers.</div>':cross.slice(0,10).map((x,i)=>`<div class="cs-row"><div class="rk">${i+1}</div><div class="nm">${escapeHtml(x.sku_name)}</div><div><span class="cat">${x.sku_category||'—'}</span></div><div class="val">${x.peer_buyers} клієнтів · ${fmt.uahK(x.peer_revenue)}</div></div>`).join('')}</div>
-    <div class="sec"><h2>🔴 Прострочена дебіторка · рахунки клієнта</h2><span class="badge">${unpaidInvoices.length}</span></div>
-    <div class="cc">${unpaidInvoices.length===0?'<div class="empty">✓ Усі рахунки оплачено.</div>':`<div class="tbl-scroll" style="max-height:320px"><div class="ar-row" style="font-weight:700;color:var(--muted);font-size:10px;text-transform:uppercase;background:#FAFAF5"><div class="dt">Дата</div><div class="nm">Рахунок</div><div class="num">Сума</div><div class="num">Не опл.</div><div class="num">Прострочка</div><div class="ag">Кор.</div></div>${unpaidInvoices.slice(0,50).map(i=>{const cls=i.aging_bucket==='current'?'current':i.aging_bucket==='1-30'?'b1':i.aging_bucket==='31-60'?'b2':i.aging_bucket==='61-90'?'b3':'b4';return `<div class="ar-row"><div class="dt">${fmt.date(i.invoice_date)}</div><div class="nm">${escapeHtml(truncate(i.invoice_name||'—',30))}</div><div class="num">${fmt.uahK(i.sum_uah)}</div><div class="num unpaid">${fmt.uahK(i.unpaid_uah)}</div><div class="num">${i.days_overdue>0?i.days_overdue+'д':'—'}</div><div class="ag ${cls}">${i.aging_bucket}</div></div>`;}).join('')}</div>`}</div>
-    <div class="sec"><h2>👥 Контактні особи · decision makers</h2><span class="badge">${contacts.length}</span></div>
-    <div class="cc">${contacts.length===0?`<div class="empty">${raw.phone||raw.email?`Основний контакт: ${raw.phone?'📞 '+escapeHtml(raw.phone):''} ${raw.email?'📧 '+escapeHtml(raw.email):''}`:'Контактні особи ще не синхронізовано. Запустіть sync contactpersons.'}</div>`:`<div class="g3">${contacts.map(p=>`<div class="cp-card"><div class="cp-name">${escapeHtml(p.name||'—')}</div>${p.position?`<div class="cp-pos">${escapeHtml(p.position)}</div>`:''}${p.phone?`<div class="cp-contact">📞 ${escapeHtml(p.phone)}</div>`:''}${p.email?`<div class="cp-contact">📧 ${escapeHtml(p.email)}</div>`:''}${p.description?`<div class="cp-contact" style="margin-top:6px;color:var(--muted)">${escapeHtml(truncate(p.description,60))}</div>`:''}</div>`).join('')}</div>`}</div>
-    ${(raw.legal_address||raw.actual_address)?`<div class="sec"><h2>🏢 Адреси</h2></div><div class="g2">${raw.legal_address?`<div class="addr"><div class="addr-lbl">Юридична</div>${escapeHtml(raw.legal_address)}</div>`:''}${raw.actual_address?`<div class="addr"><div class="addr-lbl">Фактична / Доставка</div>${escapeHtml(raw.actual_address)}</div>`:''}</div>`:''}
-    <div class="sec"><h2>🚀 Promo response · сплески замовлень (lift > 50%)</h2><span class="badge">${promo.length}</span></div>
-    <div class="cc">${promo.length===0?'<div class="empty">Немає виявлених сплесків. Це коли денна виручка > 1.5× середнього.</div>':`<table class="dt"><thead><tr><th>Дата</th><th class="num">Виручка дня</th><th class="num">Baseline avg</th><th class="num">Lift</th></tr></thead><tbody>${promo.map(p=>`<tr><td>${fmt.date(p.promo_date)}</td><td class="num">${fmt.uahK(p.daily_rev)}</td><td class="num"><small>${fmt.uahK(p.baseline_avg)}</small></td><td class="num"><span class="tag tg">+${Number(p.lift_pct).toFixed(0)}%</span></td></tr>`).join('')}</tbody></table>`}</div>
-    <div class="sec"><h2>📅 Активність по днях тижня</h2></div>
-    <div class="cc"><div class="dow-grid">${dowGrid.map(d=>{if(d.cnt===0)return `<div class="dow-cell empty"><div class="dow-name">${d.name}</div><div class="dow-cnt">·</div></div>`;const intensity=Math.min(0.95,0.3+(d.cnt/maxDow)*0.7);return `<div class="dow-cell" style="background:rgba(0,17,84,${intensity})" title="${fmt.uah(d.rev)} · ${d.cnt} тр"><div class="dow-name">${d.name}</div><div class="dow-cnt">${d.cnt}</div></div>`;}).join('')}</div><div style="margin-top:10px;font-size:11px;color:var(--muted)">Найкращий день: ${dowGrid.sort((a,b)=>b.cnt-a.cnt)[0].name}</div></div>
-    <div class="sec"><h2>📝 CRM-лог · комунікації</h2><button class="crm-add" onclick="openCrm('${c.counterparty_ms_id}', null)">+ Додати запис</button></div>
-    <div class="cc">${crm.length===0?'<div class="empty">Ще немає записів.</div>':crm.map(n=>{const dueClass=n.next_date&&new Date(n.next_date)<=new Date()?' due':'';return `<div class="crm-row"><div class="crm-date">${fmt.date(n.note_date)}</div><div class="crm-type">${n.note_type}</div><div class="crm-text">${escapeHtml(n.summary)}${n.next_step?`<strong>→ ${escapeHtml(n.next_step)}</strong>`:''}</div><div class="crm-next${dueClass}">${n.next_date?'📅 '+fmt.date(n.next_date):''}</div><button class="crm-del" onclick="event.stopPropagation(); deleteCrm('${n.id}')" title="Видалити">✕</button></div>`;}).join('')}</div>
-    <div class="sec"><h2>📅 Timeline транзакцій</h2><span class="badge">${timeline.length}</span></div>
-    <div class="cc"><div class="timeline">${timeline.length===0?'<div class="empty">Немає</div>':timeline.map(t=>`<div class="tl-item"><div class="date">${fmt.date(t.date)}</div><div><div class="desc">${truncate(t.sku_name||'—',50)}</div><div class="qty">${t.qty} шт · ${t.channel_name||'—'}</div></div><div class="val">${fmt.uah(t.revenue_uah)}</div></div>`).join('')}</div></div>
-    <div class="sec"><h2>🎯 Рекомендовані дії</h2></div>
-    <div class="cc"><div style="font-size:13px;color:#444;line-height:1.8">${Number(pr.debt_uah)>5000?`<div>📞 <strong>Дзвонити по дебіторці:</strong> ${fmt.uahK(pr.debt_uah)} не оплачено.</div>`:''}${c.days_since_last_order>60?`<div>📞 <strong>Подзвонити:</strong> не замовляли ${c.days_since_last_order} днів.</div>`:''}${c.growth_90d_pct<-20?`<div>🔍 <strong>З'ясувати причину падіння:</strong> -${Math.abs(c.growth_90d_pct)}% за 90д.</div>`:''}${c.skus_purchased<5&&c.lifetime_revenue>20000?`<div>🎯 <strong>Cross-sell:</strong> купує ${c.skus_purchased} SKU при lifetime ${fmt.uahK(c.lifetime_revenue)}.</div>`:''}${(c.segment_label||'').includes('VIP')?`<div>💎 <strong>Утримати:</strong> VIP клієнт.</div>`:''}${c.tx_count===1?`<div>🆕 <strong>Welcome call:</strong> перше замовлення.</div>`:''}${cross.length>=3?`<div>🛒 <strong>Cross-sell pitch:</strong> ${cross.length} SKU peers купляють.</div>`:''}${Number(rt.return_rate_pct)>5?`<div>↩️ <strong>З'ясувати причину повернень:</strong> ${Number(rt.return_rate_pct).toFixed(1)}%.</div>`:''}${insights.filter(i=>i.cls==='green').length>0&&insights.filter(i=>i.cls==='red').length===0?`<div>✓ <strong>Усе добре</strong> — клієнт у здоровому стані.</div>`:''}</div></div>
-    <div class="sec"><h2>📝 Картка контрагента (МойСклад)</h2></div>
-    <div class="cc"><table class="dt" style="font-size:12px"><tr><th>Поле</th><th>Значення</th></tr><tr><td><strong>МС ID</strong></td><td><code style="font-size:11px">${c.counterparty_ms_id}</code></td></tr><tr><td><strong>Назва</strong></td><td>${escapeHtml(c.name)}</td></tr><tr><td><strong>ЄДРПОУ / ІНН</strong></td><td>${c.inn||'—'}</td></tr><tr><td><strong>Тип</strong></td><td>${c.company_type||'—'}</td></tr><tr><td><strong>Тип цін</strong></td><td>${c.price_type||'—'}</td></tr><tr><td><strong>Стан CRM</strong></td><td>${c.state||'—'}</td></tr><tr><td><strong>Канал</strong></td><td>${c.channel_name||'—'} <small style="color:var(--muted)">(${c.channel_id})</small></td></tr><tr><td><strong>Телефон</strong></td><td>${raw.phone||'—'}</td></tr><tr><td><strong>Email</strong></td><td>${raw.email||'—'}</td></tr><tr><td><strong>Юр. адреса</strong></td><td>${raw.legal_address||'—'}</td></tr><tr><td><strong>Фактична адреса</strong></td><td>${raw.actual_address||'—'}</td></tr><tr><td><strong>Перше / Останнє</strong></td><td>${fmt.date(c.first_order_date)} → ${fmt.date(c.last_order_date)}</td></tr></table></div>`;
-  setTimeout(()=>{const ctx=$('custTrendChart');if(ctx){if(state.charts.custTrend)state.charts.custTrend.destroy();state.charts.custTrend=new Chart(ctx,{type:'bar',data:{labels:months.map(m=>{const[y,mo]=m.split('-');return new Date(parseInt(y),parseInt(mo)-1,1).toLocaleDateString('uk-UA',{month:'short',year:'2-digit'});}),datasets:[{label:'Виручка ₴',data:months.map(m=>byMonth[m]),backgroundColor:'#001154',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:(v)=>fmt.uahK(v)}}}}});}const ctx2=$('custHealthChart');if(ctx2&&healthHist.length>0){if(state.charts.custHealth)state.charts.custHealth.destroy();state.charts.custHealth=new Chart(ctx2,{type:'line',data:{labels:healthHist.map(h=>{const d=new Date(h.month);return d.toLocaleDateString('uk-UA',{month:'short',year:'2-digit'});}),datasets:[{label:'Health',data:healthHist.map(h=>h.health_score),backgroundColor:'rgba(57,180,74,.13)',borderColor:'#39B44A',borderWidth:2,tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100}}}});}const ctx3=$('custYoyChart');if(ctx3&&yoy.length>0){const years=[...new Set(yoy.map(y=>y.y))].sort();const colors={2025:'#3B82F6',2026:'#001154',2024:'#94a3b8'};const mn=['Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру'];const ds=years.map(y=>({label:String(y),data:mn.map((_,i)=>{const r=yoy.find(x=>x.y===y&&x.m===i+1);return r?Number(r.revenue_uah||0):0;}),backgroundColor:colors[y]||'#888',borderRadius:4}));if(state.charts.custYoy)state.charts.custYoy.destroy();state.charts.custYoy=new Chart(ctx3,{type:'bar',data:{labels:mn,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:(v)=>fmt.uahK(v)}}}}});}const ctx4=$('custShipPayChart');if(ctx4){const shipByMonth={};timeline.forEach(t=>{const m=t.date.slice(0,7);shipByMonth[m]=(shipByMonth[m]||0)+Number(t.revenue_uah||0);});const payByMonth={};payments.forEach(p=>{const m=p.moment.slice(0,7);payByMonth[m]=(payByMonth[m]||0)+Number(p.sum_uah||0);});const allMonths=[...new Set([...Object.keys(shipByMonth),...Object.keys(payByMonth)])].sort();const lbl=allMonths.map(m=>{const[y,mo]=m.split('-');return new Date(parseInt(y),parseInt(mo)-1,1).toLocaleDateString('uk-UA',{month:'short',year:'2-digit'});});if(state.charts.custShipPay)state.charts.custShipPay.destroy();state.charts.custShipPay=new Chart(ctx4,{type:'bar',data:{labels:lbl,datasets:[{label:'Відвантажено',data:allMonths.map(m=>shipByMonth[m]||0),backgroundColor:'#3B82F6',borderRadius:4},{label:'Оплачено',data:allMonths.map(m=>payByMonth[m]||0),backgroundColor:'#39B44A',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:(v)=>fmt.uahK(v)}}}}});}},50);
-}
-function healthCircle(score){const r=48,cx=60,cy=60,circ=2*Math.PI*r;const offset=circ*(1-(score||0)/100);const color=score>=70?'#39B44A':score>=40?'#F59E0B':'#E84040';return `<svg width="120" height="120" viewBox="0 0 120 120"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#EEE" stroke-width="8"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="8" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round" /></svg>`;}
-function openCrm(custMsId,noteId){$('crmModal').classList.add('open');$('crmEditId').value=noteId||'';if(noteId){const n=state.customerCrm.find(x=>x.id===noteId);if(n){$('crmDate').value=n.note_date;$('crmType').value=n.note_type;$('crmSummary').value=n.summary;$('crmNextStep').value=n.next_step||'';$('crmNextDate').value=n.next_date||'';}}else{$('crmDate').value=new Date().toISOString().slice(0,10);$('crmType').value='📞 Дзвінок';$('crmSummary').value='';$('crmNextStep').value='';$('crmNextDate').value='';}}
-function closeCrm(){$('crmModal').classList.remove('open');}
-async function saveCrm(){const summary=$('crmSummary').value.trim();if(!summary)return toast('Заповніть «Про що»',true);const payload={counterparty_ms_id:state.customer.counterparty_ms_id,note_date:$('crmDate').value,note_type:$('crmType').value,summary,next_step:$('crmNextStep').value||null,next_date:$('crmNextDate').value||null};const editId=$('crmEditId').value;try{if(editId)await api(`crm_notes?id=eq.${editId}`,{method:'PATCH',body:JSON.stringify(payload)});else await api('crm_notes',{method:'POST',body:JSON.stringify(payload)});toast('✓ Збережено');closeCrm();selectCustomer(state.customer.counterparty_ms_id);}catch(e){toast('Помилка: '+e.message,true);}}
-async function deleteCrm(id){if(!confirm('Видалити запис?'))return;try{await api(`crm_notes?id=eq.${id}`,{method:'DELETE'});toast('✓ Видалено');selectCustomer(state.customer.counterparty_ms_id);}catch(e){toast('Помилка: '+e.message,true);}}
-$('searchInput').addEventListener('input',(e)=>{const q=e.target.value.toLowerCase().trim();if(!q||q.length<2){$('autocomplete').className='autocomplete';return;}const matches=state.data.customers.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.inn||'').includes(q)).slice(0,20);$('autocomplete').innerHTML=matches.length===0?'<div class="ac-item"><div class="name">Не знайдено</div></div>':matches.map(c=>`<div class="ac-item" onclick="selectCustomer('${c.counterparty_ms_id}')"><div class="name">${escapeHtml(c.name)}</div><span class="ch">${c.channel_name||'—'}</span><small style="color:var(--muted)">${fmt.uahK(c.lifetime_revenue)}</small></div>`).join('');$('autocomplete').className='autocomplete show';});
-document.addEventListener('click',(e)=>{if(!e.target.closest('.search'))$('autocomplete').className='autocomplete';});
-$('backBtn').addEventListener('click',renderOverview);
-window.selectCustomer=selectCustomer;window.filterByRF=filterByRF;window.filterByCohort=filterByCohort;window.renderOverview=renderOverview;window.openCrm=openCrm;window.closeCrm=closeCrm;window.saveCrm=saveCrm;window.deleteCrm=deleteCrm;window.setPeriod=setPeriod;window.setMoverTab=setMoverTab;
-loadAll();
+load();
 </script>
 </body>
 </html>
