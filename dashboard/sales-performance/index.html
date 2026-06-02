@@ -66,13 +66,6 @@ table.dt td{padding:8px 12px;border-bottom:1px solid #F4F4F0;color:var(--d)}
 table.dt tbody tr:hover{background:#FBFAF5}
 table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
 .tbl-scroll{max-height:380px;overflow:auto;border-radius:8px;border:1px solid var(--line)}
-.heat-tbl{width:100%;border-collapse:separate;border-spacing:2px;font-size:11px}
-.heat-tbl th{padding:6px 4px;text-align:center;font-weight:600;color:var(--muted);font-size:10px}
-.heat-tbl th.lbl{text-align:left;padding-left:10px;background:#FAFAF5;position:sticky;left:0;width:140px}
-.heat-tbl td.lbl{text-align:left;padding:6px 10px;background:#FAFAF5;font-weight:600;position:sticky;left:0;z-index:2;border-left:3px solid transparent}
-.heat-tbl td{text-align:center;padding:6px 4px;border-radius:4px;font-weight:600;color:#fff;font-size:11px;min-width:48px}
-.heat-tbl td.tot{background:#fff;color:var(--d);font-weight:700;font-size:12px;border:1px solid var(--line)}
-.heat-tbl td.empty{background:#FBFBF8;color:#ccc;font-weight:400}
 .alert{padding:12px 16px;border-radius:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:13px;border-left:4px solid}
 .alert.red{background:#FEF2F2;border-color:var(--r);color:#7B1F1F}
 .alert.blue{background:#EFF6FF;border-color:var(--bl);color:#1E3A8A}
@@ -110,7 +103,6 @@ table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:5
   <button class="tab-btn on" data-tab="overview"><span>📊</span> Огляд</button>
   <button class="tab-btn" data-tab="dynamics"><span>📈</span> Динаміка</button>
   <button class="tab-btn" data-tab="products"><span>🏆</span> Продукти</button>
-  <button class="tab-btn" data-tab="channels"><span>🏪</span> Канали</button>
 </nav>
 <div class="sp-filters">
   <label>⚡ Період:</label>
@@ -120,10 +112,6 @@ table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:5
   <button class="chip" data-period="180">180 днів</button>
   <button class="chip" data-period="365">1 рік</button>
   <button class="chip" data-period="all">Усе</button>
-  <label style="margin-left:18px">📍 Канал:</label>
-  <select id="channelFilter" class="chip" style="font-weight:600;padding:7px 14px;background:#fff;border:1px solid var(--border)">
-    <option value="">Усі канали</option>
-  </select>
   <span style="flex:1"></span>
   <button class="chip refresh" id="syncNowBtn" title="Запустити sync">⚡ Sync</button>
   <button class="chip refresh" id="reloadBtn">⟳ Оновити</button>
@@ -137,8 +125,8 @@ table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:5
 <div id="toast" class="toast"></div>
 <script src="../../assets/bb.js"></script>
 <script>
-const SUPA_URL = 'https://zrcqmwlpsggiqgipvxhv.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+const SUPA_URL='https://barpi-api.vg-ab6.workers.dev';
+const SUPA_KEY='';
 const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
 const fmt = {
@@ -161,72 +149,58 @@ function toast(msg, isErr=false){
   setTimeout(() => t.className = 'toast', 2800);
 }
 async function api(path){
-  const r = await fetch(SUPA_URL + '/rest/v1/' + path, { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } });
-  if(!r.ok) throw new Error('API ' + r.status);
+  const r = await fetch(SUPA_URL + '/' + path, { headers: { 'Content-Type': 'application/json' } });
+  if(!r.ok){if(r.status===404)return [];throw new Error('API ' + r.status);}
   return r.json();
 }
-let state = { period: 30, channel: '', tab: 'overview', rows: [], channels: [], charts: {}, lastSync: null };
+let state = { period: 30, tab: 'overview', sales: [], skuByDay: [], skuList: [], charts: {}, lastSync: null };
 async function loadAll(){
   try {
     $('syncLabel').textContent = 'Завантаження…';
     $('loadingBox').style.display = 'block'; $('contentBox').style.display = 'none';
-    const [rows1, rows2, rows3, channels, sync] = await Promise.all([
-      api('sales_extended?select=date,channel_id,channel_name,channel_color,sku_id,sku_name,sku_category,format_g,quantity,revenue_uah,margin_uah,cost_calc,counterparty_ms_id&channel_id=neq.internal&order=date.desc&limit=10000'),
-      api('sales_extended?select=date,channel_id,channel_name,channel_color,sku_id,sku_name,sku_category,format_g,quantity,revenue_uah,margin_uah,cost_calc,counterparty_ms_id&channel_id=neq.internal&order=date.desc&offset=10000&limit=10000'),
-      api('sales_extended?select=date,channel_id,channel_name,channel_color,sku_id,sku_name,sku_category,format_g,quantity,revenue_uah,margin_uah,cost_calc,counterparty_ms_id&channel_id=neq.internal&order=date.desc&offset=20000&limit=10000'),
-      api('sales_channels?select=*&active=eq.true&id=neq.internal&order=sort_order'),
-      api('moysklad_sync_log?select=created_at,sync_type,status&order=created_at.desc&limit=1'),
+    const [salesByDay, salesBySku, kpis, sync] = await Promise.all([
+      api('v_sales_by_day?select=*&order=day.desc&limit=2000'),
+      api('v_sales_by_sku?select=*&order=revenue.desc&limit=200'),
+      api('v_dashboard_kpis?select=*'),
+      api('sync_state?entity=eq.demand&select=last_synced_at&limit=1'),
     ]);
-    state.rows = [...rows1, ...rows2, ...rows3];
-    state.channels = channels;
+    state.sales = salesByDay;
+    state.skuList = salesBySku;
+    state.kpis = kpis[0]||{};
     state.lastSync = sync[0] || null;
-    if (sync[0]) {
-      const ago = Math.floor((Date.now() - new Date(sync[0].created_at).getTime())/3600000);
-      $('syncLabel').textContent = `Sync ${ago}h тому · ${state.rows.length} записів`;
+    if (sync[0]&&sync[0].last_synced_at) {
+      const ago = Math.floor((Date.now() - new Date(sync[0].last_synced_at).getTime())/3600000);
+      $('syncLabel').textContent = `Sync ${ago}h тому · ${salesByDay.length} днів · D1`;
+    } else {
+      $('syncLabel').textContent = `${salesByDay.length} днів · D1 live`;
     }
-    populateChannelFilter();
     $('loadingBox').style.display = 'none'; $('contentBox').style.display = 'block';
     render();
   } catch(e){ console.error(e); toast('Помилка: ' + e.message, true); $('syncLabel').textContent = 'Помилка'; }
 }
-function populateChannelFilter(){
-  $('channelFilter').innerHTML = '<option value="">Усі канали</option>' + state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-}
 function getFiltered(){
   const days = state.period === 'all' ? 999999 : Number(state.period);
   const from = new Date(Date.now() - days * 86400000);
-  return state.rows.filter(r => {
-    if (new Date(r.date) < from) return false;
-    if (state.channel && r.channel_id !== state.channel) return false;
-    return true;
-  });
+  return state.sales.filter(r => new Date(r.day) >= from);
 }
 function getPrevious(){
   const days = state.period === 'all' ? 999999 : Number(state.period);
   const from = new Date(Date.now() - 2 * days * 86400000);
   const to = new Date(Date.now() - days * 86400000);
-  return state.rows.filter(r => {
-    const d = new Date(r.date);
-    if (d < from || d >= to) return false;
-    if (state.channel && r.channel_id !== state.channel) return false;
-    return true;
-  });
+  return state.sales.filter(r => { const d = new Date(r.day); return d >= from && d < to; });
 }
 function aggKPI(rows){
-  const revenue = rows.reduce((s,r) => s + Number(r.revenue_uah||0), 0);
-  const margin = rows.reduce((s,r) => s + Number(r.margin_uah||0), 0);
-  const qty = rows.reduce((s,r) => s + Number(r.quantity||0), 0);
-  const tx = rows.length;
-  const customers = new Set(rows.map(r => r.counterparty_ms_id).filter(Boolean)).size;
-  const skus = new Set(rows.map(r => r.sku_id).filter(Boolean)).size;
-  return { revenue, margin, qty, tx, customers, skus, aov: tx ? revenue/tx : 0, marginPct: revenue ? margin/revenue*100 : 0 };
+  const revenue = rows.reduce((s,r) => s + Number(r.revenue||0), 0);
+  const qty = rows.reduce((s,r) => s + Number(r.qty||0), 0);
+  const tx = rows.reduce((s,r) => s + Number(r.orders||0), 0);
+  const paid = rows.reduce((s,r) => s + Number(r.paid||0), 0);
+  return { revenue, qty, tx, paid, aov: tx ? revenue/tx : 0 };
 }
 function render(){
   const tab = state.tab;
   if (tab === 'overview') renderOverview();
   else if (tab === 'dynamics') renderDynamics();
   else if (tab === 'products') renderProducts();
-  else if (tab === 'channels') renderChannels();
 }
 function renderOverview(){
   const rows = getFiltered(), prev = getPrevious();
@@ -241,51 +215,36 @@ function renderOverview(){
     <div class="kpi cy"><div class="lbl">💰 Виручка</div><div class="val">${fmt.uah(k.revenue)}</div><div class="sub">${deltaTag(revChange)} vs попер.</div></div>
     <div class="kpi cg"><div class="lbl">📦 Шт продано</div><div class="val">${fmt.num(k.qty)}</div><div class="sub">${fmt.num(k.tx)} транзакцій</div></div>
     <div class="kpi cb"><div class="lbl">🛒 Сер. чек</div><div class="val">${fmt.uah(k.aov)}</div><div class="sub">грн / транзакція</div></div>
-    <div class="kpi"><div class="lbl">👥 Клієнти</div><div class="val">${fmt.num(k.customers)}</div><div class="sub">${deltaTag(p.customers ? ((k.customers - p.customers)/p.customers*100) : null)}</div></div>
-    <div class="kpi"><div class="lbl">🏷️ Активних SKU</div><div class="val">${fmt.num(k.skus)}</div><div class="sub">з 24 в каталозі</div></div>
+    <div class="kpi"><div class="lbl">💵 Сплачено</div><div class="val">${fmt.uah(k.paid)}</div><div class="sub">paymentin period</div></div>
+    <div class="kpi"><div class="lbl">🏷️ Активних SKU</div><div class="val">${fmt.num(state.skuList.length)}</div><div class="sub">всього у каталозі</div></div>
   </div>`);
-  const allRows = state.rows.filter(r => !state.channel || r.channel_id === state.channel);
-  const totalLifetime = allRows.reduce((s,r) => s + Number(r.revenue_uah||0), 0);
+  const totalLifetime = state.sales.reduce((s,r) => s + Number(r.revenue||0), 0);
   const runRate = state.period === 'all' ? 0 : k.revenue * 365 / Number(state.period);
-  const oneWeek = 7 * 86400000;
-  const wkLast = state.rows.filter(r => new Date(r.date) >= new Date(Date.now() - oneWeek) && (!state.channel || r.channel_id === state.channel));
-  const wkPrev = state.rows.filter(r => { const d = new Date(r.date); return d >= new Date(Date.now() - 2*oneWeek) && d < new Date(Date.now() - oneWeek) && (!state.channel || r.channel_id === state.channel); });
-  const wkLastRev = wkLast.reduce((s,r) => s + Number(r.revenue_uah||0), 0);
-  const wkPrevRev = wkPrev.reduce((s,r) => s + Number(r.revenue_uah||0), 0);
-  const wowPct = wkPrevRev ? ((wkLastRev - wkPrevRev)/wkPrevRev * 100) : null;
   html.push(`<div class="sec"><h2>❤ Здоров'я бізнесу</h2></div>`);
   html.push(`<div class="g1">
-    <div class="kpi dark"><div class="lbl">📈 WoW</div><div class="val">${wowPct != null ? (wowPct > 0 ? '+' : '') + wowPct.toFixed(1) + '%' : '—'}</div><div class="sub">тиждень-до-тижня</div></div>
-    <div class="kpi"><div class="lbl">🎯 Маржа</div><div class="val">${fmt.pct(k.marginPct)}</div><div class="sub">${fmt.uah(k.margin)} валової</div></div>
     <div class="kpi"><div class="lbl">⚡ Run-rate (рік)</div><div class="val">${runRate > 0 ? fmt.uahK(runRate) : '—'}</div><div class="sub">за поточним темпом</div></div>
-    <div class="kpi"><div class="lbl">💎 Lifetime (весь період)</div><div class="val">${fmt.uahK(totalLifetime)}</div><div class="sub">${state.rows.length} записів</div></div>
-    <div class="kpi"><div class="lbl">🔄 Sync</div><div class="val" style="font-size:13px">МойСклад API</div><div class="sub">cron 06:00 UTC щодня</div></div>
+    <div class="kpi"><div class="lbl">💎 Lifetime (весь період)</div><div class="val">${fmt.uahK(totalLifetime)}</div><div class="sub">${state.sales.length} днів</div></div>
+    <div class="kpi"><div class="lbl">👥 Клієнти (lifetime)</div><div class="val">${fmt.num(state.kpis.total_customers||0)}</div><div class="sub">унікальних</div></div>
+    <div class="kpi"><div class="lbl">🔄 Sync</div><div class="val" style="font-size:13px">МойСклад → D1</div><div class="sub">cron щогодини</div></div>
   </div>`);
   html.push(`<div class="sec"><h2>📈 Тренд</h2><span class="badge" id="trendBadge"></span></div>`);
   html.push(`<div class="cc" style="margin-bottom:14px">
-    <div class="cc-head"><h3>Виручка та маржа</h3><span class="spacer"></span>
+    <div class="cc-head"><h3>Виручка по днях</h3><span class="spacer"></span>
       <button class="chip" id="trendDay">📅 День</button>
       <button class="chip" id="trendWeek">📆 Тиждень</button>
       <button class="chip" id="trendMonth">🗓 Місяць</button>
     </div>
     <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
   </div>`);
-  html.push(`<div class="g2">
-    <div class="cc">
-      <div class="cc-head"><h3>🏪 Виручка по каналах</h3><span class="pill" id="chanCnt"></span></div>
-      <div id="channelBars" class="bars"></div>
-    </div>
-    <div class="cc">
-      <div class="cc-head"><h3>🏆 ТОП SKU</h3><span class="pill" id="skuCnt"></span></div>
-      <div class="tbl-scroll"><table class="dt" id="skuTable">
-        <thead><tr><th>#</th><th>SKU</th><th>Кат</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Маржа%</th></tr></thead>
-        <tbody></tbody>
-      </table></div>
-    </div>
+  html.push(`<div class="cc">
+    <div class="cc-head"><h3>🏆 ТОП SKU за виручкою</h3><span class="pill" id="skuCnt"></span></div>
+    <div class="tbl-scroll"><table class="dt" id="skuTable">
+      <thead><tr><th>#</th><th>SKU</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Сер.ціна</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
   </div>`);
   $('contentBox').innerHTML = html.join('');
   renderTrendChart('day');
-  renderChannelBars();
   renderTopSKU();
   $('trendDay').classList.add('on');
   $('trendDay').addEventListener('click', () => { $$('#trendDay,#trendWeek,#trendMonth').forEach(x=>x.classList.remove('on')); $('trendDay').classList.add('on'); renderTrendChart('day'); });
@@ -297,12 +256,12 @@ function renderTrendChart(mode){
   const grouped = {};
   rows.forEach(r => {
     let key;
-    if (mode === 'day') key = r.date;
-    else if (mode === 'week') { const d = new Date(r.date); const ws = new Date(d - ((d.getDay()||7)-1) * 86400000); key = ws.toISOString().slice(0,10); }
-    else { key = r.date.slice(0, 7); }
-    if (!grouped[key]) grouped[key] = { rev: 0, margin: 0 };
-    grouped[key].rev += Number(r.revenue_uah || 0);
-    grouped[key].margin += Number(r.margin_uah || 0);
+    if (mode === 'day') key = r.day;
+    else if (mode === 'week') { const d = new Date(r.day); const ws = new Date(d - ((d.getDay()||7)-1) * 86400000); key = ws.toISOString().slice(0,10); }
+    else { key = r.day.slice(0, 7); }
+    if (!grouped[key]) grouped[key] = { rev: 0, qty: 0 };
+    grouped[key].rev += Number(r.revenue || 0);
+    grouped[key].qty += Number(r.qty || 0);
   });
   const keys = Object.keys(grouped).sort();
   const labels = keys.map(k => mode === 'month' ? fmt.month(k) : fmt.date(k));
@@ -311,91 +270,26 @@ function renderTrendChart(mode){
     type: mode === 'day' ? 'line' : 'bar',
     data: { labels, datasets: [
       { label: 'Виручка', data: keys.map(k => grouped[k].rev), backgroundColor: mode === 'day' ? 'rgba(0,17,84,.1)' : 'rgba(0,17,84,.9)', borderColor: '#001154', borderWidth: 2.5, tension: 0.3, fill: mode === 'day', pointRadius: mode === 'day' ? 2 : 0 },
-      { label: 'Маржа', data: keys.map(k => grouped[k].margin), type: 'line', borderColor: '#39B44A', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, pointRadius: 0 },
     ] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Rubik', size: 11 } } } }, scales: { y: { ticks: { callback: (v) => fmt.uahK(v) } }, x: { ticks: { maxTicksLimit: 16 } } }, interaction: { intersect: false, mode: 'index' } },
   });
   if ($('trendBadge')) $('trendBadge').textContent = `${keys.length} ${mode === 'day' ? 'днів' : mode === 'week' ? 'тижнів' : 'місяців'}`;
 }
-function renderChannelBars(){
-  const rows = getFiltered(), prev = getPrevious();
-  const byCh = {}, byChPrev = {};
-  rows.forEach(r => { if (!byCh[r.channel_id]) byCh[r.channel_id] = { name: r.channel_name, color: r.channel_color, rev: 0 }; byCh[r.channel_id].rev += Number(r.revenue_uah||0); });
-  prev.forEach(r => { byChPrev[r.channel_id] = (byChPrev[r.channel_id] || 0) + Number(r.revenue_uah||0); });
-  const arr = Object.entries(byCh).map(([id, v]) => ({ id, ...v, growth: byChPrev[id] ? ((v.rev - byChPrev[id])/byChPrev[id]*100) : null })).sort((a,b) => b.rev - a.rev);
-  if ($('chanCnt')) $('chanCnt').textContent = arr.length;
-  const max = Math.max(...arr.map(c => c.rev), 1);
-  if ($('channelBars')) $('channelBars').innerHTML = arr.length === 0 ? '<div class="empty">Немає даних</div>' : arr.map(c => {
-    const w = (c.rev / max * 100).toFixed(1);
-    return `<div class="br"><div class="nm" style="color:${c.color}">${c.name}</div><div class="tk"><div class="fl" style="width:${w}%;background:linear-gradient(90deg,${c.color},${c.color}bb)"></div></div><div class="vl">${fmt.uahK(c.rev)} ${deltaTag(c.growth)}</div></div>`;
-  }).join('');
-}
 function renderTopSKU(){
-  const rows = getFiltered();
-  const bySku = {};
-  rows.forEach(r => { if (!r.sku_id) return; if (!bySku[r.sku_id]) bySku[r.sku_id] = { name: r.sku_name, cat: r.sku_category, qty: 0, rev: 0, margin: 0 }; bySku[r.sku_id].qty += Number(r.quantity||0); bySku[r.sku_id].rev += Number(r.revenue_uah||0); bySku[r.sku_id].margin += Number(r.margin_uah||0); });
-  const arr = Object.values(bySku).sort((a,b) => b.rev - a.rev);
-  const totalRev = arr.reduce((s,x) => s + x.rev, 0);
-  let cum = 0;
-  arr.forEach(s => { cum += s.rev; s.cumPct = totalRev ? (cum/totalRev*100) : 0; s.abc = s.cumPct <= 80 ? 'A' : s.cumPct <= 95 ? 'B' : 'C'; s.marginPct = s.rev ? (s.margin/s.rev*100) : 0; });
+  const arr = state.skuList.slice(0, 30);
   if ($('skuCnt')) $('skuCnt').textContent = arr.length;
-  if ($('skuTable')) $('skuTable').querySelector('tbody').innerHTML = arr.slice(0, 20).map((s,i) => `<tr><td><span class="abc abc-${s.abc}">${s.abc}</span>${i+1}</td><td title="${s.name}">${(s.name||'').length > 24 ? s.name.slice(0,24)+'…' : s.name}</td><td><small>${s.cat||'—'}</small></td><td class="num">${s.qty}</td><td class="num">${fmt.uah(s.rev)}</td><td class="num">${fmt.pct(s.marginPct)}</td></tr>`).join('');
+  if ($('skuTable')) $('skuTable').querySelector('tbody').innerHTML = arr.map((s,i) => `<tr><td>${i+1}</td><td><code>${s.sku_id||'—'}</code></td><td class="num">${s.orders||0}</td><td class="num">${s.qty||0}</td><td class="num">${fmt.uah(s.revenue)}</td><td class="num">${fmt.uah(s.avg_price||0)}</td></tr>`).join('');
 }
 function renderDynamics(){
   const html = [];
-  html.push(`<div class="sec"><h2>📈 Heatmap: канал × тиждень (12 тижнів)</h2></div>`);
-  html.push(`<div class="cc" style="margin-bottom:14px"><div style="overflow:auto"><table class="heat-tbl" id="heatTable"></table></div></div>`);
   html.push(`<div class="sec"><h2>📊 Місячні підсумки (весь період)</h2></div>`);
   html.push(`<div class="cc"><div class="chart-wrap tall"><canvas id="monthChart"></canvas></div></div>`);
   $('contentBox').innerHTML = html.join('');
-  renderHeatmap();
   renderMonthChart();
 }
-function renderHeatmap(){
-  const rows = state.rows.filter(r => !state.channel || r.channel_id === state.channel);
-  const weeks = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 7 * 86400000);
-    const dow = d.getDay() || 7;
-    const monday = new Date(d - (dow - 1) * 86400000);
-    weeks.push(monday.toISOString().slice(0, 10));
-  }
-  const grid = {}, totals = {}, max = {}, channelMeta = {};
-  rows.forEach(r => {
-    channelMeta[r.channel_id] = { name: r.channel_name, color: r.channel_color };
-    const d = new Date(r.date);
-    const dow = d.getDay() || 7;
-    const monday = new Date(d - (dow - 1) * 86400000).toISOString().slice(0, 10);
-    if (!weeks.includes(monday)) return;
-    grid[`${r.channel_id}|${monday}`] = (grid[`${r.channel_id}|${monday}`] || 0) + Number(r.revenue_uah||0);
-    totals[r.channel_id] = (totals[r.channel_id] || 0) + Number(r.revenue_uah||0);
-    max[r.channel_id] = Math.max(max[r.channel_id] || 0, grid[`${r.channel_id}|${monday}`]);
-  });
-  const sortedChans = Object.keys(totals).sort((a,b) => totals[b] - totals[a]);
-  let h = '<thead><tr><th class="lbl">Канал \\ Тиждень</th>';
-  weeks.forEach(w => { const d = new Date(w); h += `<th>${('0'+d.getDate()).slice(-2)}.${('0'+(d.getMonth()+1)).slice(-2)}</th>`; });
-  h += '<th class="lbl" style="text-align:right;padding-right:10px">Разом</th></tr></thead><tbody>';
-  sortedChans.forEach(cid => {
-    const meta = channelMeta[cid]; const m = max[cid] || 1;
-    h += `<tr><td class="lbl" style="border-left-color:${meta.color}">${meta.name}</td>`;
-    weeks.forEach(w => {
-      const v = grid[`${cid}|${w}`] || 0;
-      if (v === 0) h += `<td class="empty">·</td>`;
-      else {
-        const intensity = Math.min(0.95, 0.25 + (v/m) * 0.7);
-        const rgb = meta.color.startsWith('#') ? hexToRgba(meta.color, intensity) : meta.color;
-        h += `<td title="${meta.name} · ${w}: ${fmt.uah(v)}" style="background:${rgb}">${fmt.uahK(v)}</td>`;
-      }
-    });
-    h += `<td class="tot">${fmt.uahK(totals[cid])}</td></tr>`;
-  });
-  h += '</tbody>';
-  $('heatTable').innerHTML = h;
-}
 function renderMonthChart(){
-  const rows = state.rows.filter(r => !state.channel || r.channel_id === state.channel);
   const byMonth = {};
-  rows.forEach(r => { const k = r.date.slice(0, 7); byMonth[k] = (byMonth[k] || 0) + Number(r.revenue_uah||0); });
+  state.sales.forEach(r => { const k = r.day.slice(0, 7); byMonth[k] = (byMonth[k] || 0) + Number(r.revenue||0); });
   const keys = Object.keys(byMonth).sort();
   if (state.charts.month) state.charts.month.destroy();
   state.charts.month = new Chart($('monthChart'), {
@@ -405,19 +299,16 @@ function renderMonthChart(){
   });
 }
 function renderProducts(){
-  const rows = getFiltered(), prev = getPrevious();
-  const bySku = {}, bySkuPrev = {};
-  rows.forEach(r => { if (!r.sku_id) return; if (!bySku[r.sku_id]) bySku[r.sku_id] = { name: r.sku_name, cat: r.sku_category, qty: 0, rev: 0, margin: 0, cust: new Set() }; bySku[r.sku_id].qty += Number(r.quantity||0); bySku[r.sku_id].rev += Number(r.revenue_uah||0); bySku[r.sku_id].margin += Number(r.margin_uah||0); if (r.counterparty_ms_id) bySku[r.sku_id].cust.add(r.counterparty_ms_id); });
-  prev.forEach(r => { if (!r.sku_id) return; bySkuPrev[r.sku_id] = (bySkuPrev[r.sku_id] || 0) + Number(r.revenue_uah||0); });
-  const arr = Object.entries(bySku).map(([id, v]) => ({ id, ...v, custCount: v.cust.size, growth: bySkuPrev[id] ? ((v.rev - bySkuPrev[id])/bySkuPrev[id]*100) : null })).sort((a,b) => b.rev - a.rev);
-  const totalRev = arr.reduce((s,x) => s + x.rev, 0); let cum = 0;
-  arr.forEach(s => { cum += s.rev; s.cumPct = totalRev ? (cum/totalRev*100) : 0; s.abc = s.cumPct <= 80 ? 'A' : s.cumPct <= 95 ? 'B' : 'C'; s.marginPct = s.rev ? (s.margin/s.rev*100) : 0; s.share = totalRev ? (s.rev/totalRev*100) : 0; });
-  const periodLabel = state.period === 'all' ? 'весь час' : `${state.period} днів`;
+  const arr = state.skuList;
+  const totalRev = arr.reduce((s,x) => s + Number(x.revenue||0), 0);
+  let cum = 0;
+  const enriched = arr.map(s => { cum += Number(s.revenue||0); return { ...s, cumPct: totalRev ? (cum/totalRev*100) : 0 }; });
+  enriched.forEach(s => { s.abc = s.cumPct <= 80 ? 'A' : s.cumPct <= 95 ? 'B' : 'C'; s.share = totalRev ? (Number(s.revenue||0)/totalRev*100) : 0; });
   $('contentBox').innerHTML = `
-    <div class="sec"><h2>🏆 Всі продукти за виручкою</h2><span class="badge">${periodLabel} · ${arr.length} SKU</span></div>
+    <div class="sec"><h2>🏆 Всі продукти за виручкою (lifetime)</h2><span class="badge">${arr.length} SKU</span></div>
     <div class="cc"><div class="tbl-scroll" style="max-height:none"><table class="dt">
-      <thead><tr><th>ABC</th><th>#</th><th>SKU</th><th>Кат</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Маржа</th><th class="num">Маржа%</th><th class="num">Частка</th><th class="num">Клієнтів</th><th class="num">Δ%</th></tr></thead>
-      <tbody>${arr.map((s,i) => `<tr><td><span class="abc abc-${s.abc}">${s.abc}</span></td><td>${i+1}</td><td>${s.name}</td><td><small>${s.cat||'—'}</small></td><td class="num">${s.qty}</td><td class="num">${fmt.uah(s.rev)}</td><td class="num">${fmt.uah(s.margin)}</td><td class="num">${fmt.pct(s.marginPct)}</td><td class="num">${fmt.pct(s.share)}</td><td class="num">${s.custCount}</td><td class="num">${deltaTag(s.growth)}</td></tr>`).join('')}</tbody>
+      <thead><tr><th>ABC</th><th>#</th><th>SKU</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Частка</th><th class="num">Сер.ціна</th></tr></thead>
+      <tbody>${enriched.map((s,i) => `<tr><td><span class="abc abc-${s.abc}">${s.abc}</span></td><td>${i+1}</td><td><code>${s.sku_id||'—'}</code></td><td class="num">${s.orders||0}</td><td class="num">${s.qty||0}</td><td class="num">${fmt.uah(s.revenue)}</td><td class="num">${fmt.pct(s.share)}</td><td class="num">${fmt.uah(s.avg_price||0)}</td></tr>`).join('')}</tbody>
     </table></div></div>
     <div class="sec"><h2>📊 ABC аналіз (Pareto)</h2></div>
     <div class="cc"><div class="chart-wrap tall"><canvas id="abcChart"></canvas></div></div>
@@ -425,52 +316,26 @@ function renderProducts(){
   if (state.charts.abc) state.charts.abc.destroy();
   state.charts.abc = new Chart($('abcChart'), {
     type: 'bar',
-    data: { labels: arr.map(s => (s.name||'').length > 16 ? s.name.slice(0,16)+'…' : s.name),
+    data: { labels: enriched.map(s => s.sku_id||'—'),
       datasets: [
-        { label: 'Виручка', type: 'bar', data: arr.map(s => s.rev), backgroundColor: arr.map(s => s.abc === 'A' ? '#39B44A' : s.abc === 'B' ? '#F59E0B' : '#94a3b8'), yAxisID: 'y' },
-        { label: 'Кумулятивний %', type: 'line', data: arr.map(s => s.cumPct), borderColor: '#001154', backgroundColor: 'transparent', borderWidth: 2.5, pointRadius: 3, tension: 0.2, yAxisID: 'y1' },
+        { label: 'Виручка', type: 'bar', data: enriched.map(s => Number(s.revenue||0)), backgroundColor: enriched.map(s => s.abc === 'A' ? '#39B44A' : s.abc === 'B' ? '#F59E0B' : '#94a3b8'), yAxisID: 'y' },
+        { label: 'Кумулятивний %', type: 'line', data: enriched.map(s => s.cumPct), borderColor: '#001154', backgroundColor: 'transparent', borderWidth: 2.5, pointRadius: 3, tension: 0.2, yAxisID: 'y1' },
       ],
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { position: 'left', ticks: { callback: (v) => fmt.uahK(v) } }, y1: { position: 'right', max: 100, min: 0, ticks: { callback: (v) => v + '%' }, grid: { drawOnChartArea: false } } } },
   });
 }
-function renderChannels(){
-  const rows = getFiltered(), prev = getPrevious();
-  const byCh = {}, byChPrev = {};
-  rows.forEach(r => { if (!byCh[r.channel_id]) byCh[r.channel_id] = { name: r.channel_name, color: r.channel_color, rev: 0, margin: 0, qty: 0, tx: 0, cust: new Set() }; byCh[r.channel_id].rev += Number(r.revenue_uah||0); byCh[r.channel_id].margin += Number(r.margin_uah||0); byCh[r.channel_id].qty += Number(r.quantity||0); byCh[r.channel_id].tx++; if (r.counterparty_ms_id) byCh[r.channel_id].cust.add(r.counterparty_ms_id); });
-  prev.forEach(r => { byChPrev[r.channel_id] = (byChPrev[r.channel_id] || 0) + Number(r.revenue_uah||0); });
-  const arr = Object.entries(byCh).map(([id, v]) => ({ id, ...v, custCount: v.cust.size, aov: v.tx ? v.rev/v.tx : 0, marginPct: v.rev ? v.margin/v.rev*100 : 0, growth: byChPrev[id] ? ((v.rev - byChPrev[id])/byChPrev[id]*100) : null })).sort((a,b) => b.rev - a.rev);
-  const totalRev = arr.reduce((s,x) => s + x.rev, 0);
-  $('contentBox').innerHTML = `
-    <div class="sec"><h2>🏪 P&L по каналах</h2><span class="badge">${state.period === 'all' ? 'весь час' : state.period + ' днів'}</span></div>
-    <div class="cc"><div class="tbl-scroll" style="max-height:none"><table class="dt">
-      <thead><tr><th>#</th><th>Канал</th><th class="num">Виручка</th><th class="num">Маржа</th><th class="num">Маржа%</th><th class="num">Частка</th><th class="num">Шт</th><th class="num">Тр</th><th class="num">AOV</th><th class="num">Клієнтів</th><th class="num">Δ%</th></tr></thead>
-      <tbody>${arr.map((c,i) => `<tr><td>${i+1}</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.color};margin-right:8px"></span><strong>${c.name}</strong></td><td class="num">${fmt.uah(c.rev)}</td><td class="num">${fmt.uah(c.margin)}</td><td class="num">${fmt.pct(c.marginPct)}</td><td class="num">${fmt.pct(totalRev ? c.rev/totalRev*100 : 0)}</td><td class="num">${c.qty}</td><td class="num">${c.tx}</td><td class="num">${fmt.uah(c.aov)}</td><td class="num">${c.custCount}</td><td class="num">${deltaTag(c.growth)}</td></tr>`).join('')}</tbody>
-    </table></div></div>
-    <div class="sec"><h2>📊 Розподіл виручки</h2></div>
-    <div class="g2">
-      <div class="cc"><div class="chart-wrap"><canvas id="chanPie"></canvas></div></div>
-      <div class="cc"><div class="chart-wrap"><canvas id="chanBar"></canvas></div></div>
-    </div>
-  `;
-  if (state.charts.chanPie) state.charts.chanPie.destroy();
-  state.charts.chanPie = new Chart($('chanPie'), { type: 'doughnut', data: { labels: arr.map(c => c.name), datasets: [{ data: arr.map(c => c.rev), backgroundColor: arr.map(c => c.color) }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { family: 'Rubik', size: 11 } } } } } });
-  if (state.charts.chanBar) state.charts.chanBar.destroy();
-  state.charts.chanBar = new Chart($('chanBar'), { type: 'bar', data: { labels: arr.map(c => c.name), datasets: [{ label: 'Маржа', data: arr.map(c => c.margin), backgroundColor: arr.map(c => c.color), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: (v) => fmt.uahK(v) } } } } });
-}
-function hexToRgba(hex, alpha){ const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16); return `rgba(${r},${g},${b},${alpha})`; }
 $$('.chip[data-period]').forEach(b => b.addEventListener('click', () => { $$('.chip[data-period]').forEach(x => x.classList.remove('on')); b.classList.add('on'); state.period = b.dataset.period === 'all' ? 'all' : Number(b.dataset.period); render(); }));
 $$('.tab-btn').forEach(b => b.addEventListener('click', () => { $$('.tab-btn').forEach(x => x.classList.remove('on')); b.classList.add('on'); state.tab = b.dataset.tab; render(); }));
-$('channelFilter').addEventListener('change', (e) => { state.channel = e.target.value; render(); });
 $('reloadBtn').addEventListener('click', loadAll);
 $('printBtn').addEventListener('click', () => window.print());
 $('syncNowBtn').addEventListener('click', async () => {
   toast('⚡ Запускаю sync…');
   try {
-    const r = await fetch(SUPA_URL + '/functions/v1/moysklad-sync?action=demand&days=7', { method: 'POST', headers: { 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' }, body: '{}' });
+    const r = await fetch('https://barpi-sync.vg-ab6.workers.dev/sync?key=0db1abf2f40a499a049f881434d34cb7997ba612229476a6d43f5fdf53ee1268&only=demand', { method: 'POST' });
     const data = await r.json();
-    if (data.ok) { toast(`✓ Sync ok: +${data.result?.positions_inserted||0} нових`); setTimeout(loadAll, 1500); }
-    else toast('Sync error: ' + (data.error||'?'), true);
+    toast(`✓ Sync ${data.results?.demand !== undefined ? '+' + data.results.demand + ' rows' : 'ok'}`);
+    setTimeout(loadAll, 1500);
   } catch(e){ toast('Network: ' + e.message, true); }
 });
 loadAll();
