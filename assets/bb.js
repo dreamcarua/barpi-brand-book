@@ -1,5 +1,6 @@
 /* ============================================================
-   Barpi Brand Bible v4.0 — Global JS
+   Barpi Brand Bible v4.1 — Global JS
+   v4.1: Supabase refs повністю видалено (SUPABASE_URL/ANON), pure D1
    v4.0: CF Access (Zero Trust) edge auth — BB.AUTH видалено
    v3.4: BB.api → Cloudflare D1 (barpi-api Worker, Supabase REST deprecated)
    v3.3: Google OAuth backup auth (signInWithGoogle + UI button)
@@ -12,23 +13,22 @@
 
 const BB = window.BB = window.BB || {};
 
-BB.SUPABASE_URL = 'https://zrcqmwlpsggiqgipvxhv.supabase.co'; // legacy — auth only (magic link / google), data reads moved to BB.API_URL
 BB.API_URL = 'https://barpi-api.vg-ab6.workers.dev';
-BB.SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY3Ftd2xwc2dnaXFnaXB2eGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzcyMTYsImV4cCI6MjA5NTUxMzIxNn0.ROzbQ6aGRs-9rDVIDv0UyzlrvBRWFmFMQ7n77bLALmY';
+BB.SYNC_URL = 'https://barpi-sync.vg-ab6.workers.dev';
 
 BB.LOGO_DATA = 'data:image/webp;base64,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';
 
 /* === BB.AUTH removed in v4.0 — CF Access (Zero Trust) handles auth at edge === */
 
-/* ===== SIDEBAR HTML v3.3 ===== */
+/* ===== SIDEBAR HTML v4.1 ===== */
 BB.SIDEBAR_HTML = `
 <nav class="sidebar" id="bb-sidebar-nav" aria-label="Brand Bible navigation">
   <div class="sidebar-head">
     <a class="sidebar-brand" href="/">
       <img src="${BB.LOGO_DATA}" alt="Barpi" width="200" height="96" loading="eager">
       <div class="brand-text-sub">
-        <span data-lang="uk">Brand Bible · v4.0</span>
-        <span data-lang="en">Brand Bible · v4.0</span>
+        <span data-lang="uk">Brand Bible · v4.1</span>
+        <span data-lang="en">Brand Bible · v4.1</span>
       </div>
     </a>
     <div class="sidebar-search" style="position:relative">
@@ -82,7 +82,7 @@ BB.SIDEBAR_HTML = `
     </div>
   </div>
   <div class="sidebar-foot">
-    <a href="https://barpi.com.ua" target="_blank" style="display:block;margin-bottom:8px;font-weight:600">barpi.com.ua →</a>
+    <a href="https://barpi.com.ua" target="_blank" rel="noopener noreferrer" style="display:block;margin-bottom:8px;font-weight:600">barpi.com.ua →</a>
     <span data-lang="uk">© ТОВ «ПЕТ КОРП» · <a href="mailto:office@barpi.com.ua">office@barpi.com.ua</a></span>
     <span data-lang="en">© Pet Corp LLC · <a href="mailto:office@barpi.com.ua">office@barpi.com.ua</a></span>
   </div>
@@ -197,7 +197,7 @@ BB.initSearch = function() {
 BB.api = function(path, opts = {}) { return fetch(BB.API_URL + path, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } }); };
 BB.loadIdeas = async function(filter = 'all') { let q = '/brand_ideas?select=*&order=created_at.desc'; if (filter !== 'all') q += '&status=eq.' + filter; try { const r = await BB.api(q); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); } catch(e) { console.error('Load ideas:', e); return []; } };
 BB.submitIdea = async function(data) { try { const r = await BB.api('/brand_ideas', { method: 'POST', body: JSON.stringify(data) }); if (!r.ok) { console.error(await r.text()); return null; } return await r.json(); } catch(e) { return null; } };
-BB.upvoteIdea = async function(id, current) { try { const r = await BB.api('/brand_ideas?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ upvotes: (current || 0) + 1 }) }); return r.ok; } catch(e) { return false; } };
+BB.upvoteIdea = async function(id, current) { try { const r = await BB.api('/brand_ideas/' + id, { method: 'PATCH', body: JSON.stringify({ upvotes: (current || 0) + 1 }) }); return r.ok; } catch(e) { return false; } };
 BB.renderIdeas = async function(filter = 'all') {
   const list = document.getElementById('ideas-list');
   const counter = document.getElementById('ideas-counter');
