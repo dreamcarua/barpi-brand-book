@@ -1,11 +1,115 @@
 # Barpi Brand Bible — Changelog
 
+## v4.1 (02.06.2026) — 🧹 Audit cleanup
+
+### Що зроблено за один день автономно
+- 🚨 **P0-1:** 5 дашбордів зчитували з Supabase **paused** (HTTP 000) — мігровані на `barpi-api` Worker (D1):
+  - `inventory/`, `financial/`, `production/`, `sales-performance/`, `customer-360/` (lean rewrite з 75K → 14K).
+- 🐛 **P0-2:** `PATCH /brand_ideas/:id` повертав 200 для non-existing id → fix 404
+- 🐛 **P0-3:** filter `?col=eq.TEXT` не працював на текстових колонках (custom listIdeas hand-parsed status) — replaced з generic `readResource()`
+- 🐛 **P0-5:** `v_pnl_monthly.cogs=0` (processing_acts.materials_sum_uah порожні) → переписано на `SUM(supplies)` + додано real `collected` (paymentin) і `losses`. `v_sales_by_day.paid=0` → JOIN з paymentin by day.
+- 🛡 **P1-4/5/6:** Worker `barpi-api` graceful handling: malformed JSON → 400, CHECK constraint → 400, missing view → 200 `[]` (auto-discover via sqlite_master), `?limit=abc` → default, `?offset=-1` → 0, cap limit at 50000.
+- 🗑 **P1-3:** видалено stale файли: `auth-callback/`, `supabase/configure-auth.sh`, `AUTH_SETUP.md`, `GOOGLE_OAUTH_SETUP.md`, `dashboard/.gitkeep`, `dashboard/sales/index.html` (dup).
+- 📝 **P1-7:** `dashboard/index.html` legend оновлено: Supabase + pg_cron → D1 + barpi-api + barpi-sync cron щогодини.
+- 🧹 **P1-1:** `bb.js` v4.1 — викинуто `BB.SUPABASE_URL` + `BB.SUPABASE_ANON` (dead code).
+- ✅ Auth-callback page видалено (CF Access edge handles auth).
+
+### Архітектура (v4.1 final)
+```
+brand.barpi.ua (GitHub Pages, static HTML)
+   ↓
+Cloudflare Access (Zero Trust, 5-email allowlist, 30d session) → /dashboard/*
+   ↓
+bb.js v4.1 (BB.api → CF Worker)
+   ↓
+Worker barpi-api (REST proxy, PostgREST-compatible filters)
+   ↓
+Cloudflare D1 (barpi-bible: 17 tables + 11 views)
+   ↑
+Worker barpi-sync (cron 0 * * * *, hourly)
+   ↑
+МойСклад API (19 entities)
+```
+
+### Cost vs v3.x
+- Supabase Pro $25/міс → $0 (paused)
+- CF D1, Workers, Access — все на Free tier
+- **Економія: ~$25/міс**
+
+---
+
+## v4.0 (02.06.2026) — 🔐 CF Access edge auth
+
+- 🆕 **Cloudflare Access (Zero Trust)** активний на `brand.barpi.ua/dashboard/*` — team domain `uabarpi.cloudflareaccess.com`, 5-email allowlist, **30-day session**.
+- 🆕 `bb.js v4.0` — викинуто `BB.AUTH` (frontend gate, Magic Link, Google OAuth) — заміна на CF Access edge auth.
+- ✅ allowlist через API без UI: vg@abrisart.com, office@barpi.com.ua, aksonov@barpi.com.ua, vg@sneco.ua, fg@abrisart.com.
+
+---
+
+## v3.4 (02.06.2026) — D1 cutover
+
+- 🆕 `bb.js v3.4`: `BB.api` → Cloudflare D1 (`barpi-api` Worker) замість Supabase REST.
+- 🆕 Worker `barpi-api` deploy: REST API над D1 з PostgREST-compatible filters (eq, neq, gt, gte, lt, lte, like, ilike, is, in).
+- 🆕 Worker `barpi-sync` deploy: cron `0 * * * *` (щогодини), 19 МС entities, демандні positions з `expand=positions.assortment`.
+- ✅ D1 `barpi-bible` schema applied: 17 tables (moysklad_*, sales_sku, brand_ideas, sync_state) + 11 views (v_sales_by_day, v_sales_by_sku, v_customer_metrics, v_pnl_monthly, etc).
+- ✅ MS 401 fixed: User-Agent header added → 1955 demand + 1121 payments + 1502 customer orders synced.
+- ✅ brand_ideas migrated Supabase → D1 (3 rows).
+- ✅ Supabase project `barpi-hq` paused → $0/міс.
+
+### Bugs fixed на цьому етапі
+- `materials_sum_uah` field nullable → cogs у views показував 0 (replaced з supplies aggregation у v4.1).
+- `rebuildSalesSku` D1 memory limit → chunked SELECT 100 rows.
+- demand cursor stuck → MAX(moment) bump для resume incremental.
+- Worker CPU timeout (30 sec free) → `?only=entity1,entity2` для chunked invocation.
+
+---
+
+## v3.3 (28.05.2026) — Google OAuth backup
+
+- 🆕 `bb.js v3.3`: Google OAuth додано як backup до Magic Link (`signInWithGoogle()` через Supabase Auth).
+- 🆕 Auth gate UI: Google OAuth btn + OR + Magic Link form.
+
+## v3.2 (27.05.2026) — Mobile menu text label
+
+- 🆕 «Меню/Menu» label перед hamburger icon (mobile UX).
+
+## v3.1 (27.05.2026) — Mobile menu polish
+
+- 🆕 `BB.initMobileMenu()`: backdrop, ESC close, auto-close after link click, ARIA attributes.
+
+## v3.0 (27.05.2026) — Products + Ambassadors
+
+- 🆕 `/products/` — повний каталог 17 SKU + нутрієнтна таблиця.
+- 🆕 `/ambassadors/` — UGC амбасадори (Барні, Кіара, Райден, тощо).
+- 🆕 Sidebar updated.
+
+## v2.9 (26.05.2026) — Downloads
+
+- 🆕 `/downloads/` — Drive файли (презентація, прайс, каталог, сертифікати, ТМ/ТУ).
+
+## v2.8 (26.05.2026) — BB.AUTH Magic Link gate
+
+- 🆕 `bb.js v2.8`: BB.AUTH frontend gate з Supabase Magic Link OTP.
+- 🆕 `/auth-callback/` page для Magic Link redirect.
+- 🆕 6-email allowlist у двох файлах (bb.js + auth-callback).
+
+## v2.5 (26.05.2026) — Production + Inventory dashboards
+
+- 🆕 `/dashboard/production/` + `/dashboard/inventory/` (з Supabase).
+- 🆕 `bb.js v2.5`: topnav з 8 дашбордами.
+
+## v2.4 (25.05.2026) — Mobile audit pass
+
+- 🆕 `bb.css v2.4`: typography, spacings, grids — повністю responsive.
+
+---
+
 ## v1.1.0 (28.05.2026) — 🚀 Barpi HQ live!
 
 🎉 **Запуск Barpi HQ — повноцінної SMM-платформи** на основі DreamCar HQ.
 
 ### Barpi HQ (`/dashboard/hq/`)
-- ✅ **Supabase проект `barpi-hq`** створено (id `zrcqmwlpsggiqgipvxhv`, eu-central-1)
+- ✅ **Supabase проект `barpi-hq`** створено (id `zrcqmwlpsggiqgipvxhv`, eu-central-1) [⚠ paused у v3.4]
 - ✅ **Повна schema залита**: users, desks, desk_members, rubrics, launches, creatives, publications, publication_platforms/responsibles/approvers, creative_publications, publication_history, comments, publication_drafts, editing_sessions, notifications, notification_preferences, access_requests, user_vacations
 - ✅ **Row-Level Security** policies для всіх таблиць (5 ролей: CEO/COO/lead/member/designer)
 - ✅ **Seed:** 5 користувачів (Вадим, Пилип, Аксьонов, Альона, Мар'яна) + 6 рубрик Barpi + 4 запуски + 5 sample-публікацій
@@ -13,26 +117,11 @@
 - ✅ **Frontend**: SPA з jsDelivr CDN для всіх app-*.js модулів (60+ файлів автоматично через DreamCar HQ)
 - ✅ **Brand-adapted**: DreamCar red → Barpi blue (#2F6FED), DreamCar → Barpi typography і копірайт
 
-### Архітектура HQ
-- **Backend**: Supabase Postgres + Auth + Realtime + Storage
+### Архітектура HQ (v1.1, переїде у v5)
+- **Backend**: Supabase Postgres + Auth + Realtime + Storage [⚠ paused — потребує миграції на D1 або re-resume Supabase]
 - **Frontend**: vanilla JS SPA, lazy-loaded Supabase SDK
-- **Auth**: Google OAuth (планується) + demo-mode (localStorage) поки що
+- **Auth**: CF Access (Zero Trust) edge auth з v4.0
 - **Бібліотека модулів**: підвантажується з `cdn.jsdelivr.net/gh/dreamcarua/dreamcar-team@main/hq/` → автоматично отримуємо всі патчі DreamCar HQ
-
-### Що нового vs v1.0
-| v1.0 SMM Dashboard | v1.1 Barpi HQ |
-|---|---|
-| localStorage | Postgres у хмарі (Supabase) |
-| тільки vg | 5 ролей + whitelist + RLS |
-| одна вкладка | Календар (4 view) + Дошка + Бібліотека + Запуски |
-| ручне введення | Soft-locks, audit log, comments, real-time |
-| без auth | OAuth + Telegram login (планується) |
-| статичний | PWA з offline |
-
-### TODO для повного запуску (від vg)
-1. Google OAuth у Supabase: Authentication → Providers → Google → enable
-2. Створити Telegram bot через @BotFather → `dreamcar_team_bot` (адаптувати для Barpi) → додати token у Edge Function secrets
-3. Налаштувати Realtime channels для presence
 
 ---
 
@@ -52,7 +141,7 @@
 ### Backend (Cloudflare)
 - ✅ D1 `barpi-bible` + KV `barpi-bible-acl`
 - ✅ Schema + seed (24 SKU, 16 партнерів, 17 подій)
-- ⏳ Worker `barpi-auth` — code готовий, deploy від vg
+- ⏳ Worker `barpi-auth` — code готовий (видалено в v4.0 — CF Access замінив)
 
 ### Документи
 - ✅ `documents/README.md` + `01_Brand_Book_v7.md`
