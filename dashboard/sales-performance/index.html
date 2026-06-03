@@ -178,7 +178,7 @@ async function api(path){
   if(!r.ok){if(r.status===404)return [];throw new Error('API ' + r.status);}
   return r.json();
 }
-let state = { period: 30, tab: 'overview', sales: [], skuByDay: [], skuList: [], charts: {}, lastSync: null };
+let state = { period: 30, tab: 'overview', sales: [], skuByDay: [], skuList: [], productsCache: {}, charts: {}, lastSync: null };
 async function loadAll(){
   try {
     $('syncLabel').textContent = 'Завантаження…';
@@ -193,6 +193,7 @@ async function loadAll(){
     state.skuList = salesBySku;
     state.kpis = kpis[0]||{};
     state.lastSync = sync[0] || null;
+    state.productsCache = {}; // reset cache on reload
     if (sync[0]&&sync[0].last_synced_at) {
       const ago = Math.floor((Date.now() - new Date(sync[0].last_synced_at).getTime())/3600000);
       $('syncLabel').textContent = `Sync ${ago}h тому · ${salesByDay.length} днів · D1`;
@@ -328,21 +329,72 @@ function renderMonthChart(){
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: (v) => fmt.uahK(v) } } } },
   });
 }
-function renderProducts(){
-  const arr = state.skuList;
+// === PRODUCTS TAB з period filter ===
+async function fetchSkuListForPeriod(period){
+  if (period === 'all') {
+    return state.skuList; // lifetime aggregation готова
+  }
+  if (state.productsCache[period]) return state.productsCache[period];
+  const days = Number(period);
+  const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0,10);
+  // Fetch sales_sku for the period and aggregate locally
+  const rows = await api(`sales_sku?moment=gt.${cutoff}&select=sku_id,qty,price_uah,sum_uah,demand_ms_id&limit=50000`);
+  const skuMetaMap = {};
+  state.skuList.forEach(s => { skuMetaMap[s.sku_id] = {name:s.sku_name, category:s.category}; });
+  const agg = {};
+  rows.forEach(r => {
+    if (!r.sku_id) return;
+    if (!agg[r.sku_id]) {
+      agg[r.sku_id] = {
+        sku_id: r.sku_id,
+        sku_name: (skuMetaMap[r.sku_id]||{}).name || r.sku_id,
+        category: (skuMetaMap[r.sku_id]||{}).category || '',
+        qty: 0, revenue: 0, orders: new Set()
+      };
+    }
+    agg[r.sku_id].qty += Number(r.qty||0);
+    agg[r.sku_id].revenue += Number(r.sum_uah||0);
+    agg[r.sku_id].orders.add(r.demand_ms_id);
+  });
+  const result = Object.values(agg).map(s => ({
+    sku_id: s.sku_id,
+    sku_name: s.sku_name,
+    category: s.category,
+    qty: s.qty,
+    revenue: s.revenue,
+    orders: s.orders.size,
+    avg_price: s.qty>0 ? s.revenue/s.qty : 0,
+  })).sort((a,b)=>b.revenue-a.revenue);
+  state.productsCache[period] = result;
+  return result;
+}
+
+async function renderProducts(){
+  $('contentBox').innerHTML = `<div class="loading"><div class="spinner"></div><p>Завантажую дані по продуктах…</p></div>`;
+  const periodLabel = state.period === 'all' ? 'lifetime' : `останні ${state.period} днів`;
+  let arr;
+  try {
+    arr = await fetchSkuListForPeriod(state.period);
+  } catch(e) {
+    $('contentBox').innerHTML = `<div class="empty">Помилка: ${escapeHtml(e.message)}</div>`;
+    return;
+  }
   const totalRev = arr.reduce((s,x) => s + Number(x.revenue||0), 0);
   let cum = 0;
   const enriched = arr.map(s => { cum += Number(s.revenue||0); return { ...s, cumPct: totalRev ? (cum/totalRev*100) : 0 }; });
   enriched.forEach(s => { s.abc = s.cumPct <= 80 ? 'A' : s.cumPct <= 95 ? 'B' : 'C'; s.share = totalRev ? (Number(s.revenue||0)/totalRev*100) : 0; });
   $('contentBox').innerHTML = `
-    <div class="sec"><h2>🏆 Всі продукти за виручкою (lifetime) — клікни для деталей</h2><span class="badge">${arr.length} SKU</span></div>
+    <div class="sec"><h2>🏆 Всі продукти за виручкою · ${periodLabel} — клікни для деталей</h2><span class="badge">${arr.length} SKU</span></div>
+    ${arr.length===0 ? '<div class="cc"><div class="empty">Немає продажів за цей період</div></div>' : `
     <div class="cc"><div class="tbl-scroll" style="max-height:none"><table class="dt">
       <thead><tr><th>ABC</th><th>#</th><th>SKU</th><th>Назва</th><th>Категорія</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">Виручка</th><th class="num">Частка</th><th class="num">Сер.ціна</th></tr></thead>
       <tbody>${enriched.map((s,i) => `<tr class="clickable" onclick="openSku('${s.sku_id||''}','${escapeHtml(s.sku_name||'').replace(/'/g,'&apos;')}')"><td><span class="abc abc-${s.abc}">${s.abc}</span></td><td>${i+1}</td><td><code style="font-size:11px">${s.sku_id||'—'}</code></td><td title="${escapeHtml(s.sku_name||'')}"><strong>${escapeHtml(truncate(s.sku_name||'—',55))}</strong></td><td><small style="color:#888">${escapeHtml(shortCategory(s.category))}</small></td><td class="num">${s.orders||0}</td><td class="num">${Number(s.qty||0).toFixed(0)}</td><td class="num">${fmt.uah(s.revenue)}</td><td class="num">${fmt.pct(s.share)}</td><td class="num">${fmt.uah(s.avg_price||0)}</td></tr>`).join('')}</tbody>
     </table></div></div>
-    <div class="sec"><h2>📊 ABC аналіз (Pareto)</h2></div>
+    <div class="sec"><h2>📊 ABC аналіз (Pareto) · ${periodLabel}</h2></div>
     <div class="cc"><div class="chart-wrap tall"><canvas id="abcChart"></canvas></div></div>
+    `}
   `;
+  if (arr.length===0) return;
   if (state.charts.abc) state.charts.abc.destroy();
   state.charts.abc = new Chart($('abcChart'), {
     type: 'bar',
