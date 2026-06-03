@@ -27,7 +27,7 @@
   @media(min-width: 1100px) { .sku-grid { grid-template-columns: 1fr 1fr 1fr; } }
   .sku-card { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: #fff; display: flex; flex-direction: column; transition: all .15s; }
   .sku-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); border-color: var(--accent, #FEBF27); }
-  .sku-head { padding: 16px 16px 12px; border-bottom: 1px solid var(--border); position: relative; }
+  .sku-head { padding: 16px 16px 12px; border-bottom: 1px solid var(--border); }
   .sku-head .emoji { font-size: 32px; line-height: 1; margin-bottom: 8px; display: block; }
   .sku-head h3 { font-size: 16px; margin: 0 0 4px; font-weight: 800; }
   .sku-head .composition { font-size: 12px; color: var(--text-muted, #777); }
@@ -42,6 +42,12 @@
   .sku-ean { font-size: 10px; color: var(--text-muted, #999); font-family: monospace; line-height: 1.5; padding-top: 8px; border-top: 1px dashed var(--border); }
   .sku-nutrients { font-size: 11px; color: var(--text-muted, #777); line-height: 1.5; font-style: italic; }
   .kcal-badge { position: absolute; top: 12px; right: 12px; background: var(--accent, #FEBF27); color: #0a0a0a; padding: 4px 9px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+  .sku-head { position: relative; }
+  .filter-bar { display: flex; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+  .filter-btn { background: #fff; border: 1.5px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; color: var(--text); transition: all .15s; }
+  .filter-btn.active { background: var(--accent, #FEBF27); border-color: var(--accent, #FEBF27); color: #0a0a0a; }
+  .filter-btn:hover:not(.active) { border-color: var(--accent, #FEBF27); }
+  .sku-card.hidden { display: none; }
 </style>
 </head>
 <body class="lang-uk">
@@ -52,8 +58,8 @@
     <span class="chapter-num">11 · <span data-lang="uk">Застосування</span><span data-lang="en">Application</span></span>
     <h1>🦴 <span data-lang="uk">Каталог продукції</span><span data-lang="en">Product Catalog</span></h1>
     <p class="lead">
-      <span data-lang="uk">Повний асортимент Barpi: ласощі для собак і котів, функціональні апетайзери, промо-набори.</span>
-      <span data-lang="en">Full Barpi assortment: treats for dogs and cats, functional appetizers, promo bundles.</span>
+      <span data-lang="uk">Повний асортимент Barpi: ласощі для собак і котів, функціональні апетайзери, промо-набори. Усі дані з офіційного прайсу 2026 + E-ZOO content sheet (нутрієнтна таблиця).</span>
+      <span data-lang="en">Full Barpi assortment: treats for dogs and cats, functional appetizers, promo bundles. All data from official 2026 price list + E-ZOO content sheet (nutrition table).</span>
     </p>
 
     <div class="stats-row">
@@ -66,81 +72,515 @@
     </div>
 
     <p style="background:rgba(254,191,39,0.08);padding:14px 16px;border-radius:10px;font-size:13px;margin:24px 0">
-      <span data-lang="uk"><strong>Формула:</strong> 1 інгредієнт = 1 продукт. SNECO 34–38°C. 12 місяців без консервантів.</span>
-      <span data-lang="en"><strong>Formula:</strong> 1 ingredient = 1 product. SNECO 34–38°C. 12-month shelf life with no preservatives.</span>
+      <span data-lang="uk"><strong>Формула:</strong> 1 інгредієнт = 1 продукт. Технологія SNECO 34–38°C. Термін придатності 12 місяців без консервантів. Зберігання 0–30°C, вологість &lt;80%.</span>
+      <span data-lang="en"><strong>Formula:</strong> 1 ingredient = 1 product. SNECO technology 34–38°C. 12-month shelf life with no preservatives. Storage 0–30°C, humidity &lt;80%.</span>
     </p>
 
+    <!-- ============= ЛАСОЩІ ДЛЯ СОБАК ============= -->
     <div class="sku-section">
       <h2>🐕 <span data-lang="uk">Ласощі для собак</span><span data-lang="en">Dog Treats</span> <span class="pill">9 SKU × 2 fasuvannya</span></h2>
-      <p class="lead"><span data-lang="uk">Базова лінійка: 8 видів субпродуктів + сир.</span><span data-lang="en">Core line: 8 offal types + cheese.</span></p>
+      <p class="lead">
+        <span data-lang="uk">Базова лінійка: 8 видів субпродуктів + сир. Кожен у двох фасуваннях (маленьке для прогулянок / велике для дому).</span>
+        <span data-lang="en">Core line: 8 offal types + cheese. Each in two sizes (small for walks / large for home).</span>
+      </p>
     </div>
     <div class="sku-grid">
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🐔</span><div class="kcal-badge">380 kcal</div><h3><span data-lang="uk">Курячі пупочки</span><span data-lang="en">Chicken Stomachs</span></h3><div class="composition"><span data-lang="uk">Шлунки курячі 100%</span><span data-lang="en">Chicken stomachs 100%</span></div></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div><div class="sku-nutrition"><table><tr><td><span data-lang="uk">Білки</span><span data-lang="en">Protein</span></td><td>65 г</td></tr><tr><td><span data-lang="uk">Жири</span><span data-lang="en">Fats</span></td><td>12 г</td></tr></table></div><div class="sku-nutrients"><span data-lang="uk">🔬 Колаген, залізо, B12</span><span data-lang="en">🔬 Collagen, iron, B12</span></div><div class="sku-ean">EAN 20г: 4823095815702<br>EAN 100г: 4823095815719</div></div></div>
 
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🥩</span><div class="kcal-badge">420 kcal</div><h3><span data-lang="uk">Крекер (рубець)</span><span data-lang="en">Beef Cracker</span></h3><div class="composition"><span data-lang="uk">Рубець 100%</span><span data-lang="en">Beef tripe 100%</span></div></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">15 г</span><span class="sku-size-pill">60 г</span></div><div class="sku-nutrition"><table><tr><td>Protein</td><td>60 г</td></tr><tr><td>Fats</td><td>20 г</td></tr></table></div><div class="sku-nutrients"><span data-lang="uk">🔬 Ферменти ШКТ</span><span data-lang="en">🔬 GI enzymes</span></div><div class="sku-ean">EAN 15г: 4823095815726<br>EAN 60г: 4823095815733</div></div></div>
+      <!-- 1. Курячі пупочки -->
+      <div class="sku-card" data-cat="dog">
+        <div class="sku-head">
+          <span class="emoji">🐔</span>
+          <div class="kcal-badge">380 kcal</div>
+          <h3><span data-lang="uk">Курячі пупочки</span><span data-lang="en">Chicken Stomachs</span></h3>
+          <div class="composition"><span data-lang="uk">Шлунки курячі 100%</span><span data-lang="en">Chicken stomachs 100%</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div>
+          <div class="sku-nutrition">
+            <table>
+              <tr><td><span data-lang="uk">Енергія</span><span data-lang="en">Energy</span></td><td>380 ккал · 1590 кДж</td></tr>
+              <tr><td><span data-lang="uk">Білки</span><span data-lang="en">Protein</span></td><td>65 г</td></tr>
+              <tr><td><span data-lang="uk">Жири (нас.)</span><span data-lang="en">Fats (sat.)</span></td><td>12 г (4,8)</td></tr>
+              <tr><td><span data-lang="uk">Вуглеводи</span><span data-lang="en">Carbs</span></td><td>3 г</td></tr>
+            </table>
+          </div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Колаген, залізо, цинк, фосфор, B12, B2, B3</span>
+            <span data-lang="en">🔬 Collagen, iron, zinc, phosphorus, B12, B2, B3</span>
+          </div>
+          <div class="sku-ean">
+            EAN 20г: 4823095815702 · B-0003<br>
+            EAN 100г: 4823095815719 · B-0011
+          </div>
+        </div>
+      </div>
 
-      <div class="sku-card"><div class="sku-head"><span class="emoji">☁️</span><div class="kcal-badge">375 kcal</div><h3><span data-lang="uk">Зефір (легені)</span><span data-lang="en">Marshmallow (lungs)</span></h3><div class="composition"><span data-lang="uk">Легені 100%</span><span data-lang="en">Beef lungs 100%</span></div></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">15 г</span><span class="sku-size-pill">60 г</span></div><div class="sku-nutrition"><table><tr><td>Protein</td><td>75 г</td></tr></table></div><div class="sku-nutrients"><span data-lang="uk">🔬 Залізо, калій, B</span><span data-lang="en">🔬 Iron, potassium, B</span></div><div class="sku-ean">EAN 15г: 4823095815740<br>EAN 60г: 4823095815757</div></div></div>
+      <!-- 2. Крекер яловичий (рубець) -->
+      <div class="sku-card" data-cat="dog">
+        <div class="sku-head">
+          <span class="emoji">🥩</span>
+          <div class="kcal-badge">420 kcal</div>
+          <h3><span data-lang="uk">Крекер яловичий (рубець)</span><span data-lang="en">Beef Cracker (tripe)</span></h3>
+          <div class="composition"><span data-lang="uk">Рубець яловичий 100%</span><span data-lang="en">Beef tripe 100%</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">15 г</span><span class="sku-size-pill">60 г</span></div>
+          <div class="sku-nutrition">
+            <table>
+              <tr><td><span data-lang="uk">Енергія</span><span data-lang="en">Energy</span></td><td>420 ккал · 1757 кДж</td></tr>
+              <tr><td><span data-lang="uk">Білки</span><span data-lang="en">Protein</span></td><td>60 г</td></tr>
+              <tr><td><span data-lang="uk">Жири (нас.)</span><span data-lang="en">Fats (sat.)</span></td><td>20 г (8)</td></tr>
+              <tr><td><span data-lang="uk">Вуглеводи</span><span data-lang="en">Carbs</span></td><td>8 г</td></tr>
+            </table>
+          </div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Колаген, травні ферменти, Омега-6, кальцій, фосфор</span>
+            <span data-lang="en">🔬 Collagen, digestive enzymes, Omega-6, calcium, phosphorus</span>
+          </div>
+          <div class="sku-ean">
+            EAN 15г: 4823095815726 · B-0005<br>
+            EAN 60г: 4823095815733 · B-0013
+          </div>
+        </div>
+      </div>
 
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🍦</span><div class="kcal-badge">500 kcal</div><h3><span data-lang="uk">Безе (вим'я)</span><span data-lang="en">Meringue (udder)</span></h3><div class="composition"><span data-lang="uk">Вим'я 100%</span><span data-lang="en">Beef udder 100%</span></div></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div><div class="sku-nutrition"><table><tr><td>Protein</td><td>45 г</td></tr><tr><td>Fats</td><td>35 г</td></tr></table></div><div class="sku-nutrients"><span data-lang="uk">🔬 Колаген, еластин</span><span data-lang="en">🔬 Collagen, elastin</span></div><div class="sku-ean">EAN 20г: 4823095815764<br>EAN 100г: 4823095815771</div></div></div>
+      <!-- 3. Зефір яловичий (легені) -->
+      <div class="sku-card" data-cat="dog">
+        <div class="sku-head">
+          <span class="emoji">☁️</span>
+          <div class="kcal-badge">375 kcal</div>
+          <h3><span data-lang="uk">Зефір яловичий (легені)</span><span data-lang="en">Beef Marshmallow (lungs)</span></h3>
+          <div class="composition"><span data-lang="uk">Легені яловичі 100%</span><span data-lang="en">Beef lungs 100%</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">15 г</span><span class="sku-size-pill">60 г</span></div>
+          <div class="sku-nutrition">
+            <table>
+              <tr><td><span data-lang="uk">Енергія</span><span data-lang="en">Energy</span></td><td>375 ккал · 1569 кДж</td></tr>
+              <tr><td><span data-lang="uk">Білки</span><span data-lang="en">Protein</span></td><td>75 г</td></tr>
+              <tr><td><span data-lang="uk">Жири (нас.)</span><span data-lang="en">Fats (sat.)</span></td><td>12 г (4,8)</td></tr>
+              <tr><td><span data-lang="uk">Вуглеводи</span><span data-lang="en">Carbs</span></td><td>2 г</td></tr>
+            </table>
+          </div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Залізо, калій, фосфор, B-група вітамінів</span>
+            <span data-lang="en">🔬 Iron, potassium, phosphorus, B-group vitamins</span>
+          </div>
+          <div class="sku-ean">
+            EAN 15г: 4823095815740 · B-0002<br>
+            EAN 60г: 4823095815757 · B-0010
+          </div>
+        </div>
+      </div>
 
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🟤</span><div class="kcal-badge">400 kcal</div><h3><span data-lang="uk">Печінка</span><span data-lang="en">Beef Liver</span></h3><div class="composition"><span data-lang="uk">Печінка 100%</span><span data-lang="en">Beef liver 100%</span></div></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div><div class="sku-nutrition"><table><tr><td>Protein</td><td>65 г</td></tr></table></div><div class="sku-nutrients"><span data-lang="uk">🔬 A, B12, залізо</span><span data-lang="en">🔬 A, B12, iron</span></div><div class="sku-ean">EAN 20г: 4823095815788<br>EAN 100г: 4823095815795</div></div></div>
+      <!-- 4. Безе яловиче (вим'я) -->
+      <div class="sku-card" data-cat="dog">
+        <div class="sku-head">
+          <span class="emoji">🍦</span>
+          <div class="kcal-badge">500 kcal</div>
+          <h3><span data-lang="uk">Безе яловиче (вим'я)</span><span data-lang="en">Beef Meringue (udder)</span></h3>
+          <div class="composition"><span data-lang="uk">Вим'я яловиче 100%</span><span data-lang="en">Beef udder 100%</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div>
+          <div class="sku-nutrition">
+            <table>
+              <tr><td><span data-lang="uk">Енергія</span><span data-lang="en">Energy</span></td><td>500 ккал · 2092 кДж</td></tr>
+              <tr><td><span data-lang="uk">Білки</span><span data-lang="en">Protein</span></td><td>45 г</td></tr>
+              <tr><td><span data-lang="uk">Жири (нас.)</span><span data-lang="en">Fats (sat.)</span></td><td>35 г (14)</td></tr>
+              <tr><td><span data-lang="uk">Вуглеводи</span><span data-lang="en">Carbs</span></td><td>3 г</td></tr>
+            </table>
+          </div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Колаген, еластин, кальцій, фосфор, вітаміни групи B</span>
+            <span data-lang="en">🔬 Collagen, elastin, calcium, phosphorus, B-group vitamins</span>
+          </div>
+          <div class="sku-ean">
+            EAN 20г: 4823095815764 · B-0001<br>
+            EAN 100г: 4823095815771 · B-0009
+          </div>
+        </div>
+      </div>
 
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🥨</span><div class="kcal-badge">450 kcal</div><h3><span data-lang="uk">Хрустики (трахея)</span><span data-lang="en">Crunchies (trachea)</span></h3><div class="composition"><span data-lang="uk">Трахея 100%</span><span data-lang="en">Beef trachea 100%</span></div></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div><div class="sku-nutrition"><table><tr><td>Protein</td><td>50 г</td></tr></table></div><div class="sku-nutrients"><span data-lang="uk">🔬 Глюкозамін, хондроїтин</span><span data-lang="en">🔬 Glucosamine, chondroitin</span></div><div class="sku-ean">EAN 20г: 4823095815818<br>EAN 100г: 4823095815801</div></div></div>
+      <!-- 5. Печінка яловича -->
+      <div class="sku-card" data-cat="dog">
+        <div class="sku-head">
+          <span class="emoji">🟤</span>
+          <div class="kcal-badge">400 kcal</div>
+          <h3><span data-lang="uk">Печінка яловича</span><span data-lang="en">Beef Liver</span></h3>
+          <div class="composition"><span data-lang="uk">Печінка яловича 100%</span><span data-lang="en">Beef liver 100%</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div>
+          <div class="sku-nutrition">
+            <table>
+              <tr><td><span data-lang="uk">Енергія</span><span data-lang="en">Energy</span></td><td>400 ккал · 1674 кДж</td></tr>
+              <tr><td><span data-lang="uk">Білки</span><span data-lang="en">Protein</span></td><td>65 г</td></tr>
+              <tr><td><span data-lang="uk">Жири (нас.)</span><span data-lang="en">Fats (sat.)</span></td><td>10 г (4)</td></tr>
+              <tr><td><span data-lang="uk">Вуглеводи</span><span data-lang="en">Carbs</span></td><td>5 г</td></tr>
+            </table>
+          </div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Вітамін A, B12, фолієва, залізо, мідь, цинк, селен, холін</span>
+            <span data-lang="en">🔬 Vitamin A, B12, folate, iron, copper, zinc, selenium, choline</span>
+          </div>
+          <div class="sku-ean">
+            EAN 20г: 4823095815788 · B-0004<br>
+            EAN 100г: 4823095815795 · B-0012
+          </div>
+        </div>
+      </div>
 
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🧀</span><div class="kcal-badge">~340 kcal</div><h3><span data-lang="uk">Сир стіки</span><span data-lang="en">Cheese Sticks</span></h3><div class="composition"><span data-lang="uk">Сулугуні</span><span data-lang="en">Suluguni cheese</span></div></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div><div class="sku-nutrition"><table><tr><td>Protein</td><td>35–40 г</td></tr></table></div><div class="sku-nutrients"><span data-lang="uk">💡 Pet-food стандарт</span><span data-lang="en">💡 Pet-food grade</span></div><div class="sku-ean">EAN 20г: 4823095815825<br>EAN 100г: 4823095815832</div></div></div>
+      <!-- 6. Хрустики яловичі (трахея) -->
+      <div class="sku-card" data-cat="dog">
+        <div class="sku-head">
+          <span class="emoji">🥨</span>
+          <div class="kcal-badge">450 kcal</div>
+          <h3><span data-lang="uk">Хрустики яловичі (трахея)</span><span data-lang="en">Beef Crunchies (trachea)</span></h3>
+          <div class="composition"><span data-lang="uk">Трахея яловича 100%</span><span data-lang="en">Beef trachea 100%</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div>
+          <div class="sku-nutrition">
+            <table>
+              <tr><td><span data-lang="uk">Енергія</span><span data-lang="en">Energy</span></td><td>450 ккал · 1883 кДж</td></tr>
+              <tr><td><span data-lang="uk">Білки</span><span data-lang="en">Protein</span></td><td>50 г</td></tr>
+              <tr><td><span data-lang="uk">Жири (нас.)</span><span data-lang="en">Fats (sat.)</span></td><td>30 г (12)</td></tr>
+              <tr><td><span data-lang="uk">Вуглеводи</span><span data-lang="en">Carbs</span></td><td>2 г</td></tr>
+            </table>
+          </div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Глюкозамін, хондроїтин (суглоби), колаген, кальцій, фосфор</span>
+            <span data-lang="en">🔬 Glucosamine, chondroitin (joints), collagen, calcium, phosphorus</span>
+          </div>
+          <div class="sku-ean">
+            EAN 20г: 4823095815818 · B-0008<br>
+            EAN 100г: 4823095815801 · B-0016
+          </div>
+        </div>
+      </div>
 
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🦴</span><div class="kcal-badge">long-chew</div><h3><span data-lang="uk">Довгожуйка</span><span data-lang="en">Long-chew</span></h3><div class="composition"><span data-lang="uk">Станова жила 100%</span><span data-lang="en">Beef sinew 100%</span></div></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div><div class="sku-nutrients"><span data-lang="uk">🔬 Колаген. 20+ хв.</span><span data-lang="en">🔬 High collagen. 20+ min.</span></div><div class="sku-ean">EAN 20г: 4823095815856<br>EAN 100г: 4823095815849</div></div></div>
+      <!-- 7. Сир / Сир стіки -->
+      <div class="sku-card" data-cat="dog">
+        <div class="sku-head">
+          <span class="emoji">🧀</span>
+          <div class="kcal-badge">~340 kcal</div>
+          <h3><span data-lang="uk">Сир / Сир стіки</span><span data-lang="en">Cheese / Cheese Sticks</span></h3>
+          <div class="composition"><span data-lang="uk">Сир Сулугуні натуральний</span><span data-lang="en">Natural Suluguni cheese</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div>
+          <div class="sku-nutrition">
+            <table>
+              <tr><td><span data-lang="uk">Білки</span><span data-lang="en">Protein</span></td><td>35–40 г</td></tr>
+              <tr><td><span data-lang="uk">Кальцій</span><span data-lang="en">Calcium</span></td><td><span data-lang="uk">високий</span><span data-lang="en">high</span></td></tr>
+              <tr><td><span data-lang="uk">Лактоза</span><span data-lang="en">Lactose</span></td><td><span data-lang="uk">мінімум</span><span data-lang="en">minimal</span></td></tr>
+            </table>
+          </div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">💡 Спеціально pet-food стандартів, не людський сир. Кальцій, протеїни молочного типу.</span>
+            <span data-lang="en">💡 Pet-food grade specifically, not human cheese. Calcium, dairy proteins.</span>
+          </div>
+          <div class="sku-ean">
+            EAN 20г: 4823095815825 · B-0006<br>
+            EAN 100г: 4823095815832 · B-0014
+          </div>
+        </div>
+      </div>
 
-      <div class="sku-card"><div class="sku-head"><span class="emoji">❤️</span><div class="kcal-badge">~390 kcal</div><h3><span data-lang="uk">Серденька курячі</span><span data-lang="en">Chicken Hearts</span></h3><div class="composition"><span data-lang="uk">Серця 100%</span><span data-lang="en">Chicken hearts 100%</span></div></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div><div class="sku-nutrients"><span data-lang="uk">🔬 Таурин, Q10</span><span data-lang="en">🔬 Taurine, CoQ10</span></div><div class="sku-ean">EAN 20г: 4823095816884<br>EAN 100г: 4823095816891</div></div></div>
+      <!-- 8. Довгожуйка (станова жила) -->
+      <div class="sku-card" data-cat="dog">
+        <div class="sku-head">
+          <span class="emoji">🦴</span>
+          <div class="kcal-badge">long-chew</div>
+          <h3><span data-lang="uk">Довгожуйка (станова жила)</span><span data-lang="en">Long-chew (sinew)</span></h3>
+          <div class="composition"><span data-lang="uk">Станова жила яловича 100%</span><span data-lang="en">Beef sinew 100%</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Колаген високий, низькокалорійна. Тривале жування — заняття для собаки на 20+ хв. Для зубної гігієни.</span>
+            <span data-lang="en">🔬 High collagen, low-calorie. Long chewing — 20+ min activity. For dental hygiene.</span>
+          </div>
+          <div class="sku-ean">
+            EAN 20г: 4823095815856 · B-0007<br>
+            EAN 100г: 4823095815849 · B-0015
+          </div>
+        </div>
+      </div>
 
-      <div class="sku-card"><div class="sku-head"><span class="emoji">⚪</span><div class="kcal-badge">NEW</div><h3><span data-lang="uk">Сир кульки</span><span data-lang="en">Cheese Balls</span></h3><div class="composition"><span data-lang="uk">Гауда</span><span data-lang="en">Gouda cheese</span></div></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">20 г</span></div><div class="sku-nutrients"><span data-lang="uk">💡 Нова 2026</span><span data-lang="en">💡 New 2026</span></div><div class="sku-ean">EAN 20г: 4823095815894</div></div></div>
+      <!-- 9. Серденька курячі -->
+      <div class="sku-card" data-cat="dog">
+        <div class="sku-head">
+          <span class="emoji">❤️</span>
+          <div class="kcal-badge">~390 kcal</div>
+          <h3><span data-lang="uk">Серденька курячі</span><span data-lang="en">Chicken Hearts</span></h3>
+          <div class="composition"><span data-lang="uk">Серця курячі 100%</span><span data-lang="en">Chicken hearts 100%</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">20 г</span><span class="sku-size-pill">100 г</span></div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Таурин (серце), коензим Q10, висок. білок. Для активних собак.</span>
+            <span data-lang="en">🔬 Taurine (heart), CoQ10, high protein. For active dogs.</span>
+          </div>
+          <div class="sku-ean">
+            EAN 20г: 4823095816884 · В-0018<br>
+            EAN 100г: 4823095816891 · В-0017
+          </div>
+        </div>
+      </div>
+
+      <!-- 10. Сир кульки (NEW) -->
+      <div class="sku-card" data-cat="dog">
+        <div class="sku-head">
+          <span class="emoji">⚪</span>
+          <div class="kcal-badge">NEW</div>
+          <h3><span data-lang="uk">Сир кульки</span><span data-lang="en">Cheese Balls</span></h3>
+          <div class="composition"><span data-lang="uk">Сир Гауда натуральний</span><span data-lang="en">Natural Gouda cheese</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">20 г</span></div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">💡 Нова формула 2026. Hard-cheese аромат, зручний формат для тренінгу.</span>
+            <span data-lang="en">💡 New 2026 formula. Hard-cheese aroma, convenient training format.</span>
+          </div>
+          <div class="sku-ean">
+            EAN 20г: 4823095815894 · В-0035
+          </div>
+        </div>
+      </div>
+
     </div>
 
+    <!-- ============= ДЛЯ КОТІВ ============= -->
     <div class="sku-section">
-      <h2>🐱 <span data-lang="uk">Для котів</span><span data-lang="en">For Cats</span> <span class="pill">2 SKU</span></h2>
-      <p class="lead"><span data-lang="uk">Адаптована лінійка.</span><span data-lang="en">Cat-specific line.</span></p>
+      <h2>🐱 <span data-lang="uk">Для котів</span><span data-lang="en">For Cats</span> <span class="pill">2 SKU · NEW 2025</span></h2>
+      <p class="lead">
+        <span data-lang="uk">Спеціально адаптована лінійка для котів — менші порції, м'якіша текстура, перевірений склад.</span>
+        <span data-lang="en">Cat-specific line — smaller portions, softer texture, validated composition.</span>
+      </p>
     </div>
     <div class="sku-grid">
-      <div class="sku-card"><div class="sku-head"><span class="emoji">❤️</span><div class="kcal-badge">cat</div><h3><span data-lang="uk">Серденька для котів</span><span data-lang="en">Cat Hearts</span></h3></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">20 г</span></div><div class="sku-nutrients"><span data-lang="uk">🔬 Таурин</span><span data-lang="en">🔬 Taurine</span></div><div class="sku-ean">EAN: 4823095817058</div></div></div>
-      <div class="sku-card"><div class="sku-head"><span class="emoji">☁️</span><div class="kcal-badge">cat</div><h3><span data-lang="uk">Зефір для котів</span><span data-lang="en">Cat Lung Marshmallow</span></h3></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">15 г</span></div><div class="sku-nutrients"><span data-lang="uk">🔬 Низькокалорійний</span><span data-lang="en">🔬 Low-calorie</span></div><div class="sku-ean">EAN: 4823095816815</div></div></div>
+
+      <div class="sku-card" data-cat="cat">
+        <div class="sku-head">
+          <span class="emoji">❤️</span>
+          <div class="kcal-badge">cat</div>
+          <h3><span data-lang="uk">Серденька для котів</span><span data-lang="en">Cat Hearts</span></h3>
+          <div class="composition"><span data-lang="uk">Серця курячі натуральні</span><span data-lang="en">Natural chicken hearts</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">20 г</span></div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Таурин — критично важлива амінокислота для котів. Підтримка серця і зору.</span>
+            <span data-lang="en">🔬 Taurine — critical amino acid for cats. Heart & vision support.</span>
+          </div>
+          <div class="sku-ean">EAN: 4823095817058</div>
+        </div>
+      </div>
+
+      <div class="sku-card" data-cat="cat">
+        <div class="sku-head">
+          <span class="emoji">☁️</span>
+          <div class="kcal-badge">cat</div>
+          <h3><span data-lang="uk">Зефір легені для котів</span><span data-lang="en">Cat Lung Marshmallow</span></h3>
+          <div class="composition"><span data-lang="uk">Легені яловичі натуральні</span><span data-lang="en">Natural beef lungs</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">15 г</span></div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Низькокалорійний, високий білок, легке жування. Підходить для кошенят і літніх котів.</span>
+            <span data-lang="en">🔬 Low-calorie, high protein, easy chewing. Suitable for kittens and senior cats.</span>
+          </div>
+          <div class="sku-ean">EAN: 4823095816815</div>
+        </div>
+      </div>
+
     </div>
 
+    <!-- ============= АПЕТАЙЗЕРИ ============= -->
     <div class="sku-section">
-      <h2>💧 <span data-lang="uk">Апетайзери</span><span data-lang="en">Appetizers</span> <span class="pill">3 SKU · 280 мл</span></h2>
-      <p class="lead"><span data-lang="uk">Функціональна добавка.</span><span data-lang="en">Functional supplement.</span></p>
+      <h2>💧 <span data-lang="uk">Апетайзери (функціональні)</span><span data-lang="en">Appetizers (Functional)</span> <span class="pill">3 SKU · 280 мл</span></h2>
+      <p class="lead">
+        <span data-lang="uk">Функціональна добавка — посипається на основний корм. Підтримка апетиту, реабілітація після хвороб і операцій. Окрема товарна категорія.</span>
+        <span data-lang="en">Functional supplement — sprinkled on main food. Appetite support, post-illness recovery. Separate category.</span>
+      </p>
     </div>
     <div class="sku-grid">
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🥩</span><div class="kcal-badge">280 ml</div><h3><span data-lang="uk">Рубець</span><span data-lang="en">Tripe</span></h3></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">280 мл (80 г)</span></div><div class="sku-nutrients"><span data-lang="uk">🔬 Ферменти</span><span data-lang="en">🔬 Enzymes</span></div><div class="sku-ean">EAN: 4823095816853</div></div></div>
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🟤</span><div class="kcal-badge">280 ml</div><h3><span data-lang="uk">Печінка</span><span data-lang="en">Liver</span></h3></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">280 мл (120 г)</span></div><div class="sku-nutrients"><span data-lang="uk">🔬 A, B12, залізо</span><span data-lang="en">🔬 A, B12, iron</span></div><div class="sku-ean">EAN: 4823095816860</div></div></div>
-      <div class="sku-card"><div class="sku-head"><span class="emoji">☁️</span><div class="kcal-badge">280 ml</div><h3><span data-lang="uk">Легені</span><span data-lang="en">Lungs</span></h3></div><div class="sku-body"><div class="sku-sizes"><span class="sku-size-pill">280 мл (80 г)</span></div><div class="sku-nutrients"><span data-lang="uk">🔬 Низькокал.</span><span data-lang="en">🔬 Low-cal.</span></div><div class="sku-ean">EAN: 4823095816877</div></div></div>
+
+      <div class="sku-card" data-cat="appetizer">
+        <div class="sku-head">
+          <span class="emoji">🥩</span>
+          <div class="kcal-badge">280 ml</div>
+          <h3><span data-lang="uk">Апетайзер «Рубець»</span><span data-lang="en">Appetizer "Tripe"</span></h3>
+          <div class="composition"><span data-lang="uk">Рубець яловичий подрібнений</span><span data-lang="en">Ground beef tripe</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">280 мл (80 г сух.)</span></div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Травні ферменти, природна підтримка ШКТ. Для собак з низьким апетитом.</span>
+            <span data-lang="en">🔬 Digestive enzymes, GI tract support. For dogs with low appetite.</span>
+          </div>
+          <div class="sku-ean">EAN: 4823095816853 · A-00001</div>
+        </div>
+      </div>
+
+      <div class="sku-card" data-cat="appetizer">
+        <div class="sku-head">
+          <span class="emoji">🟤</span>
+          <div class="kcal-badge">280 ml</div>
+          <h3><span data-lang="uk">Апетайзер «Печінка»</span><span data-lang="en">Appetizer "Liver"</span></h3>
+          <div class="composition"><span data-lang="uk">Печінка яловича подрібнена</span><span data-lang="en">Ground beef liver</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">280 мл (120 г сух.)</span></div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Вітамін A, B12, залізо. Для реабілітації після операцій, анемії, виснаження.</span>
+            <span data-lang="en">🔬 Vitamin A, B12, iron. For post-op recovery, anemia, weight loss.</span>
+          </div>
+          <div class="sku-ean">EAN: 4823095816860 · A-00003</div>
+        </div>
+      </div>
+
+      <div class="sku-card" data-cat="appetizer">
+        <div class="sku-head">
+          <span class="emoji">☁️</span>
+          <div class="kcal-badge">280 ml</div>
+          <h3><span data-lang="uk">Апетайзер «Легені»</span><span data-lang="en">Appetizer "Lungs"</span></h3>
+          <div class="composition"><span data-lang="uk">Легені яловичі подрібнені</span><span data-lang="en">Ground beef lungs</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-sizes"><span class="sku-size-pill">280 мл (80 г сух.)</span></div>
+          <div class="sku-nutrients">
+            <span data-lang="uk">🔬 Низькокалорійний, високий білок. Для собак на дієті або з зайвою вагою.</span>
+            <span data-lang="en">🔬 Low-calorie, high protein. For dogs on diet or overweight.</span>
+          </div>
+          <div class="sku-ean">EAN: 4823095816877 · A-00002</div>
+        </div>
+      </div>
+
     </div>
 
+    <!-- ============= ПРОМО-НАБОРИ ============= -->
     <div class="sku-section">
-      <h2>🎁 <span data-lang="uk">Промо-набори</span><span data-lang="en">Promo Bundles</span> <span class="pill">3 SKU · E-ZOO</span></h2>
+      <h2>🎁 <span data-lang="uk">Промо-набори</span><span data-lang="en">Promo Bundles</span> <span class="pill">3 SKU · E-ZOO exclusive</span></h2>
+      <p class="lead">
+        <span data-lang="uk">Спеціальні набори зі знижкою — велика упаковка + маленька. Тільки для маркетплейсу E-ZOO (березень-квітень 2026 кампанія).</span>
+        <span data-lang="en">Special discounted bundles — large pack + small. E-ZOO marketplace exclusive (March-April 2026 campaign).</span>
+      </p>
     </div>
     <div class="sku-grid">
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🎁</span><h3><span data-lang="uk">Печінка 100г + Пупочки 20г</span><span data-lang="en">Liver 100g + Stomachs 20g</span></h3></div><div class="sku-body"><div class="sku-ean">EAN: 4821221122144</div></div></div>
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🎁</span><h3><span data-lang="uk">Сир 100г + Безе 20г</span><span data-lang="en">Cheese 100g + Meringue 20g</span></h3></div><div class="sku-body"><div class="sku-ean">EAN: 4821221122120</div></div></div>
-      <div class="sku-card"><div class="sku-head"><span class="emoji">🎁</span><h3><span data-lang="uk">Зефір 60г + Сир кульки 20г</span><span data-lang="en">Marshmallow 60g + Cheese Balls 20g</span></h3></div><div class="sku-body"><div class="sku-ean">EAN: 4821221122137</div></div></div>
+
+      <div class="sku-card" data-cat="bundle">
+        <div class="sku-head">
+          <span class="emoji">🎁</span>
+          <div class="kcal-badge">bundle</div>
+          <h3><span data-lang="uk">Печінка 100г + Пупочки 20г</span><span data-lang="en">Liver 100g + Stomachs 20g</span></h3>
+          <div class="composition"><span data-lang="uk">Дегустаційний набір №1</span><span data-lang="en">Tasting bundle #1</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-ean">EAN: 4821221122144 · Е-0003</div>
+        </div>
+      </div>
+
+      <div class="sku-card" data-cat="bundle">
+        <div class="sku-head">
+          <span class="emoji">🎁</span>
+          <div class="kcal-badge">bundle</div>
+          <h3><span data-lang="uk">Сир 100г + Безе 20г</span><span data-lang="en">Cheese 100g + Meringue 20g</span></h3>
+          <div class="composition"><span data-lang="uk">Дегустаційний набір №2</span><span data-lang="en">Tasting bundle #2</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-ean">EAN: 4821221122120 · Е-0001</div>
+        </div>
+      </div>
+
+      <div class="sku-card" data-cat="bundle">
+        <div class="sku-head">
+          <span class="emoji">🎁</span>
+          <div class="kcal-badge">bundle</div>
+          <h3><span data-lang="uk">Зефір 60г + Сир кульки 20г</span><span data-lang="en">Marshmallow 60g + Cheese Balls 20g</span></h3>
+          <div class="composition"><span data-lang="uk">Дегустаційний набір №3</span><span data-lang="en">Tasting bundle #3</span></div>
+        </div>
+        <div class="sku-body">
+          <div class="sku-ean">EAN: 4821221122137 · Е-0002</div>
+        </div>
+      </div>
+
     </div>
 
-    <h2 style="margin-top:40px"><span data-lang="uk">Загальні характеристики</span><span data-lang="en">Common Characteristics</span></h2>
+    <!-- ============= ЗВЕДЕНА ТАБЛИЦЯ ============= -->
+    <div class="sku-section">
+      <h2>📊 <span data-lang="uk">Зведена нутрієнтна таблиця</span><span data-lang="en">Nutrition Summary Table</span></h2>
+      <p class="lead">
+        <span data-lang="uk">Швидке порівняння калорійності і макронутрієнтів усіх ласощів (на 100 г сухої маси).</span>
+        <span data-lang="en">Quick comparison of calories and macronutrients for all treats (per 100g dry mass).</span>
+      </p>
+    </div>
+    <table>
+      <tr>
+        <th>SKU</th>
+        <th><span data-lang="uk">Ккал</span><span data-lang="en">kcal</span></th>
+        <th><span data-lang="uk">Білки</span><span data-lang="en">Protein</span></th>
+        <th><span data-lang="uk">Жири</span><span data-lang="en">Fats</span></th>
+        <th><span data-lang="uk">Карб.</span><span data-lang="en">Carbs</span></th>
+        <th><span data-lang="uk">Топ-нутрієнт</span><span data-lang="en">Top nutrient</span></th>
+      </tr>
+      <tr><td><span data-lang="uk">Курячі пупочки</span><span data-lang="en">Chicken stomachs</span></td><td>380</td><td>65 г</td><td>12 г</td><td>3 г</td><td><span data-lang="uk">колаген, B12</span><span data-lang="en">collagen, B12</span></td></tr>
+      <tr><td><span data-lang="uk">Крекер (рубець)</span><span data-lang="en">Cracker (tripe)</span></td><td>420</td><td>60 г</td><td>20 г</td><td>8 г</td><td><span data-lang="uk">ферменти ШКТ</span><span data-lang="en">GI enzymes</span></td></tr>
+      <tr><td><span data-lang="uk">Зефір (легені)</span><span data-lang="en">Marshmallow (lungs)</span></td><td>375</td><td><strong>75 г</strong></td><td>12 г</td><td>2 г</td><td><span data-lang="uk">залізо, калій</span><span data-lang="en">iron, potassium</span></td></tr>
+      <tr><td><span data-lang="uk">Безе (вим'я)</span><span data-lang="en">Meringue (udder)</span></td><td><strong>500</strong></td><td>45 г</td><td><strong>35 г</strong></td><td>3 г</td><td><span data-lang="uk">еластин, колаген</span><span data-lang="en">elastin, collagen</span></td></tr>
+      <tr><td><span data-lang="uk">Печінка</span><span data-lang="en">Liver</span></td><td>400</td><td>65 г</td><td>10 г</td><td>5 г</td><td><span data-lang="uk">A, B12, залізо</span><span data-lang="en">A, B12, iron</span></td></tr>
+      <tr><td><span data-lang="uk">Хрустики (трахея)</span><span data-lang="en">Crunchies (trachea)</span></td><td>450</td><td>50 г</td><td>30 г</td><td>2 г</td><td><span data-lang="uk">глюкозамін, хондроїтин</span><span data-lang="en">glucosamine, chondroitin</span></td></tr>
+    </table>
+
+    <h2><span data-lang="uk">Як використовувати ці дані</span><span data-lang="en">How to use this data</span></h2>
+    <div class="card-grid">
+      <div class="card">
+        <h4>📣 <span data-lang="uk">Маркетинг</span><span data-lang="en">Marketing</span></h4>
+        <p>
+          <span data-lang="uk">Числа з цієї таблиці — основа для всіх promo-меседжів («до 65% білка», «низькокалорійні», «глюкозамін для суглобів»).</span>
+          <span data-lang="en">Numbers here are the basis for all promo messages ("up to 65% protein", "low-calorie", "glucosamine for joints").</span>
+        </p>
+      </div>
+      <div class="card">
+        <h4>🤝 <span data-lang="uk">Партнерські переговори</span><span data-lang="en">Partner negotiations</span></h4>
+        <p>
+          <span data-lang="uk">EAN-13 + артикул — у спецификацію партнера. Прайси: <a href="/downloads/">/downloads/</a> → Прайс-листи 2026.</span>
+          <span data-lang="en">EAN-13 + SKU — into partner specs. Prices: <a href="/downloads/">/downloads/</a> → Price lists 2026.</span>
+        </p>
+      </div>
+      <div class="card">
+        <h4>🏷️ <span data-lang="uk">Етикетки і упаковка</span><span data-lang="en">Labels & packaging</span></h4>
+        <p>
+          <span data-lang="uk">Дизайн і tech-pack — <a href="/labels/">/labels/</a>. PDF файл наклейки 20г — <a href="/downloads/">/downloads/</a>.</span>
+          <span data-lang="en">Design and tech-pack — <a href="/labels/">/labels/</a>. 20g label PDF — <a href="/downloads/">/downloads/</a>.</span>
+        </p>
+      </div>
+    </div>
+
+    <h2><span data-lang="uk">Загальні характеристики</span><span data-lang="en">Common Characteristics</span></h2>
     <table>
       <tr><th><span data-lang="uk">Параметр</span><span data-lang="en">Parameter</span></th><th><span data-lang="uk">Значення</span><span data-lang="en">Value</span></th></tr>
-      <tr><td><span data-lang="uk">Технологія</span><span data-lang="en">Technology</span></td><td>SNECO 34–38°C · <a href="/tech/">/tech/</a></td></tr>
-      <tr><td><span data-lang="uk">Строк придатності</span><span data-lang="en">Shelf life</span></td><td><span data-lang="uk">12 місяців</span><span data-lang="en">12 months</span></td></tr>
+      <tr><td><span data-lang="uk">Технологія</span><span data-lang="en">Technology</span></td><td>SNECO 34–38°C · <a href="/tech/"><span data-lang="uk">детальніше</span><span data-lang="en">more</span></a></td></tr>
+      <tr><td><span data-lang="uk">Видалено вологи</span><span data-lang="en">Moisture removed</span></td><td><span data-lang="uk">до 99%</span><span data-lang="en">up to 99%</span></td></tr>
+      <tr><td><span data-lang="uk">Збережено поживних</span><span data-lang="en">Nutrients preserved</span></td><td><span data-lang="uk">до 95%</span><span data-lang="en">up to 95%</span></td></tr>
+      <tr><td><span data-lang="uk">Термін придатності</span><span data-lang="en">Shelf life</span></td><td><span data-lang="uk">12 місяців</span><span data-lang="en">12 months</span></td></tr>
+      <tr><td><span data-lang="uk">Умови зберігання</span><span data-lang="en">Storage</span></td><td><span data-lang="uk">0–30°C, вологість &lt;80% (печінка &lt;30%)</span><span data-lang="en">0–30°C, humidity &lt;80% (liver &lt;30%)</span></td></tr>
+      <tr><td><span data-lang="uk">Консерванти / ароматизатори</span><span data-lang="en">Preservatives / flavorings</span></td><td><span data-lang="uk">❌ немає</span><span data-lang="en">❌ none</span></td></tr>
       <tr><td><span data-lang="uk">УКТ ЗЕД</span><span data-lang="en">HS code</span></td><td><code>2309 10 90 00</code></td></tr>
-      <tr><td><span data-lang="uk">ТУ</span><span data-lang="en">Specs</span></td><td><code>ТУ У 10.9-45519838-001:2024</code></td></tr>
+      <tr><td><span data-lang="uk">ТУ України</span><span data-lang="en">Ukraine Tech Specs</span></td><td><code>ТУ У 10.9-45519838-001:2024</code></td></tr>
+      <tr><td><span data-lang="uk">Лабораторія</span><span data-lang="en">Lab certification</span></td><td><span data-lang="uk">Експертний висновок № 001636 п/24 (мікробіологія, 7 SKU, all pass)</span><span data-lang="en">Lab conclusion № 001636 p/24 (microbiology, 7 SKU, all pass)</span></td></tr>
     </table>
 
     <p style="margin-top: 32px; padding: 16px; background: rgba(254,191,39,0.08); border-radius: 10px; font-size: 13px">
-      <span data-lang="uk">💡 <strong>Пов'язані:</strong> <a href="/labels/">/labels/</a> · <a href="/tech/">/tech/</a> · <a href="/downloads/">/downloads/</a> · <a href="/documents/">/documents/</a></span>
-      <span data-lang="en">💡 <strong>Related:</strong> <a href="/labels/">/labels/</a> · <a href="/tech/">/tech/</a> · <a href="/downloads/">/downloads/</a> · <a href="/documents/">/documents/</a></span>
+      <span data-lang="uk">💡 <strong>Пов'язані розділи:</strong> Дизайн етикеток — <a href="/labels/">/labels/</a> · Технологія SNECO — <a href="/tech/">/tech/</a> · Прайси і КП — <a href="/downloads/">/downloads/</a> · Документи і сертифікати — <a href="/documents/">/documents/</a></span>
+      <span data-lang="en">💡 <strong>Related sections:</strong> Label design — <a href="/labels/">/labels/</a> · SNECO technology — <a href="/tech/">/tech/</a> · Prices and proposals — <a href="/downloads/">/downloads/</a> · Documents and certificates — <a href="/documents/">/documents/</a></span>
     </p>
 
     <div class="page-foot"><div>© <span data-lang="uk">ТОВ «ПЕТ КОРП»</span><span data-lang="en">Pet Corp LLC</span> · /products/ v1.0 · 29.05.2026 · 17 SKU</div></div>
   </main>
 </div>
-<script src="/assets/bb.js"></script>
+<script src="/assets/bb.js"</script>
 </body>
 </html>
