@@ -67,7 +67,7 @@ table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:5
 </head>
 <body>
 <header class="fn-top">
-  <h1>💵 Barpi · <span class="sub">Financial v5 — Real P&L з фільтрами</span></h1>
+  <h1>💵 Barpi · <span class="sub">Financial v5.1 — Real P&L з фільтрами</span></h1>
   <span class="spacer"></span>
   <span class="sync"><span class="dot"></span><span id="syncLabel">Завантаження…</span></span>
 </header>
@@ -236,11 +236,11 @@ function render(){
     state.charts.cf=new Chart($('cfChart'),{
       type:'bar',
       data:{labels:cf.map(m=>fmt.month(m.month)),datasets:[
-        {label:'Cash In',data:cf.map(m=>Number(m.cash_in||0)),backgroundColor:'#39B44A',borderRadius:4},
-        {label:'Cash Out',data:cf.map(m=>-Number(m.cash_out||0)),backgroundColor:'#E84040',borderRadius:4},
-        {label:'Net Cash',data:cf.map(m=>Number(m.net_cash||0)),type:'line',borderColor:'#001154',borderWidth:2,tension:.3,pointRadius:3},
+        {label:'💵 Cash In (надходження)',data:cf.map(m=>Number(m.inflow||0)),backgroundColor:'#39B44A',borderRadius:4,order:2},
+        {label:'💸 Cash Out (виплати)',data:cf.map(m=>-Number(m.outflow||0)),backgroundColor:'#E84040',borderRadius:4,order:2},
+        {label:'📊 Net Cash',data:cf.map(m=>Number(m.net_cash||0)),type:'line',borderColor:'#001154',backgroundColor:'transparent',borderWidth:2.5,tension:.3,pointRadius:3,pointBackgroundColor:'#001154',order:1},
       ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:(v)=>fmt.uahK(v)}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:(ctx)=>ctx.dataset.label+': '+fmt.uah(Math.abs(ctx.parsed.y))}}},scales:{y:{ticks:{callback:(v)=>fmt.uahK(v)}}}}
     });
     if(state.charts.pnlGrouped)state.charts.pnlGrouped.destroy();
     state.charts.pnlGrouped=new Chart($('pnlGroupedChart'),{
