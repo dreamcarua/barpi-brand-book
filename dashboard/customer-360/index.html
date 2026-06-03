@@ -183,10 +183,10 @@ function render(d){
       </div>
     </div>
 
-    <div class="sec"><h2>🏆 ТОП клієнтів за LTV — клікни рядок для деталей</h2><span class="badge">${metrics.length}</span></div>
+    <div class="sec"><h2>🏆 ТОП клієнтів за LTV — клікни рядок для деталей</h2><span class="badge" id="custCnt">${metrics.length}</span><input type="search" id="custSearch" placeholder="🔍 Пошук клієнта…" style="margin-left:auto;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;min-width:240px"></div>
     <div class="cc"><div class="tbl-scroll"><table class="dt">
       <thead><tr><th>#</th><th>Клієнт</th><th class="num">Замовлень</th><th class="num">Шт</th><th class="num">LTV ₴</th><th class="num">Avg чек</th><th>Перше</th><th>Останнє</th><th class="num">Днів</th><th>Сегмент</th></tr></thead>
-      <tbody>${metrics.slice(0,200).map((m,i) => {
+      <tbody id="custTbody">${metrics.slice(0,200).map((m,i) => {
         const score = rfmScore(m);
         const seg = segment(score);
         return `<tr class="clickable" onclick="openCustomer('${m.agent_ms_id}')">
@@ -234,7 +234,6 @@ async function openCustomer(agentMsId){
   document.body.style.overflow = 'hidden';
   try {
     const sales = await api(`sales_sku?agent_ms_id=eq.${agentMsId}&select=demand_ms_id,moment,sku_id,qty,price_uah,sum_uah&order=moment.desc&limit=500`);
-    // Map sku_id → name from v_sales_by_sku (cached) or call directly
     const skus = await api(`v_sales_by_sku?select=sku_id,sku_name&limit=500`);
     const skuNameMap = {};
     skus.forEach(s => { skuNameMap[s.sku_id] = s.sku_name; });
@@ -249,7 +248,6 @@ function renderCustomerDetails(m, sales, skuNameMap){
   const score = rfmScore(m);
   const seg = segment(score);
 
-  // Aggregate by SKU
   const bySku = {};
   sales.forEach(s => {
     if (!s.sku_id) return;
@@ -260,7 +258,6 @@ function renderCustomerDetails(m, sales, skuNameMap){
   });
   const skuRows = Object.entries(bySku).map(([id,v])=>({sku_id:id, qty:v.qty, sum:v.sum, ordersCount:v.orders.size, name:v.name})).sort((a,b)=>b.sum-a.sum);
 
-  // Aggregate by month (orders count, revenue)
   const byMonth = {};
   sales.forEach(s => {
     if (!s.moment) return;
@@ -272,7 +269,6 @@ function renderCustomerDetails(m, sales, skuNameMap){
   });
   const monthRows = Object.entries(byMonth).map(([m,v])=>({month:m, sum:v.sum, orders:v.orders.size, qty:v.qty})).sort((a,b)=>a.month.localeCompare(b.month));
 
-  // Recent orders (unique demand_ms_id)
   const recentOrders = {};
   sales.forEach(s => {
     if (!s.demand_ms_id) return;
@@ -345,7 +341,24 @@ function closeModal(){
 $('modalBg').addEventListener('click', (e) => { if (e.target.id === 'modalBg') closeModal(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('modalBg').classList.contains('shown')) closeModal(); });
 
-load();
+load().then(() => {
+  const inp = $('custSearch');
+  if (inp) inp.addEventListener('input', () => filterCustomers(inp.value));
+});
+
+function filterCustomers(q) {
+  const tbody = $('custTbody');
+  if (!tbody || !allMetrics) return;
+  q = (q||'').toLowerCase().trim();
+  const filtered = q ? allMetrics.filter(m => (m.counterparty_name||'').toLowerCase().includes(q) || (m.agent_ms_id||'').includes(q)) : allMetrics.slice(0,200);
+  tbody.innerHTML = filtered.slice(0,500).map((m,i) => {
+    const score = rfmScore(m);
+    const seg = segment(score);
+    return `<tr class="clickable" onclick="openCustomer('${m.agent_ms_id}')"><td>${i+1}</td><td><strong>${escapeHtml(truncate(m.counterparty_name||'— невідомий —',32))}</strong></td><td class="num">${m.total_orders||0}</td><td class="num">${Number(m.total_qty||0).toFixed(0)}</td><td class="num">${fmt.uahK(m.lifetime_revenue)}</td><td class="num">${fmt.uah(m.avg_order_value||0)}</td><td><small>${fmt.date(m.first_purchase)}</small></td><td><small>${fmt.date(m.last_purchase)}</small></td><td class="num">${m.days_since_last_purchase??'—'}</td><td><span class="tag ${seg.cls}">${seg.name}</span></td></tr>`;
+  }).join('') || '<tr><td colspan="10" class="empty">Нічого не знайдено</td></tr>';
+  const cnt = $('custCnt');
+  if (cnt) cnt.textContent = q ? `${filtered.length} / ${allMetrics.length}` : allMetrics.length;
+}
 </script>
 </body>
 </html>
