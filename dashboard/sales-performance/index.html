@@ -411,15 +411,12 @@ $$('.chip[data-period]').forEach(b => b.addEventListener('click', () => { $$('.c
 $$('.tab-btn').forEach(b => b.addEventListener('click', () => { $$('.tab-btn').forEach(x => x.classList.remove('on')); b.classList.add('on'); state.tab = b.dataset.tab; render(); }));
 $('reloadBtn').addEventListener('click', loadAll);
 $('printBtn').addEventListener('click', () => window.print());
-$('syncNowBtn').addEventListener('click', async () => {
-  toast('⚡ Запускаю sync…');
-  try {
-    const r = await fetch('https://barpi-sync.vg-ab6.workers.dev/sync?key=0db1abf2f40a499a049f881434d34cb7997ba612229476a6d43f5fdf53ee1268&only=demand', { method: 'POST' });
-    const data = await r.json();
-    toast(`✓ Sync ${data.results?.demand !== undefined ? '+' + data.results.demand + ' rows' : 'ok'}`);
-    setTimeout(loadAll, 1500);
-  } catch(e){ toast('Network: ' + e.message, true); }
+// SYNC button: ключ більше не embedded у HTML (rotated 2026-06-07).
+// Manual sync trigger тепер через cron (hourly) або wrangler CLI з admin token.
+$('syncNowBtn').addEventListener('click', () => {
+  toast('ℹ Автоматичний sync щогодини. Ручний — через wrangler CLI (admin only).');
 });
+$('syncNowBtn').title = 'Sync щогодини автоматично. Ручний — для адмінів.';
 // === SKU DRILL-DOWN ===
 async function openSku(skuId, skuName){
   if (!skuId) return;
