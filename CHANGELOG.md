@@ -1,5 +1,71 @@
 # Barpi Brand Bible — Changelog
 
+## v5.0 (07.06.2026) — 🛡 Handover hardening
+
+### 🔴 P0 Security incidents (виявлено + закрито за день)
+
+- 🚨 **C1 — barpi-api Worker був повністю public** (~5h leak window). Будь-хто з прямим URL міг fetch-нути:
+  - 308 counterparty records (phone, email, name)
+  - 1983 demand records з sums
+  - 1133 paymentin / 905 paymentout
+  - всі 30 D1 таблиць/views
+  - **Fix:** додано `checkAuth()` функцію + `STRICT_ORIGIN=1` binding. Worker тепер вимагає або (a) Origin у allowlist [brand.barpi.ua, pages.dev], (b) `Cf-Access-Jwt-Assertion` header (для майбутнього zone routing), або (c) `X-API-Key` matching `API_AUTH_KEY` secret. `/healthz` залишився public.
+- 🚨 **C2 — `SYNC_API_KEY` (64-char production secret) hardcoded** у `dashboard/sales-performance/index.html` сирцях.
+  - **Fix:** ключ rotated на barpi-sync Worker (old → 403). Видалено з HTML (commit `7c226cca`), sync button тепер показує toast "auto cron щогодини".
+  - ⚠ Git history досі містить старий ключ — потребує `bfg-repo-cleaner` для history rewrite, якщо є concern.
+
+### 🟢 Triple-pass handover QA — 3 паралельні agent'и
+
+Кожен агент аудитував з різного кута: Engineer (код + D1 + API contract + injection vectors), UX (a11y + mobile + bilingual + brand consistency), Handover (docs + ops + DR + cross-system consistency). Підсумок:
+- Backend: 9.5/10 — KPIs reconcile до raw, 0 errors, sub-500ms perf
+- Frontend UX: 8/10 — bilingual 100%, 2 stub pages thin
+- Docs: 9/10 (після rewrite README/RUNBOOK)
+- Net handover-readiness: **8.7/10**
+
+### 📝 Documentation rewrite
+
+- 🆕 `README.md` повністю переписано: architecture diagram, що де лежить, secrets list, швидкий старт для inженера + не-інженера. (Старий README описував Supabase + Telegram bot — обсолетне з v4.0.)
+- 🆕 `RUNBOOK.md` — 9 операційних процедур: deploy worker fix, add CF Access user, investigate sync failure, D1 backup/restore, rotate CF API token, add MS-synced column, onboard non-eng editor, customer data discrepancy, GDPR deletion.
+- 🆕 `SECURITY.md` — secrets inventory (4 secrets з expiry tracking), rotation guide для кожного, auth flow, compliance, leak response.
+- 🟡 `.github/workflows/d1-backup.yml` готовий у outputs/ — потребує manual upload (GitHub PAT MCP token не має workflow scope). Weekly `wrangler d1 export` → artifact 90-day retention.
+
+### 🐛 UX / a11y fixes
+
+- 🆕 `/ideas/` — drop obsolete "stored in Supabase" wording → "stored in our database". Додано `aria-label` на 4 form inputs + select (WCAG 1.3.1).
+- 🆕 `/about/` — narrative "BARPI" → "Barpi" (відповідає wordmark guidelines, що лише logo має lowercase wordmark).
+- 🆕 `favicon.svg` 256-byte (raises Pages 404 → 200). Navy `#001154` square + жовте `B`. Не залежить від `barpi.com.ua/favicon.ico` (broken upstream).
+
+### 🧹 Backend cleanup
+
+- 🗑 Removed `_ProcActsOld` dead function з `barpi-sync.js` (стара версія syncProcessingActs з v3.x, замінено в v4.1).
+- 🗑 Removed `payroll` entity з sync_state (MS не має `/entity/employee/payroll` endpoint — це був silent dead branch з v3.x). Зарплати tracking — через `paymentout` з expense item.
+- ✅ 18 sync entities тепер активні (було 19 з мертвим payroll).
+- ✅ Cron continues hourly @ `0 * * * *`, 0 errors.
+
+### 📊 Real-time stats (станом на 07.06.2026 09:30 UTC)
+
+| | |
+|---|---|
+| Demand orders | 1 983 |
+| Unique customers | 156 |
+| Lifetime revenue | 5 288 981 ₴ |
+| Lifetime paid | 5 889 629 ₴ |
+| Active SKUs (з продажами) | 96 |
+| Processing acts | 1 862 |
+| Loss events | 47 (320 070 ₴ lifetime) |
+| D1 size | 352 MB / 5 GB free |
+| Workers used | 10k/100k free per day |
+| **Cost** | **$0/month** |
+
+### ⚠ Що залишилось на User-action
+
+1. **CF API token expires 10.06.2026** (через 3 дні) — створи новий: dash.cloudflare.com → My Profile → API Tokens (permissions: Workers Scripts Edit, D1 Edit, Account Settings Read).
+2. **D1 backup workflow** — drop `/outputs/d1-backup.yml` у `.github/workflows/` через GitHub UI. Додай secrets `CF_API_TOKEN` + `CF_ACCOUNT_ID`.
+3. **`processing_acts.materials_sum_uah` = 0** (всі 1862 акти). MS API positions не містять `price`. Потрібен more complex fix: sync supply positions (`expand=positions.assortment` на supplies) → derive avg buy_price per product → JOIN у v_production_efficiency. ~3 hours estimated.
+4. **Git history містить leaked SYNC_API_KEY** у комітах до `7c226cca`. Розглянь `bfg --replace-text` якщо потрібно sanitize.
+
+---
+
 ## v4.1 (02.06.2026) — 🧹 Audit cleanup
 
 ### Що зроблено за один день автономно
