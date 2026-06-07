@@ -48,13 +48,13 @@
 
     <div class="ideas-form" id="ideas-form" style="display:none">
       <h3 style="margin: 0 0 16px"><span data-lang="uk">Запропонувати ідею</span><span data-lang="en">Propose an idea</span></h3>
-      <input type="text" id="idea-title" placeholder="Заголовок ідеї / Idea title" />
-      <textarea id="idea-body" placeholder="Опис: що, чому, для якого розділу? / Description: what, why, which section?"></textarea>
+      <input type="text" id="idea-title" aria-label="Заголовок ідеї / Idea title" placeholder="Заголовок ідеї / Idea title" />
+      <textarea id="idea-body" aria-label="Опис ідеї" placeholder="Опис: що, чому, для якого розділу? / Description: what, why, which section?"></textarea>
       <div class="ideas-form-grid">
-        <input type="text" id="idea-author" placeholder="Ваше ім'я / Your name" />
-        <input type="email" id="idea-email" placeholder="Email (опційно)" />
+        <input type="text" id="idea-author" aria-label="Ваше ім'я / Your name" placeholder="Ваше ім'я / Your name" />
+        <input type="email" id="idea-email" aria-label="Email (опційно)" placeholder="Email (опційно)" />
       </div>
-      <select id="idea-section" style="width:100%; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; margin-bottom: 10px; font-family: inherit">
+      <select id="idea-section" aria-label="Розділ Brand Book" style="width:100%; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; margin-bottom: 10px; font-family: inherit">
         <option value="">— Розділ (опційно) / Section (optional) —</option>
         <option value="manifesto">Маніфест / Manifesto</option>
         <option value="about">Про бренд / About</option>
@@ -79,8 +79,8 @@
 
     <div class="page-foot">
       <div style="font-size: 13px; color: var(--text-muted)">
-        <span data-lang="uk">Всі пропозиції зберігаються у Supabase і обробляються командою Barpi.</span>
-        <span data-lang="en">All ideas are stored in Supabase and reviewed by the Barpi team.</span>
+        <span data-lang="uk">Усі пропозиції зберігаються у нашій базі та обробляються командою Barpi.</span>
+        <span data-lang="en">All ideas are stored in our database and reviewed by the Barpi team.</span>
       </div>
     </div>
 
