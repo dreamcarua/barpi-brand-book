@@ -1,5 +1,6 @@
 /* ============================================================
-   Barpi Brand Bible v4.2 — Global JS
+   Barpi Brand Bible v4.3 — Global JS
+   v4.3: a11y — skip-link before sidebar, aria-current=page on active nav
    v4.2: SMM cleanup — викинуто HQ SMM + SMM v1 (Supabase project deleted)
    v4.1: Supabase refs повністю видалено (SUPABASE_URL/ANON), pure D1
    v4.0: CF Access (Zero Trust) edge auth — BB.AUTH видалено
@@ -21,22 +22,25 @@ BB.LOGO_DATA = 'data:image/webp;base64,UklGRugRAABXRUJQVlA4WAoAAAAYAAAAjwEAvgAAQ
 
 /* === BB.AUTH removed in v4.0 — CF Access (Zero Trust) handles auth at edge === */
 
-/* ===== SIDEBAR HTML v4.2 ===== */
+/* ===== SKIP LINK (a11y, v4.3) ===== */
+BB.SKIP_LINK_HTML = `<a href="#bb-main" class="skip-link"><span data-lang="uk">Перейти до контенту</span><span data-lang="en">Skip to main content</span></a>`;
+
+/* ===== SIDEBAR HTML v4.3 ===== */
 BB.SIDEBAR_HTML = `
 <nav class="sidebar" id="bb-sidebar-nav" aria-label="Brand Bible navigation">
   <div class="sidebar-head">
     <a class="sidebar-brand" href="/">
       <img src="${BB.LOGO_DATA}" alt="Barpi" width="200" height="96" loading="eager">
       <div class="brand-text-sub">
-        <span data-lang="uk">Brand Bible · v4.2</span>
-        <span data-lang="en">Brand Bible · v4.2</span>
+        <span data-lang="uk">Brand Bible · v4.3</span>
+        <span data-lang="en">Brand Bible · v4.3</span>
       </div>
     </a>
     <div class="sidebar-search" style="position:relative">
-      <input type="text" id="bb-search" placeholder="Шукати / Search…" autocomplete="off" />
-      <div id="bb-search-results" class="search-results"></div>
+      <input type="text" id="bb-search" placeholder="Шукати / Search…" autocomplete="off" aria-label="Search Brand Bible" />
+      <div id="bb-search-results" class="search-results" role="region" aria-live="polite"></div>
     </div>
-    <div class="lang-switch">
+    <div class="lang-switch" role="group" aria-label="Language switch">
       <button data-lang="uk">UK</button>
       <button data-lang="en">EN</button>
     </div>
@@ -95,6 +99,26 @@ BB.injectSidebar = function() {
   else { const app = document.querySelector('.app'); if (app) app.insertAdjacentHTML('afterbegin', BB.SIDEBAR_HTML); }
 };
 
+BB.injectSkipLink = function() {
+  // v4.3: skip-link стає першим focusable елементом для keyboard навігації
+  if (!document.querySelector('.skip-link')) {
+    document.body.insertAdjacentHTML('afterbegin', BB.SKIP_LINK_HTML);
+  }
+  // Помічаємо main елемент анкором, якщо немає
+  const mainEl = document.querySelector('main.main, main.events-main, main.bb-main, main');
+  if (mainEl && !mainEl.id) mainEl.id = 'bb-main';
+  else if (mainEl && mainEl.id !== 'bb-main') {
+    // Якщо у main уже є інший id — додаємо невидимий анкор
+    if (!document.getElementById('bb-main')) {
+      const anchor = document.createElement('a');
+      anchor.id = 'bb-main';
+      anchor.tabIndex = -1;
+      anchor.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden';
+      mainEl.parentNode.insertBefore(anchor, mainEl);
+    }
+  }
+};
+
 BB.setLang = function(lang) {
   if (!['uk','en'].includes(lang)) lang = 'uk';
   document.body.classList.remove('lang-uk','lang-en');
@@ -119,12 +143,15 @@ BB.initLang = function() {
 BB.markActiveNav = function() {
   let path = location.pathname.replace(/\/index\.html$/, '/');
   if (!path.endsWith('/')) path += '/';
-  document.querySelectorAll('.sidebar .nav-link').forEach(a => {
+  document.querySelectorAll('.sidebar .nav-link, .bb-topnav .nav-link').forEach(a => {
     const href = a.getAttribute('href') || '';
     if (!href) return;
     let normalized = href.replace(/\/index\.html$/, '/');
     if (!normalized.endsWith('/')) normalized += '/';
-    a.classList.toggle('active', normalized === path);
+    const isActive = normalized === path;
+    a.classList.toggle('active', isActive);
+    if (isActive) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
   });
 };
 
@@ -252,6 +279,7 @@ BB.injectDashboardTopnav = function(){
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  BB.injectSkipLink();  // v4.3: skip-link перший elemenet for screen readers
   if (location.pathname.startsWith('/dashboard/')) BB.injectDashboardTopnav();
   BB.injectSidebar();
   BB.initLang();
