@@ -1,5 +1,7 @@
 /* ============================================================
-   Barpi Brand Bible v2.4 — Global Stylesheet
+   Barpi Brand Bible v2.5 — Global Stylesheet
+   v2.5: fix dashboard double-header (push per-dashboard sticky
+         headers below .bb-topnav: c360, fn, sp, pr, iv, ev variants)
    v2.4: pill menu button with "Меню" label,
          3-col feature-badges on mobile (no more 4+2),
          tighter mobile typography, narrow section paddings,
@@ -355,6 +357,35 @@ blockquote .who {
 .search-result .sect { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
 
 /* ============================================================
+   DASHBOARD: fix double-header (v2.5)
+   `body.has-topnav` is added by BB.injectDashboardTopnav() when
+   .bb-topnav is present (44px sticky strip).
+   Push per-dashboard sticky headers below the topnav so вони
+   стекуються візуально: bb-topnav (44px) → dashboard header (48px).
+   ============================================================ */
+body.has-topnav .c360-top,
+body.has-topnav .fn-top,
+body.has-topnav .sp-topbar,
+body.has-topnav .pr-top,
+body.has-topnav .iv-top,
+body.has-topnav .ev-top {
+  top: 44px;
+}
+/* Filter strips that stick below per-dashboard headers — push further down */
+body.has-topnav .fn-filters,
+body.has-topnav .sp-filters,
+body.has-topnav .pr-filters {
+  top: 92px;
+}
+/* tabnav sticks at top: 48px у sales-perf — push до 92px */
+body.has-topnav .tabnav {
+  top: 92px;
+}
+body.has-topnav .sp-filters {
+  top: 132px;
+}
+
+/* ============================================================
    MOBILE MENU v2.4 — Pill button with "Меню" label + animated icon
    ============================================================ */
 
@@ -449,6 +480,34 @@ blockquote .who {
   transition: opacity .25s ease;
 }
 .menu-backdrop.shown { opacity: 1; pointer-events: auto; }
+
+/* ============================================================
+   A11y v2.5 — skip-link, focus-visible polish
+   ============================================================ */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 8px;
+  background: var(--blue);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  z-index: 1000;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  transition: top .2s ease;
+}
+.skip-link:focus {
+  top: 8px;
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.nav-link:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
 
 /* ============================================================
    MOBILE BREAKPOINTS — tighter, more polished
@@ -583,8 +642,8 @@ blockquote .who {
 /* === Smaller phones (≤480px) — even tighter === */
 @media (max-width: 480px) {
   .menu-toggle {
-    height: 40px;
-    padding: 0 12px 0 14px;
+    height: 44px;      /* v2.5: WCAG min 44×44 (було 40) */
+    padding: 0 14px 0 16px;
     gap: 8px;
     top: 12px;
     right: 12px;
