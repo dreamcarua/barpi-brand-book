@@ -1,0 +1,38 @@
+{
+  "exported_at": "2026-06-09T09:08:26.704097Z",
+  "note": "Snapshot of CF Access policy for brand.barpi.ua/dashboard/* — for audit trail. To restore: replay via API. Source of truth = CF Dashboard UI.",
+  "team_domain": "uabarpi.cloudflareaccess.com",
+  "account_id": "ab63a85bdfbf5894c28efe7076acbd82",
+  "app": {
+    "id": "e2567fcf-df3b-4920-8763-48dbffa4ba1b",
+    "name": "Barpi Brand Bible Dashboards",
+    "domain": "brand.barpi.ua/dashboard",
+    "type": "self_hosted",
+    "session_duration": "720h",
+    "auto_redirect_to_identity": false
+  },
+  "policies": [
+    {
+      "id": "12e4ee5e-982b-468b-b573-67c192e600a7",
+      "name": "Allowlist 5 emails",
+      "decision": "allow",
+      "precedence": 1,
+      "include": [
+        { "email": { "email": "vg@abrisart.com" } },
+        { "email": { "email": "office@barpi.com.ua" } },
+        { "email": { "email": "aksonov@barpi.com.ua" } },
+        { "email": { "email": "vg@sneco.ua" } },
+        { "email": { "email": "fg@abrisart.com" } }
+      ],
+      "exclude": [],
+      "require": []
+    }
+  ],
+  "allowlist_summary": [
+    "aksonov@barpi.com.ua",
+    "fg@abrisart.com",
+    "office@barpi.com.ua",
+    "vg@abrisart.com",
+    "vg@sneco.ua"
+  ]
+}
