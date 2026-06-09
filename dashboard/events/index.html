@@ -1,42 +1,109 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Events · Barpi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/bb.css">
-<style>:root{--bg:#FAFAFA;--ink:#1A1A1A;--blue:#2F6FED;--gray:#6b7280;--line:#e5e7eb;--radius:12px;--green:#16a34a;--orange:#f59e0b}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}main.events-main{max-width:1100px;margin:0 auto;padding:32px 24px 80px}.events-h1{font-size:32px;font-weight:800;letter-spacing:-0.02em;margin:0 0 8px}.events-sub{color:var(--gray);font-size:15px;margin:0 0 32px}.events-card{background:white;border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:16px}.events-card h3{margin:0 0 12px;font-size:16px;font-weight:700}.events-card table{width:100%;border-collapse:collapse;font-size:13px}.events-card th{text-align:left;padding:10px 12px;font-weight:600;font-size:11px;text-transform:uppercase;color:var(--gray);background:#f3f4f6}.events-card td{padding:10px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top}.events-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;text-transform:uppercase}.events-badge.done{background:#dcfce7;color:#166534}.events-badge.plan{background:#fef3c7;color:#92400e}.events-badge.next{background:#dbeafe;color:#1e40af}.events-banner{background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;padding:16px 20px;color:#1e40af;font-size:14px;margin-bottom:24px}.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}.kpi{background:white;border:1px solid var(--line);border-radius:10px;padding:14px}.kpi .l{font-size:11px;color:var(--gray);text-transform:uppercase;font-weight:600}.kpi .v{font-size:24px;font-weight:800;margin-top:4px}.events-status{display:inline-block;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;text-transform:uppercase;background:#fef3c7;color:#92400e;margin-left:8px}.events-fresh{font-size:11px;color:var(--gray);margin-top:6px}</style></head>
+<style>
+:root{--y:#001154;--y-soft:rgba(0,17,84,.13);--g:#39B44A;--g-soft:rgba(57,180,74,.13);--r:#E84040;--r-soft:rgba(232,64,64,.1);--bl:#3B82F6;--or:#F59E0B;--d:#1A1A1A;--bg:#FAF7F7;--card:#fff;--muted:#888;--border:#E5E5DC;--line:#EEE}
+body{background:var(--bg);font-family:Rubik,-apple-system,sans-serif;color:var(--d);margin:0;line-height:1.55}
+.ev-top{position:sticky;top:0;z-index:200;background:var(--d);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--y)}
+.ev-top h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.ev-top .sub{font-size:11px;opacity:.6;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.ev-top .spacer{flex:1}
+.ev-top .status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:rgba(245,158,11,.2);color:#fcd34d;text-transform:uppercase;letter-spacing:.04em}
+.ev-wrap{max-width:1280px;margin:0 auto;padding:20px 24px 40px}
+.sec{margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+.sec h2{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--y-soft);color:var(--y)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+@media(max-width:900px){.g4,.g5{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.g4,.g5{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:all .2s}
+.kpi:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,17,84,.06)}
+.kpi .lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.kpi .val{font-size:22px;font-weight:800;color:var(--d);letter-spacing:-.02em;line-height:1.1}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:6px}
+.kpi.cy{border-bottom:3px solid var(--y)}
+.kpi.cg{border-bottom:3px solid var(--g)}
+.kpi.cb{border-bottom:3px solid var(--bl)}
+.kpi.co{border-bottom:3px solid var(--or)}
+.cc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.cc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.cc-head h3{margin:0;font-size:14px;font-weight:700}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}
+table.dt th{text-align:left;padding:8px 12px;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--muted);background:#FAFAF5;border-bottom:1px solid var(--line);letter-spacing:.05em}
+table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
+.tag.done{background:var(--g-soft);color:var(--g)}
+.tag.next{background:rgba(59,130,246,.13);color:var(--bl)}
+.tag.plan{background:rgba(245,158,11,.13);color:var(--or)}
+.banner{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 18px;color:#1E3A8A;font-size:13px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.banner .icon{font-size:18px}
+.fresh{font-size:11px;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:6px}
+.fresh::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block}
+</style></head>
 <body>
-<button class="menu-toggle" aria-label="Menu">☰</button>
-<main class="events-main">
-<h1 class="events-h1">🎪 <span data-lang="uk">Events Dashboard</span><span data-lang="en">Events Dashboard</span> <span class="events-status">PLANNED · <span data-lang="uk">Фаза 4</span><span data-lang="en">Phase 4</span></span></h1>
-<p class="events-sub"><span data-lang="uk">Фестивалі, дегустації, ROI. Дані з маркетингового календаря 2026.</span><span data-lang="en">Festivals, tastings, ROI. Data from 2026 marketing calendar.</span></p>
-<div class="events-banner">🚧 <strong><span data-lang="uk">Дашборд у розробці.</span><span data-lang="en">Dashboard under construction.</span></strong> <span data-lang="uk">Розклад подій імпортовано з маркетингового календаря.</span><span data-lang="en">Event schedule imported from marketing calendar.</span></div>
-<div class="events-card"><h3>2026 KPI</h3><div class="kpi-grid">
-<div class="kpi"><div class="l"><span data-lang="uk">Запланованих подій</span><span data-lang="en">Planned events</span></div><div class="v">17</div></div>
-<div class="kpi"><div class="l"><span data-lang="uk">Проведених (рік)</span><span data-lang="en">Completed (year)</span></div><div class="v">5</div></div>
-<div class="kpi"><div class="l"><span data-lang="uk">Загальний бюджет</span><span data-lang="en">Total budget</span></div><div class="v">~13K <span style="font-size:14px">грн</span></div></div>
-<div class="kpi"><div class="l"><span data-lang="uk">Зразків роздано</span><span data-lang="en">Samples given</span></div><div class="v">—</div></div>
-<div class="kpi"><div class="l"><span data-lang="uk">UGC згенеровано</span><span data-lang="en">UGC generated</span></div><div class="v">—</div></div>
+<header class="ev-top">
+  <h1>🎪 Barpi · <span class="sub">Events</span></h1>
+  <span class="spacer"></span>
+  <span class="status">Фаза 4 · Planned</span>
+</header>
+<div class="ev-wrap">
+  <div class="banner">
+    <span class="icon">🚧</span>
+    <div>
+      <strong data-lang="uk">Дашборд у розробці.</strong>
+      <strong data-lang="en">Dashboard under construction.</strong>
+      <span data-lang="uk"> Розклад подій імпортовано з маркетингового календаря 2026 вручну.</span>
+      <span data-lang="en"> Event schedule imported from 2026 marketing calendar manually.</span>
+    </div>
+  </div>
+
+  <div class="sec"><h2>📊 KPI 2026</h2></div>
+  <div class="g5">
+    <div class="kpi cy"><div class="lbl"><span data-lang="uk">Запланованих</span><span data-lang="en">Planned</span></div><div class="val">17</div><div class="sub"><span data-lang="uk">подій рік</span><span data-lang="en">events year</span></div></div>
+    <div class="kpi cg"><div class="lbl"><span data-lang="uk">Проведених</span><span data-lang="en">Completed</span></div><div class="val">5</div><div class="sub"><span data-lang="uk">done</span><span data-lang="en">done</span></div></div>
+    <div class="kpi cb"><div class="lbl">📅 Next 30d</div><div class="val">3</div><div class="sub"><span data-lang="uk">найближчі</span><span data-lang="en">upcoming</span></div></div>
+    <div class="kpi co"><div class="lbl">💰 <span data-lang="uk">Бюджет</span><span data-lang="en">Budget</span></div><div class="val">~13K</div><div class="sub">₴</div></div>
+    <div class="kpi"><div class="lbl">🎁 Samples</div><div class="val">—</div><div class="sub"><span data-lang="uk">tba</span><span data-lang="en">tba</span></div></div>
+  </div>
+
+  <div class="sec"><h2>📅 <span data-lang="uk">Календар подій 2026</span><span data-lang="en">2026 Event Calendar</span></h2><span class="badge">17</span></div>
+  <div class="cc">
+    <table class="dt">
+      <thead><tr>
+        <th><span data-lang="uk">Подія</span><span data-lang="en">Event</span></th>
+        <th><span data-lang="uk">Місто</span><span data-lang="en">City</span></th>
+        <th><span data-lang="uk">Дата</span><span data-lang="en">Date</span></th>
+        <th><span data-lang="uk">Хто</span><span data-lang="en">Team</span></th>
+        <th><span data-lang="uk">Бюджет</span><span data-lang="en">Budget</span></th>
+        <th><span data-lang="uk">Статус</span><span data-lang="en">Status</span></th>
+      </tr></thead>
+      <tbody>
+        <tr><td><span data-lang="uk">Котики Фест</span><span data-lang="en">Kotyky Fest</span></td><td><span data-lang="uk">Київ (ВДНГ)</span><span data-lang="en">Kyiv (VDNG)</span></td><td>04.04</td><td>—</td><td>—</td><td><span class="tag done">Done</span></td></tr>
+        <tr><td>Pet Friends Day</td><td><span data-lang="uk">Мукачево</span><span data-lang="en">Mukachevo</span></td><td>05.04</td><td>—</td><td>—</td><td><span class="tag done">Done</span></td></tr>
+        <tr><td>Dog Fest</td><td><span data-lang="uk">Житомир</span><span data-lang="en">Zhytomyr</span></td><td>02–03.05</td><td>Микола+</td><td>—</td><td><span class="tag done">Done</span></td></tr>
+        <tr><td>Dog Party</td><td><span data-lang="uk">Львів</span><span data-lang="en">Lviv</span></td><td>16.05</td><td>Альона, Мар'яна</td><td>10 000 ₴</td><td><span class="tag done">Done</span></td></tr>
+        <tr><td><span data-lang="uk">Песики Фест</span><span data-lang="en">Pesyky Fest</span></td><td><span data-lang="uk">Львів</span><span data-lang="en">Lviv</span></td><td>23.05</td><td>Альона, Мар'яна</td><td>—</td><td><span class="tag done">Done</span></td></tr>
+        <tr><td>PetVille</td><td><span data-lang="uk">Вінниця</span><span data-lang="en">Vinnytsia</span></td><td>30–31.05</td><td>Альона, Мар'яна</td><td>27 847 ₴</td><td><span class="tag next">Next</span></td></tr>
+        <tr><td><span data-lang="uk">Бульдог Паті</span><span data-lang="en">Bulldog Party</span></td><td><span data-lang="uk">Київ (парк Наталка)</span><span data-lang="en">Kyiv (Natalka park)</span></td><td>31.05</td><td>—</td><td>~1 500 ₴</td><td><span class="tag next">Next</span></td></tr>
+        <tr><td><span data-lang="uk">Кінологічний конкурс</span><span data-lang="en">Cynology Contest</span></td><td>с. Гатне</td><td>31.05</td><td>—</td><td>~1 500 ₴</td><td><span class="tag next">Next</span></td></tr>
+        <tr><td><span data-lang="uk">Песики Фест</span><span data-lang="en">Pesyky Fest</span></td><td><span data-lang="uk">Одеса (парк Шевченка)</span><span data-lang="en">Odesa (Shevchenko park)</span></td><td>27.06</td><td>—</td><td>—</td><td><span class="tag plan">Plan</span></td></tr>
+        <tr><td>PetVille</td><td><span data-lang="uk">Одеса</span><span data-lang="en">Odesa</span></td><td>11–12.07</td><td>—</td><td>—</td><td><span class="tag plan">Plan</span></td></tr>
+        <tr><td><span data-lang="uk">Хвостик Фест</span><span data-lang="en">Khvostyk Fest</span></td><td><span data-lang="uk">Львів (парк культури)</span><span data-lang="en">Lviv (Culture park)</span></td><td>18–19.07</td><td>Альона, Мар'яна</td><td>—</td><td><span class="tag plan">Plan</span></td></tr>
+        <tr><td><span data-lang="uk">Песики Фест</span><span data-lang="en">Pesyky Fest</span></td><td><span data-lang="uk">Київ (ВДНГ)</span><span data-lang="en">Kyiv (VDNG)</span></td><td>15.08</td><td>Коля</td><td>—</td><td><span class="tag plan">Plan</span></td></tr>
+        <tr><td>PetVille</td><td><span data-lang="uk">Тернопіль</span><span data-lang="en">Ternopil</span></td><td>29–30.08</td><td>Альона, Мар'яна</td><td>—</td><td><span class="tag plan">Plan</span></td></tr>
+        <tr><td>Dogs Guru Fest</td><td><span data-lang="uk">Дніпро</span><span data-lang="en">Dnipro</span></td><td>05–06.09</td><td>—</td><td>—</td><td><span class="tag plan">Plan</span></td></tr>
+        <tr><td>КСУ</td><td><span data-lang="uk">Одеса</span><span data-lang="en">Odesa</span></td><td>12–13.09</td><td><span data-lang="uk">без участі</span><span data-lang="en">no booth</span></td><td>—</td><td><span class="tag plan">Plan</span></td></tr>
+        <tr><td>PesDay</td><td><span data-lang="uk">Київ</span><span data-lang="en">Kyiv</span></td><td>12–13.09</td><td>Коля</td><td>—</td><td><span class="tag plan">Plan</span></td></tr>
+        <tr><td><span data-lang="uk">Котики Фест</span><span data-lang="en">Kotyky Fest</span></td><td><span data-lang="uk">Київ (ВДНГ)</span><span data-lang="en">Kyiv (VDNG)</span></td><td>10.10</td><td>—</td><td>—</td><td><span class="tag plan">Plan</span></td></tr>
+      </tbody>
+    </table>
+    <div class="fresh"><span data-lang="uk">Дані вручну з MarketCal 2026 · v2.0 (refactor)</span><span data-lang="en">Manual data from MarketCal 2026 · v2.0 (refactor)</span></div>
+  </div>
 </div>
-<div class="events-fresh"><span data-lang="uk">Дані оновлено вручну з MarketCal 2026 · v1.0</span><span data-lang="en">Manual data from MarketCal 2026 · v1.0</span></div>
-</div>
-<div class="events-card"><h3><span data-lang="uk">Календар подій 2026</span><span data-lang="en">2026 Event Calendar</span></h3><table><thead><tr><th><span data-lang="uk">Подія</span><span data-lang="en">Event</span></th><th><span data-lang="uk">Місто</span><span data-lang="en">City</span></th><th><span data-lang="uk">Дата</span><span data-lang="en">Date</span></th><th><span data-lang="uk">Хто</span><span data-lang="en">Team</span></th><th><span data-lang="uk">Бюджет</span><span data-lang="en">Budget</span></th><th><span data-lang="uk">Статус</span><span data-lang="en">Status</span></th></tr></thead><tbody>
-<tr><td><span data-lang="uk">Котики Фест</span><span data-lang="en">Kotyky Fest</span></td><td><span data-lang="uk">Київ (ВДНГ)</span><span data-lang="en">Kyiv (VDNG)</span></td><td>04.04</td><td>—</td><td>—</td><td><span class="events-badge done">Done</span></td></tr>
-<tr><td>Pet Friends Day</td><td><span data-lang="uk">Мукачево</span><span data-lang="en">Mukachevo</span></td><td>05.04</td><td>—</td><td>—</td><td><span class="events-badge done">Done</span></td></tr>
-<tr><td>Dog Fest</td><td><span data-lang="uk">Житомир</span><span data-lang="en">Zhytomyr</span></td><td>02–03.05</td><td>Микола+</td><td>—</td><td><span class="events-badge done">Done</span></td></tr>
-<tr><td>Dog Party</td><td><span data-lang="uk">Львів</span><span data-lang="en">Lviv</span></td><td>16.05</td><td>Альона, Мар'яна</td><td>10 000 грн</td><td><span class="events-badge done">Done</span></td></tr>
-<tr><td><span data-lang="uk">Песики Фест</span><span data-lang="en">Pesyky Fest</span></td><td><span data-lang="uk">Львів</span><span data-lang="en">Lviv</span></td><td>23.05</td><td>Альона, Мар'яна</td><td>—</td><td><span class="events-badge done">Done</span></td></tr>
-<tr><td>PetVille</td><td><span data-lang="uk">Вінниця</span><span data-lang="en">Vinnytsia</span></td><td>30–31.05</td><td>Альона, Мар'яна</td><td>27 847 грн</td><td><span class="events-badge next">Next</span></td></tr>
-<tr><td><span data-lang="uk">Бульдог Паті</span><span data-lang="en">Bulldog Party</span></td><td><span data-lang="uk">Київ (парк Наталка)</span><span data-lang="en">Kyiv (Natalka park)</span></td><td>31.05</td><td>—</td><td>~1 500 грн</td><td><span class="events-badge next">Next</span></td></tr>
-<tr><td><span data-lang="uk">Кінологічний конкурс</span><span data-lang="en">Cynology Contest</span></td><td>с. Гатне</td><td>31.05</td><td>—</td><td>~1 500 грн</td><td><span class="events-badge next">Next</span></td></tr>
-<tr><td><span data-lang="uk">Песики Фест</span><span data-lang="en">Pesyky Fest</span></td><td><span data-lang="uk">Одеса (парк Шевченка)</span><span data-lang="en">Odesa (Shevchenko park)</span></td><td>27.06</td><td>—</td><td>—</td><td><span class="events-badge plan">Plan</span></td></tr>
-<tr><td>PetVille</td><td><span data-lang="uk">Одеса</span><span data-lang="en">Odesa</span></td><td>11–12.07</td><td>—</td><td>—</td><td><span class="events-badge plan">Plan</span></td></tr>
-<tr><td><span data-lang="uk">Хвостик Фест</span><span data-lang="en">Khvostyk Fest</span></td><td><span data-lang="uk">Львів (парк культури)</span><span data-lang="en">Lviv (Culture park)</span></td><td>18–19.07</td><td>Альона, Мар'яна</td><td>—</td><td><span class="events-badge plan">Plan</span></td></tr>
-<tr><td><span data-lang="uk">Песики Фест</span><span data-lang="en">Pesyky Fest</span></td><td><span data-lang="uk">Київ (ВДНГ)</span><span data-lang="en">Kyiv (VDNG)</span></td><td>15.08</td><td>Коля</td><td>—</td><td><span class="events-badge plan">Plan</span></td></tr>
-<tr><td>PetVille</td><td><span data-lang="uk">Тернопіль</span><span data-lang="en">Ternopil</span></td><td>29–30.08</td><td>Альона, Мар'яна</td><td>—</td><td><span class="events-badge plan">Plan</span></td></tr>
-<tr><td>Dogs Guru Fest</td><td><span data-lang="uk">Дніпро</span><span data-lang="en">Dnipro</span></td><td>05–06.09</td><td>—</td><td>—</td><td><span class="events-badge plan">Plan</span></td></tr>
-<tr><td>КСУ</td><td><span data-lang="uk">Одеса</span><span data-lang="en">Odesa</span></td><td>12–13.09</td><td><span data-lang="uk">без участі</span><span data-lang="en">no booth</span></td><td>—</td><td><span class="events-badge plan">Plan</span></td></tr>
-<tr><td>PesDay</td><td><span data-lang="uk">Київ</span><span data-lang="en">Kyiv</span></td><td>12–13.09</td><td>Коля</td><td>—</td><td><span class="events-badge plan">Plan</span></td></tr>
-<tr><td><span data-lang="uk">Котики Фест</span><span data-lang="en">Kotyky Fest</span></td><td><span data-lang="uk">Київ (ВДНГ)</span><span data-lang="en">Kyiv (VDNG)</span></td><td>10.10</td><td>—</td><td>—</td><td><span class="events-badge plan">Plan</span></td></tr>
-</tbody></table></div>
-</main>
 <script src="/assets/bb.js"></script>
 </body></html>
