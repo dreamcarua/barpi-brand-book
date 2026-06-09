@@ -53,13 +53,12 @@ table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0}.dt td.num{text-ali
 </div>
 <script src="../../assets/bb.js"></script>
 <script>
-const SUPA_URL='https://barpi-api.vg-ab6.workers.dev';
-const SUPA_KEY='';
+const API_URL='https://barpi-api.vg-ab6.workers.dev';
 const $=(id)=>document.getElementById(id);
 const fmt={uah:(n)=>new Intl.NumberFormat('uk-UA').format(Math.round(n||0))+' ₴',uahK:(n)=>n>=1e6?(n/1e6).toFixed(1)+'M ₴':n>=1e3?(n/1e3).toFixed(0)+'K ₴':Math.round(n||0)+' ₴',num:(n)=>new Intl.NumberFormat('uk-UA').format(n||0)};
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function truncate(s,n){return (s||'').length>n?s.slice(0,n)+'…':s;}
-async function api(p){const r=await fetch(SUPA_URL+'/'+p,{headers:{'Content-Type':'application/json'}});if(!r.ok){if(r.status===404)return [];throw new Error('API '+r.status);}return r.json();}
+async function api(p){const r=await fetch(API_URL+'/'+p,{headers:{'Content-Type':'application/json'}});if(!r.ok){if(r.status===404)return [];throw new Error('API '+r.status);}return r.json();}
 let charts={};
 async function load(){
   try{
