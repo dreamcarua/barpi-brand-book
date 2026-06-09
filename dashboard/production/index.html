@@ -55,12 +55,6 @@ table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:5
 .tag.tg{background:var(--g-soft);color:var(--g)}.tag.tr{background:var(--r-soft);color:var(--r)}.tag.ty{background:var(--y-soft);color:var(--y)}
 .loading{text-align:center;padding:60px;color:var(--muted)}
 .empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
-.alert{padding:12px 16px;border-radius:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:13px;border-left:4px solid}
-.alert.warn{background:#FFFBEB;border-color:#F59E0B;color:#78350F}
-.alert .icon{font-size:18px}
-.alert .body{flex:1}
-.alert strong{display:block;font-weight:700;font-size:13px;margin-bottom:2px}
-.alert small{font-size:11px;opacity:.85}
 .spinner{display:inline-block;width:30px;height:30px;border:3px solid var(--y-soft);border-top-color:var(--y);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .bar-row{display:grid;grid-template-columns:1fr 80px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
@@ -73,7 +67,7 @@ table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:5
 </head>
 <body>
 <header class="pr-top">
-  <h1>🏭 Barpi · <span class="sub">Production v2 — period + plan breakdown</span></h1>
+  <h1>🏭 Barpi · <span class="sub">Production v3 — real COGS from supply positions</span></h1>
   <span class="spacer"></span>
   <span class="sync"><span class="dot"></span><span id="syncLabel">Завантаження…</span></span>
 </header>
@@ -116,7 +110,7 @@ async function loadAll(){
     const [plans,acts,eff,monthly,losses,sync]=await Promise.all([
       api('moysklad_processing_plans?select=ms_id,ms_name&order=ms_name&limit=200'),
       api('moysklad_processing_acts?select=ms_id,moment,plan_ms_id,materials_sum_uah,store_ms_id,products_qty&order=moment.desc&limit=3000'),
-      api('v_production_efficiency?select=*&order=production_runs.desc&limit=100'),
+      api('v_production_efficiency?select=*&order=total_materials_uah.desc&limit=100'),
       api('v_production_monthly?select=*&order=month'),
       api('v_losses_monthly?select=*&order=month'),
       api('sync_state?entity=eq.processing&select=last_synced_at&limit=1'),
@@ -156,30 +150,28 @@ function render(){
   const planNameMap = {};
   plans.forEach(p => { planNameMap[p.ms_id] = p.ms_name; });
 
-  // Plan stats for period
+  // Plan stats for period (тепер з materials cost!)
   const byPlan = {};
   acts.forEach(a => {
     if (!a.plan_ms_id) return;
-    if (!byPlan[a.plan_ms_id]) byPlan[a.plan_ms_id] = {runs:0, qty:0, name:planNameMap[a.plan_ms_id]||'—'};
+    if (!byPlan[a.plan_ms_id]) byPlan[a.plan_ms_id] = {runs:0, qty:0, cost:0, name:planNameMap[a.plan_ms_id]||'—'};
     byPlan[a.plan_ms_id].runs += 1;
     byPlan[a.plan_ms_id].qty += Number(a.products_qty||0);
+    byPlan[a.plan_ms_id].cost += Number(a.materials_sum_uah||0);
   });
-  const planRows = Object.entries(byPlan).map(([id,v])=>({plan_ms_id:id,...v})).sort((a,b)=>b.runs-a.runs);
+  const planRows = Object.entries(byPlan).map(([id,v])=>({plan_ms_id:id,...v})).sort((a,b)=>b.cost-a.cost);
 
   // KPIs
   const totalActs = acts.length;
   const totalQty = acts.reduce((s,a)=>s+Number(a.products_qty||0),0);
+  const totalCost = acts.reduce((s,a)=>s+Number(a.materials_sum_uah||0),0);
   const uniquePlansUsed = Object.keys(byPlan).length;
   const lastAct = acts[0];
   const totalLossCount = losses.reduce((s,l)=>s+Number(l.losses_count||0),0);
   const totalLossQty = losses.reduce((s,l)=>s+Number(l.qty_lost||0),0);
-  // materials_sum_uah is null due to sync bug — count availability
-  const actsWithMaterials = acts.filter(a => a.materials_sum_uah != null).length;
-  const materialsAvailability = totalActs ? (actsWithMaterials/totalActs*100) : 0;
+  const avgCostPerKg = totalQty > 0 ? totalCost / totalQty : 0;
 
   $('contentBox').innerHTML = `
-    ${materialsAvailability < 50 ? `<div class="alert warn"><span class="icon">🛠</span><div class="body"><strong>Собівартість матеріалів недоступна (${materialsAvailability.toFixed(0)}% покриття)</strong><small>Sync bug: barpi-sync Worker поки не екстрактить materials_sum_uah з MS API processing acts. Для COGS використовуйте Financial Dashboard → блок COGS з supplies. Фікс в роботі.</small></div></div>` : ''}
-
     <div class="sec"><h2>🏭 KPI виробництва · ${periodLabel}</h2></div>
     <div class="g4">
       <div class="kpi cy"><div class="lbl">📋 Тех.карт (lifetime)</div><div class="val">${plans.length}</div><div class="sub">${uniquePlansUsed} активних у періоді</div></div>
@@ -188,21 +180,28 @@ function render(){
       <div class="kpi cr"><div class="lbl">⚠ Списань у періоді</div><div class="val">${fmt.num(totalLossCount)}</div><div class="sub">${fmt.num(totalLossQty)} шт</div></div>
     </div>
 
+    <div class="sec"><h2>💰 COGS — собівартість матеріалів · ${periodLabel}</h2></div>
+    <div class="g3">
+      <div class="kpi co"><div class="lbl">💵 Materials cost</div><div class="val">${fmt.uahK(totalCost)}</div><div class="sub">сума по processing acts</div></div>
+      <div class="kpi cv"><div class="lbl">📊 Avg cost / шт</div><div class="val">${fmt.uah(avgCostPerKg)}</div><div class="sub">cost ÷ виготовлено</div></div>
+      <div class="kpi"><div class="lbl">🔬 Метод</div><div class="val" style="font-size:13px">positions × buy_price</div><div class="sub">з v_product_avg_cost</div></div>
+    </div>
+
     <div class="sec"><h2>📈 Активність виробництва по місяцях · ${periodLabel}</h2></div>
     <div class="cc"><div class="chart-wrap tall"><canvas id="monthChart"></canvas></div></div>
 
     <div class="g2" style="margin-top:14px">
       <div class="cc">
-        <div class="cc-head"><h3>🏆 ТОП тех.карт за запусками · ${periodLabel}</h3><span class="pill">${planRows.length}</span></div>
+        <div class="cc-head"><h3>🏆 ТОП тех.карт за вартістю · ${periodLabel}</h3><span class="pill">${planRows.length}</span></div>
         <div style="max-height:460px;overflow:auto">
-          ${planRows.length ? planRows.slice(0,30).map((p,i)=>{const w=planRows[0].runs>0?(p.runs/planRows[0].runs*100):0;return `<div class="bar-row"><div><div class="nm">${i+1}. ${escapeHtml(truncate(p.name||'—',45))}</div><div class="tk"><div class="fl" style="width:${w}%"></div></div><div style="font-size:10px;color:#999;margin-top:2px">${p.qty.toFixed(0)} шт виготовлено</div></div><div class="vl">${p.runs}<small style="font-size:9px;color:#888;display:block;font-weight:500">запусків</small></div></div>`;}).join('') : '<div class="empty">Немає виробничих актів за період</div>'}
+          ${planRows.length ? planRows.slice(0,30).map((p,i)=>{const w=planRows[0].cost>0?(p.cost/planRows[0].cost*100):0;return `<div class="bar-row"><div><div class="nm">${i+1}. ${escapeHtml(truncate(p.name||'—',45))}</div><div class="tk"><div class="fl" style="width:${w}%"></div></div><div style="font-size:10px;color:#999;margin-top:2px">${p.runs} запусків · ${p.qty.toFixed(0)} шт</div></div><div class="vl">${fmt.uahK(p.cost)}<small style="font-size:9px;color:#888;display:block;font-weight:500">COGS</small></div></div>`;}).join('') : '<div class="empty">Немає виробничих актів за період</div>'}
         </div>
       </div>
       <div class="cc">
         <div class="cc-head"><h3>📋 Останні 50 виробничих актів</h3><span class="pill">${acts.length}</span></div>
         <div class="tbl-scroll" style="max-height:460px"><table class="dt">
-          <thead><tr><th>Дата</th><th>Тех.карта</th><th class="num">Шт</th></tr></thead>
-          <tbody>${acts.slice(0,50).map(a=>`<tr><td>${fmt.date(a.moment)}</td><td><small>${escapeHtml(truncate(planNameMap[a.plan_ms_id]||'—',40))}</small></td><td class="num">${Number(a.products_qty||0).toFixed(0)}</td></tr>`).join('')||'<tr><td colspan="3" class="empty">Немає актів за період</td></tr>'}</tbody>
+          <thead><tr><th>Дата</th><th>Тех.карта</th><th class="num">Шт</th><th class="num">Cost ₴</th></tr></thead>
+          <tbody>${acts.slice(0,50).map(a=>`<tr><td>${fmt.date(a.moment)}</td><td><small>${escapeHtml(truncate(planNameMap[a.plan_ms_id]||'—',40))}</small></td><td class="num">${Number(a.products_qty||0).toFixed(0)}</td><td class="num">${fmt.uah(a.materials_sum_uah)}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">Немає актів за період</td></tr>'}</tbody>
         </table></div>
       </div>
     </div>
@@ -210,10 +209,10 @@ function render(){
     <div class="sec"><h2>⚠ Списання по місяцях · ${periodLabel}</h2></div>
     <div class="cc"><div class="chart-wrap"><canvas id="lossChart"></canvas></div></div>
 
-    <div class="sec"><h2>📊 Lifetime efficiency (з v_production_efficiency)</h2></div>
+    <div class="sec"><h2>📊 Lifetime efficiency (v_production_efficiency)</h2></div>
     <div class="cc"><div class="tbl-scroll"><table class="dt">
-      <thead><tr><th>#</th><th>Тех.карта</th><th class="num">Lifetime запусків</th><th class="num">Шт за рецептом</th></tr></thead>
-      <tbody>${allEff.slice(0,50).map((e,i)=>`<tr><td>${i+1}</td><td><strong>${escapeHtml(truncate(e.plan_name||'—',55))}</strong></td><td class="num">${e.production_runs}</td><td class="num">${e.total_products_uah?Number(e.total_products_uah).toFixed(0):'—'}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">Немає</td></tr>'}</tbody>
+      <thead><tr><th>#</th><th>Тех.карта</th><th class="num">Lifetime запусків</th><th class="num">Materials ₴</th><th class="num">Шт виготовлено</th></tr></thead>
+      <tbody>${allEff.slice(0,50).map((e,i)=>`<tr><td>${i+1}</td><td><strong>${escapeHtml(truncate(e.plan_name||'—',55))}</strong></td><td class="num">${e.production_runs}</td><td class="num">${fmt.uahK(e.total_materials_uah)}</td><td class="num">${e.total_products_qty?Number(e.total_products_qty).toFixed(0):'—'}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">Немає</td></tr>'}</tbody>
     </table></div></div>
   `;
 
