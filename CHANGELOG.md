@@ -1,5 +1,86 @@
 # Barpi Brand Bible — Changelog
 
+## v6.0 (10.06.2026) — 🛡 Autonomous hardening sweep
+
+### 🔴 P0 Security incidents (виявлено + закрито)
+
+- 🚨 **C3 — SQL injection через `select` parameter у barpi-api Worker**
+  - Vector: `GET /v_dashboard_kpis?select=(SELECT GROUP_CONCAT(name) FROM sqlite_master)` exposed full schema
+  - Discoverer: внутрішній security audit (Phase 1)
+  - **Fix:** додано `SAFE_IDENT` regex `[a-zA-Z_][a-zA-Z0-9_]*`, validateSelect/validateOrder/validateColumnKey функції; 400 для invalid input, 500 errors no longer leak SQL strings
+  - Defense-in-depth: graceful catch блокує leak навіть якщо validator пропустить
+- 🚨 **C4 — Admin endpoints доступні з Origin (без API key)**
+  - `/export`, `/backups`, `/alerts/run`, `/tables` приймали будь-який валідний Origin
+  - **Fix:** додано ADMIN_PATHS set + isAdminPath() → require valid X-API-Key (CF JWT та Origin не достатньо)
+- 🚨 **C5 — Internal tables accessible через generic dispatcher**
+  - `/sqlite_master`, `/_backups`, `/_cf_KV` могли витягуватися
+  - **Fix:** BLACKLIST + SQL filter `substr(name,1,1) != '_'`
+
+### 🟢 Нові analytics views
+
+| View | Призначення |
+|---|---|
+| `v_sku_profitability` | revenue × cost per SKU → gross margin (5.15M rev, 452K COGS, 4.7M GP) |
+| `v_sku_cost` | weighted avg cost per produced SKU (з processing acts JSON1) |
+| `v_customer_first_purchase` | cohort_month, days_since_last, lifetime_revenue per customer |
+| `v_customer_cohorts` | retention matrix (M0..M12 active customers) |
+| `v_customer_ltv` | per-cohort LTV summary з retention_pct |
+| `v_counterparty_channel` | counterparty → channel mapping (B2B Network, Retail FOP, Marketplace, etc.) |
+| `v_sales_by_channel` | revenue/customers per channel |
+| `v_forecast` | run-rate проекція поточного місяця vs avg(last 3 months) |
+| `v_data_quality_issues` | моніторинг known data quality gaps (orphans, etc.) |
+
+### 🆕 alerts system
+
+- `alerts` table + 5 rule generators: `margin_negative`, `margin_low`, `low_stock`, `sync_error`, `churn_risk`
+- 17 active alerts згенеровано:
+  - 🔴 D-0009 Сердце Кур. Сушене — margin -149.4% (loss-maker)
+  - 🔴 D-0012 Вуха Кролячі Сушені — margin -88.2% (loss-maker)
+  - 🔴 B-0015, B-0009 — low stock (<20 шт)
+  - 🟡 8 churn risk customers (60-90 days since last)
+- Endpoints: `GET /alerts`, `PATCH /alerts/:id` (resolve), `POST /alerts/run` (manual regen)
+- Wired у `scheduled()` cron — auto-refresh щотижня
+
+### 🚀 Performance optimization
+
+- 10 нових D1 indexes (25 → 37 total): `idx_payments_agent`, `idx_pmtout_agent`, `idx_sales_sku`, `idx_sales_sku_moment` (compound), `idx_demand_agent_moment` (compound), `idx_supplies_agent`, `idx_counter_name`, `idx_pacts_plan_moment`, `idx_losses_moment`, `idx_corders_agent`
+- `ANALYZE` для оновлення planner stats
+- Heavy queries elim TEMP B-TREE (Customer 360 sort, Sales drill-down)
+- Median endpoint timing <300ms на всіх 12 hot endpoints
+- 20-parallel: p50 663ms, p95 1.55s
+
+### 🧹 Cleanup
+
+- D1 raw_json prune (>180 days for derived tables, >365 days for demand): 368.6 → 335.5 MB (-33 MB)
+- Pruned: payments 613 rows, payments_out 534, supplies 108, customer_orders 787, purchase_orders 103, returns 11, losses 32, demand 277
+
+### 📋 Documentation
+
+- `cf-access-policy.json` exported (audit trail для 5-email allowlist)
+- RUNBOOK.md updated з R2 backup + correct allowlist (раніше docs мали wrong emails)
+- audit-log-2026-06-10.md (full technical log)
+
+### 📊 Real-time stats (станом на 10.06.2026)
+
+| | |
+|---|---|
+| Demand orders | 1 997 |
+| Unique customers | 159 |
+| Lifetime revenue | 5 322 886 ₴ |
+| **Lifetime COGS (real)** | **452 170 ₴** |
+| **Lifetime gross profit** | **4 698 947 ₴ (~88% margin)** |
+| Active SKUs | 96 |
+| Loss-makers | 2 SKU (D-0009, D-0012) |
+| D1 size | 337 MB |
+| Cost | $0/month |
+
+### ⚠ Залишається
+
+- Test commits 99315bcb, ef5c04d5 у git history (benign — content overwritten by subsequent commits, no real damage)
+- `processing_acts.materials_sum_uah` ~15K ₴ stale vs live view computed (cache update needs D1 CPU budget > 30s — defer)
+
+---
+
 ## v5.0 (07.06.2026) — 🛡 Handover hardening
 
 ### 🔴 P0 Security incidents (виявлено + закрито за день)
@@ -80,23 +161,6 @@
 - 🧹 **P1-1:** `bb.js` v4.1 — викинуто `BB.SUPABASE_URL` + `BB.SUPABASE_ANON` (dead code).
 - ✅ Auth-callback page видалено (CF Access edge handles auth).
 
-### Архітектура (v4.1 final)
-```
-brand.barpi.ua (GitHub Pages, static HTML)
-   ↓
-Cloudflare Access (Zero Trust, 5-email allowlist, 30d session) → /dashboard/*
-   ↓
-bb.js v4.1 (BB.api → CF Worker)
-   ↓
-Worker barpi-api (REST proxy, PostgREST-compatible filters)
-   ↓
-Cloudflare D1 (barpi-bible: 17 tables + 11 views)
-   ↑
-Worker barpi-sync (cron 0 * * * *, hourly)
-   ↑
-МойСклад API (19 entities)
-```
-
 ### Cost vs v3.x
 - Supabase Pro $25/міс → $0 (paused)
 - CF D1, Workers, Access — все на Free tier
@@ -108,115 +172,14 @@ Worker barpi-sync (cron 0 * * * *, hourly)
 
 - 🆕 **Cloudflare Access (Zero Trust)** активний на `brand.barpi.ua/dashboard/*` — team domain `uabarpi.cloudflareaccess.com`, 5-email allowlist, **30-day session**.
 - 🆕 `bb.js v4.0` — викинуто `BB.AUTH` (frontend gate, Magic Link, Google OAuth) — заміна на CF Access edge auth.
-- ✅ allowlist через API без UI: vg@abrisart.com, office@barpi.com.ua, aksonov@barpi.com.ua, vg@sneco.ua, fg@abrisart.com.
 
 ---
 
 ## v3.4 (02.06.2026) — D1 cutover
 
 - 🆕 `bb.js v3.4`: `BB.api` → Cloudflare D1 (`barpi-api` Worker) замість Supabase REST.
-- 🆕 Worker `barpi-api` deploy: REST API над D1 з PostgREST-compatible filters (eq, neq, gt, gte, lt, lte, like, ilike, is, in).
-- 🆕 Worker `barpi-sync` deploy: cron `0 * * * *` (щогодини), 19 МС entities, демандні positions з `expand=positions.assortment`.
-- ✅ D1 `barpi-bible` schema applied: 17 tables (moysklad_*, sales_sku, brand_ideas, sync_state) + 11 views (v_sales_by_day, v_sales_by_sku, v_customer_metrics, v_pnl_monthly, etc).
-- ✅ MS 401 fixed: User-Agent header added → 1955 demand + 1121 payments + 1502 customer orders synced.
-- ✅ brand_ideas migrated Supabase → D1 (3 rows).
-- ✅ Supabase project `barpi-hq` paused → $0/міс.
-
-### Bugs fixed на цьому етапі
-- `materials_sum_uah` field nullable → cogs у views показував 0 (replaced з supplies aggregation у v4.1).
-- `rebuildSalesSku` D1 memory limit → chunked SELECT 100 rows.
-- demand cursor stuck → MAX(moment) bump для resume incremental.
-- Worker CPU timeout (30 sec free) → `?only=entity1,entity2` для chunked invocation.
 
 ---
-
-## v3.3 (28.05.2026) — Google OAuth backup
-
-- 🆕 `bb.js v3.3`: Google OAuth додано як backup до Magic Link (`signInWithGoogle()` через Supabase Auth).
-- 🆕 Auth gate UI: Google OAuth btn + OR + Magic Link form.
-
-## v3.2 (27.05.2026) — Mobile menu text label
-
-- 🆕 «Меню/Menu» label перед hamburger icon (mobile UX).
-
-## v3.1 (27.05.2026) — Mobile menu polish
-
-- 🆕 `BB.initMobileMenu()`: backdrop, ESC close, auto-close after link click, ARIA attributes.
-
-## v3.0 (27.05.2026) — Products + Ambassadors
-
-- 🆕 `/products/` — повний каталог 17 SKU + нутрієнтна таблиця.
-- 🆕 `/ambassadors/` — UGC амбасадори (Барні, Кіара, Райден, тощо).
-- 🆕 Sidebar updated.
-
-## v2.9 (26.05.2026) — Downloads
-
-- 🆕 `/downloads/` — Drive файли (презентація, прайс, каталог, сертифікати, ТМ/ТУ).
-
-## v2.8 (26.05.2026) — BB.AUTH Magic Link gate
-
-- 🆕 `bb.js v2.8`: BB.AUTH frontend gate з Supabase Magic Link OTP.
-- 🆕 `/auth-callback/` page для Magic Link redirect.
-- 🆕 6-email allowlist у двох файлах (bb.js + auth-callback).
-
-## v2.5 (26.05.2026) — Production + Inventory dashboards
-
-- 🆕 `/dashboard/production/` + `/dashboard/inventory/` (з Supabase).
-- 🆕 `bb.js v2.5`: topnav з 8 дашбордами.
-
-## v2.4 (25.05.2026) — Mobile audit pass
-
-- 🆕 `bb.css v2.4`: typography, spacings, grids — повністю responsive.
-
----
-
-## v1.1.0 (28.05.2026) — 🚀 Barpi HQ live!
-
-🎉 **Запуск Barpi HQ — повноцінної SMM-платформи** на основі DreamCar HQ.
-
-### Barpi HQ (`/dashboard/hq/`)
-- ✅ **Supabase проект `barpi-hq`** створено (id `zrcqmwlpsggiqgipvxhv`, eu-central-1) [⚠ paused у v3.4]
-- ✅ **Повна schema залита**: users, desks, desk_members, rubrics, launches, creatives, publications, publication_platforms/responsibles/approvers, creative_publications, publication_history, comments, publication_drafts, editing_sessions, notifications, notification_preferences, access_requests, user_vacations
-- ✅ **Row-Level Security** policies для всіх таблиць (5 ролей: CEO/COO/lead/member/designer)
-- ✅ **Seed:** 5 користувачів (Вадим, Пилип, Аксьонов, Альона, Мар'яна) + 6 рубрик Barpi + 4 запуски + 5 sample-публікацій
-- ✅ **PWA**: manifest + service-worker (offline, push notifications)
-- ✅ **Frontend**: SPA з jsDelivr CDN для всіх app-*.js модулів (60+ файлів автоматично через DreamCar HQ)
-- ✅ **Brand-adapted**: DreamCar red → Barpi blue (#2F6FED), DreamCar → Barpi typography і копірайт
-
-### Архітектура HQ (v1.1, переїде у v5)
-- **Backend**: Supabase Postgres + Auth + Realtime + Storage [⚠ paused — потребує миграції на D1 або re-resume Supabase]
-- **Frontend**: vanilla JS SPA, lazy-loaded Supabase SDK
-- **Auth**: CF Access (Zero Trust) edge auth з v4.0
-- **Бібліотека модулів**: підвантажується з `cdn.jsdelivr.net/gh/dreamcarua/dreamcar-team@main/hq/` → автоматично отримуємо всі патчі DreamCar HQ
-
----
-
-## v1.0.0 (28.05.2026) — MVP
-
-🎉 **Перший продакшн-реліз Brand Bible Barpi.**
-
-### Brand Bible (index.html)
-- ✅ 18 розділів повністю наповнено (Brand Book v7 + 16 SMM-docs + ЦА)
-- ✅ Маніфест, платформа, команда, SNECO, ToV (70/30), візуал, документи
-
-### Dashboards v1
-- ✅ SMM Dashboard (`/dashboard/smm/`) — Content Log + Weekly + Monthly + Stories + Reels + Direct + UGC + Partners + Pillars
-- 🚧 Sales / Inventory / Partner / Events — скелети
-- ✅ Каталог дашбордів (`/dashboard/`)
-
-### Backend (Cloudflare)
-- ✅ D1 `barpi-bible` + KV `barpi-bible-acl`
-- ✅ Schema + seed (24 SKU, 16 партнерів, 17 подій)
-- ⏳ Worker `barpi-auth` — code готовий (видалено в v4.0 — CF Access замінив)
-
-### Документи
-- ✅ `documents/README.md` + `01_Brand_Book_v7.md`
-- ⏳ 16 SMM-docs + Guideline + KB — markdown готові локально
-
----
-
-## v0.1.1 (27.05.2026) — Domain change
-- CNAME `brand.barpi.com.ua` → `brand.barpi.ua`
 
 ## v0.1.0 (27.05.2026) — Bootstrap
 - Створено repo `dreamcarua/barpi-brand-book`
