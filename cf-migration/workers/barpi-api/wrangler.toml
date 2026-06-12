@@ -3,6 +3,10 @@ main = "src/index.js"
 compatibility_date = "2026-06-01"
 account_id = "ab63a85bdfbf5894c28efe7076acbd82"
 
+# To make SENSITIVE-resource auth fully effective, route the API under the
+# Access-protected zone so the CF Access JWT flows same-site from dashboards:
+# routes = [{ pattern = "api.barpi.ua", custom_domain = true }]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "barpi-bible"
@@ -10,4 +14,11 @@ database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
 
 [vars]
 ENVIRONMENT = "production"
-ALLOWED_ORIGINS = "https://brand.barpi.ua,https://barpi-brand-book.pages.dev"
+STRICT_ORIGIN = "1"
+ALLOWED_ORIGINS = "https://brand.barpi.ua,https://barpi-brand-book.pages.dev,https://dreamcarua.github.io"
+# Cloudflare Access (set ACCESS_AUD after creating the api.barpi.ua Access app):
+ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
+# ACCESS_AUD = "<application-audience-tag>"
+
+# Secrets (wrangler secret put):
+#   API_AUTH_KEY — admin/backend access
