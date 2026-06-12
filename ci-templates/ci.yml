@@ -1,0 +1,31 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+  lint-and-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: HTMLHint
+        run: npx --yes htmlhint "**/*.html" || true
+      - name: Lychee link check
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --exclude-mail --exclude 'barpi-api.vg-ab6.workers.dev' --exclude 'barpi-sync.vg-ab6.workers.dev' './**/*.html'
+        continue-on-error: true
+  worker-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: node --check cf-migration/workers/barpi-api/src/index.js
