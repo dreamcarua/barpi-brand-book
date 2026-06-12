@@ -19,6 +19,9 @@ ALLOWED_ORIGINS = "https://brand.barpi.ua,https://barpi-brand-book.pages.dev,htt
 # Cloudflare Access (set ACCESS_AUD after creating the api.barpi.ua Access app):
 ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
 # ACCESS_AUD = "<application-audience-tag>"
+# Deploy now is non-breaking. AFTER api.barpi.ua + CF Access routing exists and
+# dashboards point to it, flip this to "1" to block PII via spoofed Origin:
+# ENFORCE_SENSITIVE = "1"
 
 # Secrets (wrangler secret put):
 #   API_AUTH_KEY — admin/backend access
