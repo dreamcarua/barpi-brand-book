@@ -1,0 +1,22 @@
+name: Deploy CF Security Headers
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['cloudflare/response-headers-ruleset.json']
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply response-headers ruleset
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+        run: |
+          curl -sf -X PUT \
+            "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/rulesets/phases/http_response_headers_transform/entrypoint" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data @cloudflare/response-headers-ruleset.json | tee /tmp/out.json
+          grep -q '"success": *true' /tmp/out.json || (echo "API call failed" && cat /tmp/out.json && exit 1)
