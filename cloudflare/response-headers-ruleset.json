@@ -1,0 +1,23 @@
+{
+  "description": "Barpi security response headers",
+  "kind": "zone",
+  "phase": "http_response_headers_transform",
+  "rules": [
+    {
+      "description": "Security headers for brand.barpi.ua",
+      "expression": "(http.host eq \"brand.barpi.ua\")",
+      "action": "rewrite",
+      "action_parameters": {
+        "headers": {
+          "Content-Security-Policy": { "operation": "set", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://barpi.com.ua; connect-src 'self' https://barpi-api.vg-ab6.workers.dev https://barpi-sync.vg-ab6.workers.dev; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'" },
+          "Strict-Transport-Security": { "operation": "set", "value": "max-age=31536000; includeSubDomains; preload" },
+          "X-Content-Type-Options": { "operation": "set", "value": "nosniff" },
+          "X-Frame-Options": { "operation": "set", "value": "SAMEORIGIN" },
+          "Referrer-Policy": { "operation": "set", "value": "strict-origin-when-cross-origin" },
+          "Permissions-Policy": { "operation": "set", "value": "geolocation=(), camera=(), microphone=(), payment=()" },
+          "Cross-Origin-Opener-Policy": { "operation": "set", "value": "same-origin" }
+        }
+      }
+    }
+  ]
+}
