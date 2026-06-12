@@ -3,15 +3,18 @@
    SECURITY HARDENED 2026-06-12 (super-audit):
      - Verified Cloudflare Access JWT (JWKS/RS256), not header-presence
      - SENSITIVE resources (PII/financial) require verified JWT or API key
-       — spoofable Origin alone is NOT accepted for sensitive data
+       — spoofable Origin alone is NOT accepted (when ENFORCE_SENSITIVE=1)
      - /healthz no longer leaks row counts
      - No SQL-error / query-fail leakage in response headers
      - SQLi validators retained (SAFE_IDENT on select/order/filter keys)
-   Auth model (deploy behind CF Access on api.barpi.ua for full effect):
+   Deploy safety: ENFORCE_SENSITIVE is a no-op until set to '1'. Deploy this
+   worker now (origin-gated, non-breaking), then after api.barpi.ua + CF Access
+   routing exists set ENFORCE_SENSITIVE=1 to activate PII protection.
+   Auth model:
      healthz/OPTIONS         → public
      admin (/export,/backups,
        /alerts/run,/tables)  → X-API-Key only
-     SENSITIVE resources     → verified CF Access JWT OR X-API-Key
+     SENSITIVE resources     → verified CF Access JWT OR X-API-Key (when enforced)
      non-sensitive aggregates→ JWT OR API key OR allow-listed Origin
    ============================================================ */
 
@@ -136,8 +139,11 @@ async function checkAuth(req, env, headers, resourceName) {
   const jwtOk = await verifyAccessJwt(req, env);
   if (jwtOk) return null;
 
-  // SENSITIVE resources: do NOT accept Origin — require key or verified JWT
-  if (resourceName && SENSITIVE_RESOURCES.has(resourceName)) {
+  // SENSITIVE resources: do NOT accept Origin — require key or verified JWT.
+  // Enforced only when ENFORCE_SENSITIVE=1 (set AFTER api.barpi.ua + CF Access
+  // routing exists so dashboards can present a verified JWT). Until then this is
+  // a no-op, so deploying the worker now is NON-breaking (Origin still works).
+  if (env.ENFORCE_SENSITIVE === '1' && resourceName && SENSITIVE_RESOURCES.has(resourceName)) {
     return json({ error: 'forbidden', reason: 'sensitive resource requires authenticated access' }, 403, headers);
   }
 
