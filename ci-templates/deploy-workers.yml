@@ -1,0 +1,19 @@
+name: Deploy Workers
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['cf-migration/workers/**']
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Deploy barpi-api
+        working-directory: cf-migration/workers/barpi-api
+        run: npx --yes wrangler@3 deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
