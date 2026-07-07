@@ -57,7 +57,7 @@ BB.SIDEBAR_HTML = `
     <div class="nav-group">
       <div class="nav-group-label"><span data-lang="uk">Ідентичність</span><span data-lang="en">Identity</span></div>
       <a class="nav-link" href="/visual/"><span class="dot"></span><span data-lang="uk">Візуальна система</span><span data-lang="en">Visual system</span></a>
-      <a class="nav-link" href="/fonts/"><span class="dot"></span><span data-lang="uk">Шрифти Qanelas</span><span data-lang="en">Typography</span></a>
+      <a class="nav-link" href="/fonts/"><span class="dot"></span><span data-lang="uk">Шрифти & типографіка</span><span data-lang="en">Typography</span></a>
       <a class="nav-link" href="/voice/"><span class="dot"></span><span data-lang="uk">Голос бренду</span><span data-lang="en">Voice</span></a>
       <a class="nav-link" href="/photo/"><span class="dot"></span><span data-lang="uk">Фотографія</span><span data-lang="en">Photography</span></a>
       <a class="nav-link" href="/ambassadors/"><span class="dot" style="background:#e4405f"></span><span data-lang="uk">⭐ Амбасадори</span><span data-lang="en">⭐ Ambassadors</span></a>
@@ -65,7 +65,7 @@ BB.SIDEBAR_HTML = `
     <div class="nav-group">
       <div class="nav-group-label"><span data-lang="uk">Застосування</span><span data-lang="en">Application</span></div>
       <a class="nav-link" href="/digital/"><span class="dot"></span><span data-lang="uk">Digital · Instagram</span><span data-lang="en">Digital · Instagram</span></a>
-      <a class="nav-link" href="/products/"><span class="dot" style="background:var(--accent,#FEBF27)"></span><span data-lang="uk">🦴 Продукти (17 SKU)</span><span data-lang="en">🦴 Products (17 SKU)</span></a>
+      <a class="nav-link" href="/products/"><span class="dot" style="background:var(--accent,#BAD9F4)"></span><span data-lang="uk">🦴 Продукти (17 SKU)</span><span data-lang="en">🦴 Products (17 SKU)</span></a>
       <a class="nav-link" href="/packaging/"><span class="dot"></span><span data-lang="uk">Упаковка & SKU</span><span data-lang="en">Packaging & SKU</span></a>
       <a class="nav-link" href="/labels/"><span class="dot"></span><span data-lang="uk">Етикетки (9 SKU)</span><span data-lang="en">Labels (9 SKU)</span></a>
       <a class="nav-link" href="/partners/"><span class="dot"></span><span data-lang="uk">Партнери & Sales</span><span data-lang="en">Partners & Sales</span></a>
@@ -75,7 +75,7 @@ BB.SIDEBAR_HTML = `
     <div class="nav-group">
       <div class="nav-group-label"><span data-lang="uk">Сервіс</span><span data-lang="en">Service</span></div>
       <a class="nav-link" href="/documents/"><span class="dot"></span><span data-lang="uk">Документи</span><span data-lang="en">Documents</span></a>
-      <a class="nav-link" href="/downloads/"><span class="dot" style="background:var(--accent,#FEBF27)"></span><span data-lang="uk">⬇️ Завантаження</span><span data-lang="en">⬇️ Downloads</span></a>
+      <a class="nav-link" href="/downloads/"><span class="dot" style="background:var(--accent,#BAD9F4)"></span><span data-lang="uk">⬇️ Завантаження</span><span data-lang="en">⬇️ Downloads</span></a>
       <a class="nav-link" href="/brand-assets/"><span class="dot"></span><span data-lang="uk">Brand Assets Library</span><span data-lang="en">Brand Assets Library</span></a>
       <a class="nav-link" href="/roadmap/"><span class="dot"></span><span data-lang="uk">Roadmap</span><span data-lang="en">Roadmap</span></a>
       <a class="nav-link" href="/dashboard/"><span class="dot"></span><span data-lang="uk">Дашборди</span><span data-lang="en">Dashboards</span></a>
@@ -202,7 +202,7 @@ BB.SEARCH_INDEX = [
   { id: 'dashboards', uk: 'Дашборди', en: 'Dashboards', url: '/dashboard/', words: 'dashboards Sales Inventory Events Customer 360 Financial Production' },
   { id: 'architecture', uk: 'Архітектура бренду', en: 'Brand architecture', url: '/architecture/', words: 'architecture snEco SNECO brand hierarchy' },
   { id: 'ideas', uk: 'Ідеї та пропозиції', en: 'Ideas & proposals', url: '/ideas/', words: 'ideas propose suggest пропозиції' },
-  { id: 'fonts', uk: 'Шрифти Qanelas', en: 'Typography Qanelas', url: '/fonts/', words: 'qanelas font typography typeface шрифт weight bold regular italic woff ttf' },
+  { id: 'fonts', uk: 'Шрифти & типографіка', en: 'Typography', url: '/fonts/', words: 'qanelas font typography typeface шрифт weight bold regular italic woff ttf' },
   { id: 'labels', uk: 'Етикетки продукції', en: 'Product labels', url: '/labels/', words: 'етикетки labels packaging хрустики печінка сир зефір безе крекер довгожуйка пупочки серденька stickers' },
   { id: 'brand-assets', uk: 'Brand Assets Library', en: 'Brand Assets Library', url: '/brand-assets/', words: 'logo logos brand assets library svg png ai pdf qanelas font catalog brochure brand-assets лого асет' },
 ];
@@ -267,7 +267,7 @@ BB.DASHBOARD_LINKS = [
   {href:'/dashboard/', label:'📋 Усі', match:'__index__'},
   {href:'/', label:'📘 Brand Bible', match:'__brandbible__'},
 ];
-BB.DASHBOARD_TOPNAV_CSS = `.bb-topnav{background:#0a0a0a;color:#fff;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:300;font-family:Rubik,-apple-system,sans-serif}.bb-topnav-inner{max-width:1480px;margin:0 auto;padding:0 18px;display:flex;align-items:center;gap:14px;height:44px;overflow-x:auto;scrollbar-width:thin}.bb-topnav-inner::-webkit-scrollbar{height:0}.bb-topnav-brand{color:#fff;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:-.01em;display:flex;align-items:center;gap:5px;flex-shrink:0;padding-right:8px;border-right:1px solid rgba(255,255,255,.12);height:100%}.bb-topnav-brand .dot{color:#FEBF27}.bb-topnav-brand:hover{opacity:.85}.bb-topnav-links{display:flex;align-items:center;gap:2px;flex:1}.bb-topnav-links .nav-link{color:rgba(255,255,255,.65);text-decoration:none;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:7px;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}.bb-topnav-links .nav-link:hover{background:rgba(255,255,255,.08);color:#fff}.bb-topnav-links .nav-link.active{background:rgba(254,191,39,.18);color:#FEBF27}.bb-topnav-tools{display:flex;align-items:center;gap:8px;flex-shrink:0;color:rgba(255,255,255,.5);font-size:11px}@media(max-width:900px){.bb-topnav-inner{height:auto;padding:8px 12px;flex-wrap:wrap}.bb-topnav-brand{border-right:none;padding-right:0}.bb-topnav-links{order:3;width:100%}}`;
+BB.DASHBOARD_TOPNAV_CSS = `.bb-topnav{background:#0a0a0a;color:#fff;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:300;font-family:Rubik,-apple-system,sans-serif}.bb-topnav-inner{max-width:1480px;margin:0 auto;padding:0 18px;display:flex;align-items:center;gap:14px;height:44px;overflow-x:auto;scrollbar-width:thin}.bb-topnav-inner::-webkit-scrollbar{height:0}.bb-topnav-brand{color:#fff;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:-.01em;display:flex;align-items:center;gap:5px;flex-shrink:0;padding-right:8px;border-right:1px solid rgba(255,255,255,.12);height:100%}.bb-topnav-brand .dot{color:#BAD9F4}.bb-topnav-brand:hover{opacity:.85}.bb-topnav-links{display:flex;align-items:center;gap:2px;flex:1}.bb-topnav-links .nav-link{color:rgba(255,255,255,.65);text-decoration:none;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:7px;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}.bb-topnav-links .nav-link:hover{background:rgba(255,255,255,.08);color:#fff}.bb-topnav-links .nav-link.active{background:rgba(186,217,244,.18);color:#BAD9F4}.bb-topnav-tools{display:flex;align-items:center;gap:8px;flex-shrink:0;color:rgba(255,255,255,.5);font-size:11px}@media(max-width:900px){.bb-topnav-inner{height:auto;padding:8px 12px;flex-wrap:wrap}.bb-topnav-brand{border-right:none;padding-right:0}.bb-topnav-links{order:3;width:100%}}`;
 BB.injectDashboardTopnav = function(){
   const path = location.pathname;
   function isActive(m){ if (m === '__index__') return /^\/dashboard\/?$/.test(path); if (m === '__brandbible__') return false; return path.includes(m); }

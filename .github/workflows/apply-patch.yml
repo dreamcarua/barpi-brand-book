@@ -1,0 +1,30 @@
+name: Apply brand-audit patches
+on:
+  push:
+    branches: [main]
+    paths: ['patches/*.patch']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: apply-patch
+  cancel-in-progress: false
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patches and commit
+        run: |
+          shopt -s nullglob
+          applied=0
+          for p in patches/*.patch; do
+            echo "Applying $p"
+            git apply --whitespace=nowarn "$p" && rm "$p" && applied=1 || echo "SKIP: $p failed to apply"
+          done
+          [ "$applied" = "1" ] || exit 0
+          git config user.name "barpi-bot"
+          git config user.email "vg@abrisart.com"
+          git add -A
+          git commit -m "brand-audit: apply patches"
+          git push || (git pull --rebase origin main && git push)

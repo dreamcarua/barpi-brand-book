@@ -1,0 +1,28 @@
+name: Generate og-image.png from og.svg
+on:
+  push:
+    branches: [main]
+    paths: ['og.svg', '.github/workflows/og-image.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install rsvg + fonts
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q librsvg2-bin fonts-rubik
+      - name: Render PNG (1200x630)
+        run: |
+          mkdir -p assets
+          rsvg-convert -w 1200 -h 630 og.svg -o assets/og-image.png
+      - name: Commit
+        run: |
+          git config user.name "barpi-bot"
+          git config user.email "vg@abrisart.com"
+          git add assets/og-image.png
+          git diff --cached --quiet || git commit -m "assets: render og-image.png from og.svg (fixes 22 broken og:image refs)"
+          git push
