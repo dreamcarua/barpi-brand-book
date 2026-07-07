@@ -1,5 +1,6 @@
 /* ============================================================
-   Barpi Brand Bible v2.5 — Global Stylesheet
+   Barpi Brand Bible v2.6 — Global Stylesheet
+   v2.6: .page-nav — prev/next картки навігації розділів
    v2.5: fix dashboard double-header (push per-dashboard sticky
          headers below .bb-topnav: c360, fn, sp, pr, iv, ev variants)
    v2.4: pill menu button with "Меню" label,
@@ -692,3 +693,36 @@ body.has-topnav .sp-filters {
 }
 .page-foot .formula { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
 .page-foot .formula .accent { color: var(--blue); }
+
+/* === Prev/Next навігація розділів (v2.6, інжектиться bb.js) === */
+.page-nav {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  margin-top: 72px;
+}
+.page-nav a {
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 18px 22px;
+  text-decoration: none; color: var(--ink);
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+.page-nav a:hover {
+  border-color: var(--blue-soft);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,17,84,0.07);
+  color: var(--ink);
+}
+.page-nav a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.page-nav .pn-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+.page-nav .pn-title { font-size: 15px; font-weight: 700; color: var(--blue); line-height: 1.35; }
+.page-nav a.pn-prev { grid-column: 1; }
+.page-nav a.pn-next { grid-column: 2; text-align: right; align-items: flex-end; }
+@media (max-width: 900px) {
+  .page-nav { grid-template-columns: 1fr; gap: 10px; margin-top: 44px; }
+  .page-nav a.pn-prev, .page-nav a.pn-next { grid-column: 1; }
+  .page-nav a { padding: 15px 18px; }
+}

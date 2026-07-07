@@ -1,5 +1,6 @@
 /* ============================================================
-   Barpi Brand Bible v4.3 — Global JS
+   Barpi Brand Bible v4.4 — Global JS
+   v4.4: prev/next навігація розділів (BB.PAGE_ORDER + BB.injectPageNav)
    v4.3: a11y — skip-link before sidebar, aria-current=page on active nav
    v4.2: SMM cleanup — викинуто HQ SMM + SMM v1 (Supabase project deleted)
    v4.1: Supabase refs повністю видалено (SUPABASE_URL/ANON), pure D1
@@ -32,8 +33,8 @@ BB.SIDEBAR_HTML = `
     <a class="sidebar-brand" href="/">
       <img src="${BB.LOGO_DATA}" alt="Barpi" width="200" height="96" loading="eager">
       <div class="brand-text-sub">
-        <span data-lang="uk">Brand Bible · v4.3</span>
-        <span data-lang="en">Brand Bible · v4.3</span>
+        <span data-lang="uk">Brand Bible · v4.4</span>
+        <span data-lang="en">Brand Bible · v4.4</span>
       </div>
     </a>
     <div class="sidebar-search" style="position:relative">
@@ -181,6 +182,57 @@ BB.initMobileMenu = function() {
   window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (window.innerWidth > 900 && isOpen()) closeMenu(); }, 150); });
 };
 
+/* ===== PREV/NEXT НАВІГАЦІЯ РОЗДІЛІВ (v4.4) =====
+   Порядок = порядок sidebar-навігації = наскрізна нумерація 01–25.
+   /dashboard/ (23) пропущено — він за CF Access, публічний читач впреться в гейт. */
+BB.PAGE_ORDER = [
+  { num: '01', url: '/',              uk: 'Маніфест',              en: 'Manifesto' },
+  { num: '02', url: '/about/',        uk: 'Про бренд',             en: 'About' },
+  { num: '03', url: '/team/',         uk: 'Команда',               en: 'Team' },
+  { num: '04', url: '/tech/',         uk: 'Технологія SNECO',      en: 'SNECO Technology' },
+  { num: '05', url: '/messages/',     uk: 'Меседжі & слогани',     en: 'Messages & slogans' },
+  { num: '06', url: '/visual/',       uk: 'Візуальна система',     en: 'Visual system' },
+  { num: '07', url: '/logo/',         uk: 'Логотип',               en: 'Logo' },
+  { num: '08', url: '/fonts/',        uk: 'Шрифти & типографіка',  en: 'Typography' },
+  { num: '09', url: '/voice/',        uk: 'Голос бренду',          en: 'Voice' },
+  { num: '10', url: '/photo/',        uk: 'Фотографія',            en: 'Photography' },
+  { num: '11', url: '/ambassadors/',  uk: 'Амбасадори',            en: 'Ambassadors' },
+  { num: '12', url: '/digital/',      uk: 'Digital · Instagram',   en: 'Digital · Instagram' },
+  { num: '13', url: '/products/',     uk: 'Продукти (17 SKU)',     en: 'Products (17 SKU)' },
+  { num: '14', url: '/packaging/',    uk: 'Упаковка & SKU',        en: 'Packaging & SKU' },
+  { num: '15', url: '/labels/',       uk: 'Етикетки',              en: 'Labels' },
+  { num: '16', url: '/partners/',     uk: 'Партнери & Sales',      en: 'Partners & Sales' },
+  { num: '17', url: '/pr/',           uk: 'PR & криза',            en: 'PR & Crisis' },
+  { num: '18', url: '/touchpoints/',  uk: 'Touchpoints',           en: 'Touchpoints' },
+  { num: '19', url: '/documents/',    uk: 'Документи',             en: 'Documents' },
+  { num: '20', url: '/downloads/',    uk: 'Завантаження',          en: 'Downloads' },
+  { num: '21', url: '/brand-assets/', uk: 'Brand Assets Library',  en: 'Brand Assets Library' },
+  { num: '22', url: '/roadmap/',      uk: 'Roadmap',               en: 'Roadmap' },
+  { num: '24', url: '/architecture/', uk: 'Архітектура бренду',    en: 'Brand architecture' },
+  { num: '25', url: '/ideas/',        uk: 'Пропозиції & ідеї',     en: 'Ideas & proposals' },
+];
+BB.injectPageNav = function() {
+  if (location.pathname.startsWith('/dashboard/')) return;
+  let path = location.pathname.replace(/\/index\.html$/, '/');
+  if (!path.endsWith('/')) path += '/';
+  const i = BB.PAGE_ORDER.findIndex(p => p.url === path);
+  if (i === -1) return; // 404 та сторінки поза книгою
+  const prev = BB.PAGE_ORDER[i - 1];
+  const next = BB.PAGE_ORDER[i + 1];
+  if (!prev && !next) return;
+  const card = (p, dir) => `
+    <a class="pn-${dir}" href="${p.url}">
+      <span class="pn-label">${dir === 'prev'
+        ? '<span data-lang="uk">← Попередній розділ</span><span data-lang="en">← Previous chapter</span>'
+        : '<span data-lang="uk">Наступний розділ →</span><span data-lang="en">Next chapter →</span>'}</span>
+      <span class="pn-title">${p.num} · <span data-lang="uk">${p.uk}</span><span data-lang="en">${p.en}</span></span>
+    </a>`;
+  const html = `<nav class="page-nav" aria-label="Chapter navigation">${prev ? card(prev, 'prev') : ''}${next ? card(next, 'next') : ''}</nav>`;
+  const foot = document.querySelector('main .page-foot');
+  if (foot) foot.insertAdjacentHTML('beforebegin', html);
+  else { const m = document.querySelector('main.main, main'); if (m) m.insertAdjacentHTML('beforeend', html); }
+};
+
 BB.SEARCH_INDEX = [
   { id: 'manifesto', uk: 'Маніфест', en: 'Manifesto', url: '/' , words: 'турбота справжніх друзів один інгредієнт без зайвого' },
   { id: 'about', uk: 'Про бренд', en: 'About', url: '/about/', words: 'місія бачення цінності аудиторія barpi mission vision values' },
@@ -286,6 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
   BB.injectSidebar();
   BB.initLang();
   BB.markActiveNav();
+  BB.injectPageNav();
   BB.initSearch();
   BB.initMobileMenu();
   if (document.getElementById('ideas-list')) { BB.renderIdeas(); BB.initIdeasForm(); }
