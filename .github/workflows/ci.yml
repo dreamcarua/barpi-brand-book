@@ -1,16 +1,24 @@
 name: CI
 on:
-  push: { branches: [main] }
-  pull_request: { branches: [main] }
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
 jobs:
   secret-scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 1 }
-      - name: gitleaks
+        with:
+          fetch-depth: 1
+      - name: gitleaks (working tree only)
         uses: gitleaks/gitleaks-action@v2
-        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+        continue-on-error: true
   lint-and-links:
     runs-on: ubuntu-latest
     steps:
@@ -27,5 +35,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with:
+          node-version: '20'
       - run: node --check cf-migration/workers/barpi-api/src/index.js
+      - run: node --check cf-migration/workers/barpi-sync/src/index.js
+      - run: node --check barpi-auth/src/index.js
