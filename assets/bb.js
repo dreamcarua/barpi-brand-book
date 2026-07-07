@@ -57,6 +57,7 @@ BB.SIDEBAR_HTML = `
     <div class="nav-group">
       <div class="nav-group-label"><span data-lang="uk">Ідентичність</span><span data-lang="en">Identity</span></div>
       <a class="nav-link" href="/visual/"><span class="dot"></span><span data-lang="uk">Візуальна система</span><span data-lang="en">Visual system</span></a>
+      <a class="nav-link" href="/logo/"><span class="dot"></span><span data-lang="uk">Логотип</span><span data-lang="en">Logo</span></a>
       <a class="nav-link" href="/fonts/"><span class="dot"></span><span data-lang="uk">Шрифти & типографіка</span><span data-lang="en">Typography</span></a>
       <a class="nav-link" href="/voice/"><span class="dot"></span><span data-lang="uk">Голос бренду</span><span data-lang="en">Voice</span></a>
       <a class="nav-link" href="/photo/"><span class="dot"></span><span data-lang="uk">Фотографія</span><span data-lang="en">Photography</span></a>
@@ -202,6 +203,7 @@ BB.SEARCH_INDEX = [
   { id: 'dashboards', uk: 'Дашборди', en: 'Dashboards', url: '/dashboard/', words: 'dashboards Sales Inventory Events Customer 360 Financial Production' },
   { id: 'architecture', uk: 'Архітектура бренду', en: 'Brand architecture', url: '/architecture/', words: 'architecture snEco SNECO brand hierarchy' },
   { id: 'ideas', uk: 'Ідеї та пропозиції', en: 'Ideas & proposals', url: '/ideas/', words: 'ideas propose suggest пропозиції' },
+  { id: 'logo', uk: 'Логотип', en: 'Logo', url: '/logo/', words: 'logo лого wordmark barpi paw лапка dot крапка master files png webp clear space' },
   { id: 'fonts', uk: 'Шрифти & типографіка', en: 'Typography', url: '/fonts/', words: 'qanelas font typography typeface шрифт weight bold regular italic woff ttf' },
   { id: 'labels', uk: 'Етикетки продукції', en: 'Product labels', url: '/labels/', words: 'етикетки labels packaging хрустики печінка сир зефір безе крекер довгожуйка пупочки серденька stickers' },
   { id: 'brand-assets', uk: 'Brand Assets Library', en: 'Brand Assets Library', url: '/brand-assets/', words: 'logo logos brand assets library svg png ai pdf qanelas font catalog brochure brand-assets лого асет' },
