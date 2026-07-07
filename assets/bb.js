@@ -236,7 +236,7 @@ BB.injectPageNav = function() {
 BB.SEARCH_INDEX = [
   { id: 'manifesto', uk: 'Маніфест', en: 'Manifesto', url: '/' , words: 'турбота справжніх друзів один інгредієнт без зайвого' },
   { id: 'about', uk: 'Про бренд', en: 'About', url: '/about/', words: 'місія бачення цінності аудиторія barpi mission vision values' },
-  { id: 'team', uk: 'Команда', en: 'Team', url: '/team/', words: 'Аксьонов Вадим Альона Мар\'яна Пилип org structure' },
+  { id: 'team', uk: 'Команда', en: 'Team', url: '/team/', words: 'Аксьонов Вадим Альона Мар\'яна Пилип org structure говернанс governance затвердження хто затверджує approvals оргструктура' },
   { id: 'tech', uk: 'Технологія SNECO', en: 'SNECO Technology', url: '/tech/', words: 'SNECO sneco 34 38 вакуум сушка вологи поживних космічні технології патент 160558' },
   { id: 'messages', uk: 'Меседжі і слогани', en: 'Messages', url: '/messages/', words: 'слогани claims tone of voice messaging космічна якість' },
   { id: 'visual', uk: 'Візуальна система', en: 'Visual system', url: '/visual/', words: 'логотип кольори шрифт Rubik SKU палітра' },
@@ -253,7 +253,7 @@ BB.SEARCH_INDEX = [
   { id: 'downloads', uk: 'Завантаження', en: 'Downloads', url: '/downloads/', words: 'downloads презентація pdf docx прайс каталог сертифікат патент ТМ ТУ лабораторний реквізити виписка завантажити drive' },
   { id: 'roadmap', uk: 'Roadmap', en: 'Roadmap', url: '/roadmap/', words: 'roadmap Q3 пріоритети strategy 2026' },
   { id: 'dashboards', uk: 'Дашборди', en: 'Dashboards', url: '/dashboard/', words: 'dashboards Sales Inventory Events Customer 360 Financial Production' },
-  { id: 'architecture', uk: 'Архітектура бренду', en: 'Brand architecture', url: '/architecture/', words: 'architecture snEco SNECO brand hierarchy' },
+  { id: 'architecture', uk: 'Архітектура бренду', en: 'Brand architecture', url: '/architecture/', words: 'architecture snEco SNECO brand hierarchy branded house портфель лінійки naming написання назв барпі co-branding кобрендинг конкуренти Cosset Pala Brovko Trixie' },
   { id: 'ideas', uk: 'Ідеї та пропозиції', en: 'Ideas & proposals', url: '/ideas/', words: 'ideas propose suggest пропозиції' },
   { id: 'logo', uk: 'Логотип', en: 'Logo', url: '/logo/', words: 'logo лого wordmark barpi paw лапка dot крапка master files png webp clear space' },
   { id: 'fonts', uk: 'Шрифти & типографіка', en: 'Typography', url: '/fonts/', words: 'qanelas font typography typeface шрифт weight bold regular italic woff ttf' },
