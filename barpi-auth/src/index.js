@@ -124,14 +124,14 @@ function emailTemplate(opts) {
 <tr><td align="center">
 <table role="presentation" cellpadding="0" cellspacing="0" width="560" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
 <tr><td style="background:#1A1A1A;padding:22px 28px;text-align:left;color:white">
-<div style="font-weight:800;font-size:22px;letter-spacing:-0.02em">Barpi<span style="color:#2F6FED">.</span></div>
+<div style="font-weight:800;font-size:22px;letter-spacing:-0.02em">Barpi<span style="color:#001154">.</span></div>
 </td></tr>
 <tr><td style="padding:28px 28px 8px"><h1 style="margin:0;font-size:20px;font-weight:800;line-height:1.3;color:#1A1A1A">${title}</h1></td></tr>
 ${intro ? `<tr><td style="padding:0 28px 12px"><p style="margin:0;font-size:14px;line-height:1.6;color:#6b7280">${intro}</p></td></tr>` : ''}
 <tr><td style="padding:8px 28px 18px">${content}</td></tr>
-${cta ? `<tr><td style="padding:8px 28px 24px"><a href="${cta.url}" style="display:inline-block;background:#2F6FED;color:white;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;padding:11px 22px;border-radius:8px">${cta.label}</a></td></tr>` : ''}
+${cta ? `<tr><td style="padding:8px 28px 24px"><a href="${cta.url}" style="display:inline-block;background:#001154;color:white;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;padding:11px 22px;border-radius:8px">${cta.label}</a></td></tr>` : ''}
 ${footnote ? `<tr><td style="padding:0 28px 24px"><p style="margin:0;font-size:11.5px;color:#9ca3af;line-height:1.5">${footnote}</p></td></tr>` : ''}
-<tr><td style="height:4px;line-height:4px;font-size:0;background:#2F6FED">&nbsp;</td></tr>
+<tr><td style="height:4px;line-height:4px;font-size:0;background:#001154">&nbsp;</td></tr>
 <tr><td style="padding:18px 28px;background:#f9fafb">
 <p style="margin:0 0 6px;font-size:11px;color:#6b7280;line-height:1.5">
 <strong style="color:#1A1A1A">Barpi</strong> · ТОВ «ПЕТ КОРП» · Мукачево, Україна<br>
@@ -171,7 +171,7 @@ async function sendOtpEmail(env, email, code, block) {
   const subject = `Код доступу · ${blockNice} · Barpi`;
   const codeBlock = `
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:8px 0 18px">
-<tr><td style="background:#2F6FED;border-radius:10px;padding:22px 18px;text-align:center">
+<tr><td style="background:#001154;border-radius:10px;padding:22px 18px;text-align:center">
 <div style="font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:white;opacity:0.85;margin-bottom:8px">Ваш код</div>
 <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:36px;font-weight:800;letter-spacing:10px;color:white">${code}</div>
 </td></tr>
