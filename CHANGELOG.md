@@ -1,5 +1,25 @@
 # Barpi Brand Bible — Changelog
 
+## v7.0 (07.07.2026) — 🎨 Brand consistency, content & polish sweep
+
+### 🎯 Brand canon (аудит #1)
+- **Accent color:** прибрано чужий жовтий DreamCar `#FEBF27` з усього UI (bb.css `--accent`, bb.js, topnav.js, favicon, + CSS-fallback на 4 сторінках) → Barpi soft blue `#BAD9F4`. 0 залишків у публічних сторінках.
+- **Messaging:** «космічні технології» як головний описувач → «запатентована технологія SNECO 34–38°C» (index og/twitter/manifesto, about, tech). «Мікрохвильова сушка» у B2C → «низькотемпературне вакуумне сушіння» (tech meta, labels). Космічна тема зведена до «лише точково».
+- **Typography canon:** узгоджено двошрифтову систему — Rubik (цифровий) + Qanelas Soft (display) на /fonts/ і /visual/. Palette Doc 03 + CLAUDE.md синхронізовано з Guideline 2026.1.
+- **Facts:** Пилип/Hryshyn (не Філіп/Gryshyn), 3→4 messaging pillars, специмен «100% М'ЯСО» → «ОДИН ІНГРЕДІЄНТ».
+- **/voice/** повністю перебудовано: стаб (16 блоків) → повний ToV (129 двомовних блоків): характер, словник, формула поста, фрази, канали, хуки, CTA, do/don't.
+
+### 📄 Content completeness
+- **/photo/** — стаб → повний розділ (Doc 05+06): 8 типів фото, світло/фон, композиція, тех-вимоги, відео-хуки, 10 сюжетів, чек-листи.
+- **/digital/** — стаб → повний (Doc 08+09): частота, 12 рубрик, тижневий план, сезонність 2026, шаблони підписів, хештеги, чек-лист.
+- **/logo/** — порожня папка → повна сторінка + реальні майстер-файли (витягнуто з bb.js base64): dark/white PNG + WebP, охоронне поле, мін. розмір, заборони. Заведено у nav + search + sitemap.
+
+### 🔎 SEO / icons / a11y
+- **Favicon set:** повний набір у бренд-кольорах (multi-size .ico + apple-touch + icon-192/512 + site.webmanifest). Уніфіковано icon-блок на 25 сторінках, виправлено 10 крос-доменних посилань `barpi.com.ua/favicon.ico` → локальні (P3-3).
+- **a11y:** контраст `--text-muted` 4.19→6.09, `--text-dim` 2.50→4.57 (WCAG AA). Візуальні Do/Don't антиприклади на /visual/.
+- **JSON-LD:** реальний logo PNG + foundingDate. **og-image.png** відрендерено (22 биті посилання закрито).
+- **CI:** активовано `ci.yml` (gitleaks + htmlhint + lychee + worker syntax); deploy-workflows готові (чекають CF secrets).
+
 ## v6.0 (10.06.2026) — 🛡 Autonomous hardening sweep
 
 ### 🔴 P0 Security incidents (виявлено + закрито)
