@@ -6,15 +6,22 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: apply-patch
+  cancel-in-progress: false
 jobs:
   render:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install rsvg + fonts
+      - name: Install rsvg + Rubik font
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q librsvg2-bin fonts-rubik
+          sudo apt-get install -y -q librsvg2-bin
+          sudo mkdir -p /usr/share/fonts/truetype/rubik
+          curl -sL "https://github.com/google/fonts/raw/main/ofl/rubik/Rubik%5Bwght%5D.ttf" -o /tmp/Rubik.ttf
+          sudo cp /tmp/Rubik.ttf /usr/share/fonts/truetype/rubik/
+          fc-cache -f
       - name: Render PNG (1200x630)
         run: |
           mkdir -p assets
@@ -24,5 +31,6 @@ jobs:
           git config user.name "barpi-bot"
           git config user.email "vg@abrisart.com"
           git add assets/og-image.png
-          git diff --cached --quiet || git commit -m "assets: render og-image.png from og.svg (fixes 22 broken og:image refs)"
-          git push
+          git diff --cached --quiet && exit 0 || true
+          git commit -m "assets: render og-image.png from og.svg (fixes 22 og:image refs)"
+          git push || (git pull --rebase origin main && git push)
