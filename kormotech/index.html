@@ -87,6 +87,12 @@ b{font-weight:600;color:var(--navy)}
   min-height:150px;display:flex;align-items:center;justify-content:center;text-align:center;
   color:rgba(215,227,246,.7);font-size:13px;letter-spacing:.03em;background:rgba(255,255,255,.03)}
 .title-ph{min-height:190px}
+.title-photo{margin:22px 0 20px;height:212px;border-radius:18px;overflow:hidden;
+  box-shadow:0 26px 60px -26px rgba(0,0,0,.6);border:1px solid rgba(186,217,244,.22)}
+.title-photo img{width:100%;height:100%;object-fit:cover;object-position:center 40%;display:block}
+.about-photo{border-radius:16px;overflow:hidden;box-shadow:var(--shadow);background:#05102e;
+  display:flex;align-items:center;justify-content:center}
+.about-photo img{width:100%;height:100%;max-height:300px;object-fit:contain;display:block}
 .badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
 .bdg{font-size:12px;font-weight:500;letter-spacing:.04em;color:#eaf1fc;
   border:1px solid rgba(186,217,244,.4);padding:7px 14px;border-radius:100px;background:rgba(255,255,255,.05)}
@@ -440,7 +446,7 @@ body{background:var(--bg)}
   <div class="s-title">
     <div class="brandline">Barpi × <span class="client">Kormotech</span></div>
     <h1><span data-lang="uk">Натуральні мʼясні шматочки та снеки нового покоління</span><span data-lang="en">A new generation of natural meat inclusions and treats</span></h1>
-    <p class="lead"><span data-lang="uk">Локальний supply-маршрут і технологія сушіння, яку ми готові довести проти freeze-dry на вашому продукті.</span><span data-lang="en">A local supply route and a drying technology we are ready to prove against freeze-dry on your product.</span></p>
+    <p class="lead"><span data-lang="uk">Ваш курс у топ-30 світових виробників виграється в преміум-сегменті. Barpi дає для цього натуральну мʼясну сировину й технологію сушіння, яку ми готові довести проти freeze-dry на вашому продукті.</span><span data-lang="en">Your course into the world’s top-30 makers is won in the premium segment. Barpi brings the natural meat ingredient and a drying technology we are ready to prove against freeze-dry on your product.</span></p>
     <div class="hero-photo"><img src="img/life.webp" alt="Barpi natural dried treats" loading="eager" fetchpriority="high" decoding="async"></div>
     <div class="badges">
       <span class="bdg">FSSC 22000</span><span class="bdg">ISO 22000</span><span class="bdg">HACCP</span>
@@ -458,7 +464,7 @@ body{background:var(--bg)}
     <div class="stat" style="align-items:center;text-align:center"><div class="donut"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="#dfe8f5" stroke-width="13"/><circle cx="60" cy="60" r="52" fill="none" stroke="#001154" stroke-width="13" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="326.7" stroke-dashoffset="326.7" class="darc" data-arc="44"/></svg><div class="dctr"><b>44%</b><span><span data-lang="uk">преміум</span><span data-lang="en">premium</span></span></div></div>
       <div class="cap"><span data-lang="uk">випуску Kormotech, вже преміум (37+ тис. т, 2024)</span><span data-lang="en">of Kormotech output is already premium (37k+ t, 2024)</span></div><div class="src">Petfood Industry · <span class="tag tag-proven"><span data-lang="uk">Доведено</span><span data-lang="en">Proven</span></span></div></div>
   </div>
-  <p class="foot"><span data-lang="uk">Ринок росте вартістю, а не обсягом. Його рушій, преміумізація та натуральні снеки.</span><span data-lang="en">The market grows in value, not volume. The engine is premiumisation and natural snacks.</span></p></div></section>
+  <p class="foot"><span data-lang="uk">Ринок росте вартістю, а не обсягом. Топ-30 світу, куди прямує Kormotech, виграється саме тут: у преміумі та натуральних снеках.</span><span data-lang="en">The market grows in value, not volume. The world’s top-30, where Kormotech is heading, is won right here: in premium and natural snacks.</span></p></div></section>
 <section id="fit" class="sec alt"><div class="wrap">
   <div class="s-head"><span class="kicker"><span data-lang="uk">Де ми бачимо fit</span><span data-lang="en">Where we see the fit</span></span>
     <h2><span data-lang="uk">У ваших рецептурах видно конкретну незакриту зону</span><span data-lang="en">Your recipes reveal one specific open gap</span></h2></div>
@@ -620,6 +626,7 @@ body{background:var(--bg)}
       <div class="ar"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 13V5a1.5 1.5 0 013 0v6M11 11V4a1.5 1.5 0 013 0v7M14 11V6a1.5 1.5 0 013 0v8c0 4-3 6-6 6s-5-2-6-4l-2-4a1.5 1.5 0 012-2l2 2"/></svg></i><span data-lang="uk">Назвати <b>R&D / QA owner</b> з вашого боку</span><span data-lang="en">Name an <b>R&D / QA owner</b> on your side</span></div>
       <div class="ar"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 3h6M10 3v6l-5 8a2 2 0 002 3h10a2 2 0 002-3l-5-8V3"/><path d="M7.5 15h9"/></svg></i><span data-lang="uk">Затвердити <b>sample brief</b> і дату review</span><span data-lang="en">Approve a <b>sample brief</b> and a review date</span></div>
     </div>
+    <p class="foot" style="max-width:640px;margin-left:auto;margin-right:auto;text-align:left"><span data-lang="uk">Barpi і наша унікальна технологія, логічний крок вашого шляху в топ-30: інгредієнт, який працює на преміум.</span><span data-lang="en">Barpi and our unique technology are a logical step on your path to the top-30: an ingredient built for premium.</span></p>
     <p class="lead"><span data-lang="uk">Пропонуємо 30-хвилинний discovery-дзвінок цього тижня. Зразки і пілот, нашим коштом; далі стартуємо side-by-side.</span><span data-lang="en">We propose a 30-minute discovery call this week. Samples and pilot at our cost; then we start the side-by-side.</span></p>
   </div></div></section>
 <section id="about" class="sec"><div class="wrap">
