@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Barpi × Kormotech · Ingredient Partnership</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="description" content="Barpi × Kormotech: натуральна сушена мʼясна сировина для преміальних кормів. Технологія, що переграє freeze-dry.">
+<meta name="description" content="Barpi × Kormotech: натуральна сушена мʼясна сировина для преміальних кормів на власній технології MVD SnEco.">
 <meta property="og:title" content="Barpi × Kormotech · Ingredient Partnership">
-<meta property="og:description" content="Натуральна сушена мʼясна сировина для преміальних кормів. Ми готові довести перевагу над freeze-dry side-by-side.">
+<meta property="og:description" content="Натуральна сушена мʼясна сировина для преміальних кормів. Власна технологія MVD SnEco, готові підтвердити на вашому продукті.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://brand.barpi.ua/kormotech">
 <link rel="icon" href="/favicon.svg">
@@ -81,8 +81,9 @@ b{font-weight:600;color:var(--navy)}
 .slide-title .slide-inner{max-width:1000px}
 .brandline{font-size:22px;font-weight:500;letter-spacing:.02em;color:var(--blue);margin-bottom:20px}
 .brandline .client{color:#fff}
-.slide-title h1{color:#fff;max-width:20ch}
-.slide-title .lead{color:#d7e3f6;max-width:52ch}
+.slide-title h1{color:#fff;max-width:24ch}
+.slide-title .lead{color:#d7e3f6;max-width:64ch;font-size:19.5px}
+.slide-title .badges{margin-top:26px}
 .photo-ph{margin:26px 0;border:1.5px dashed rgba(186,217,244,.45);border-radius:18px;
   min-height:150px;display:flex;align-items:center;justify-content:center;text-align:center;
   color:rgba(215,227,246,.7);font-size:13px;letter-spacing:.03em;background:rgba(255,255,255,.03)}
@@ -90,6 +91,8 @@ b{font-weight:600;color:var(--navy)}
 .title-photo{margin:22px 0 20px;height:212px;border-radius:18px;overflow:hidden;
   box-shadow:0 26px 60px -26px rgba(0,0,0,.6);border:1px solid rgba(186,217,244,.22)}
 .title-photo img{width:100%;height:100%;object-fit:cover;object-position:center 40%;display:block}
+.prod-band{display:flex;gap:14px}
+.prod-band img{flex:1;min-width:0;height:100%;object-fit:cover;object-position:center 45%}
 .about-photo{border-radius:16px;overflow:hidden;box-shadow:var(--shadow);background:#05102e;
   display:flex;align-items:center;justify-content:center}
 .about-photo img{width:100%;height:100%;max-height:300px;object-fit:contain;display:block}
@@ -104,6 +107,7 @@ b{font-weight:600;color:var(--navy)}
 .cols2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
 .cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.cards2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
 .stat,.mini,.box,.note-card,.uc{background:var(--card);border:1px solid var(--line);border-radius:18px;
   padding:22px;box-shadow:var(--shadow-sm)}
 .stat{display:flex;flex-direction:column;gap:8px}
@@ -165,6 +169,11 @@ b{font-weight:600;color:var(--navy)}
   font-size:14px;font-weight:500;color:var(--navy);text-align:center;box-shadow:var(--shadow-sm);
   transition:transform .25s var(--ease),background .25s}
 .sku:hover{transform:translateY(-4px);background:#f4f8ff}
+.sku-group{margin-bottom:20px}
+.sg-head{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.sg-t{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--navy)}
+.sku.alt{background:#fbfaf9;border-style:dashed;border-color:#d9d3d3;color:#4d566a;font-weight:400}
+.sku.alt:hover{background:#f4f8ff;border-color:var(--blue)}
 .formats{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .fmt{font-size:13px;color:var(--navy);border:1px solid var(--blue);border-radius:100px;padding:7px 14px;background:#f4f8ff}
 
@@ -396,18 +405,16 @@ body{background:var(--bg)}
 .hero-photo::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(90deg,#001154 0%,rgba(0,17,84,.5) 14%,transparent 30%)}
 .about-img{width:100%;max-width:340px;border-radius:18px;display:block;box-shadow:var(--shadow)}
-.photo-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:26px}
-.photo-strip figure{margin:0;display:flex;flex-direction:column;gap:8px}
-.photo-strip img{width:100%;aspect-ratio:.7;object-fit:contain;background:#fff;border:1px solid var(--line);
-  border-radius:14px;padding:6px;box-shadow:var(--shadow-sm);transition:transform .3s var(--ease)}
-.photo-strip figure:hover img{transform:translateY(-6px)}
-.photo-strip figcaption{font-size:12.5px;color:var(--muted);text-align:center;font-weight:500}
-@media (max-width:820px){.photo-strip{grid-template-columns:repeat(3,1fr)}.hero-img{max-width:100%}.about-img{max-width:100%}}
+/* production band on the hero (renders only when _PROD_FILES is filled in build_deck.py) */
+.hero-prod{display:flex;gap:14px;max-width:720px}
+.hero-prod::before{display:none}
+.hero-prod img{flex:1;min-width:0;aspect-ratio:4/3;object-fit:cover}
+@media (max-width:820px){.about-img{max-width:100%}.hero-prod{flex-direction:column}}
 
 /* responsive */
 @media (max-width:820px){
   .tb-nav{display:none}
-  .cols2,.cols3,.cards3,.grid-sku,.donut-wrap{grid-template-columns:1fr!important;display:grid}
+  .cols2,.cols3,.cards2,.cards3,.grid-sku,.donut-wrap{grid-template-columns:1fr!important;display:grid}
   .donut-wrap{display:flex;flex-direction:column;text-align:center}
   .flow{flex-direction:column}.flow i{transform:rotate(90deg)}
   .matrix{display:block;overflow-x:auto;white-space:nowrap}
@@ -438,7 +445,7 @@ body{background:var(--bg)}
 <div id="scrollprog"></div>
 <header class="topbar">
   <div class="tb-logo">Barpi<span class="x">×</span>Kormotech</div>
-  <nav class="tb-nav"><a href="#market"><span data-lang="uk">Ринок</span><span data-lang="en">Market</span></a><a href="#edge"><span data-lang="uk">Перевага</span><span data-lang="en">Edge</span></a><a href="#tech"><span data-lang="uk">Технологія</span><span data-lang="en">Technology</span></a><a href="#economics"><span data-lang="uk">Економіка</span><span data-lang="en">Economics</span></a><a href="#pilot"><span data-lang="uk">Пілот</span><span data-lang="en">Pilot</span></a></nav>
+  <nav class="tb-nav"><a href="#market"><span data-lang="uk">Ринок</span><span data-lang="en">Market</span></a><a href="#edge"><span data-lang="uk">Чому MVD</span><span data-lang="en">Why MVD</span></a><a href="#tech"><span data-lang="uk">Технологія</span><span data-lang="en">Technology</span></a><a href="#portfolio"><span data-lang="uk">Сировина</span><span data-lang="en">Ingredients</span></a><a href="#economics"><span data-lang="uk">Економіка</span><span data-lang="en">Economics</span></a><a href="#pilot"><span data-lang="uk">Пілот</span><span data-lang="en">Pilot</span></a></nav>
   <div class="tb-right">
     <div class="langsw"><button id="lu" class="on">UK</button><button id="le">EN</button></div>
     <a class="tb-cta" href="#ask"><span data-lang="uk">Обговорити пілот</span><span data-lang="en">Discuss a pilot</span></a>
@@ -449,8 +456,8 @@ body{background:var(--bg)}
   <div class="s-title">
     <div class="brandline">Barpi × <span class="client">Kormotech</span></div>
     <h1><span data-lang="uk">Натуральні мʼясні шматочки та снеки нового покоління</span><span data-lang="en">A new generation of natural meat inclusions and treats</span></h1>
-    <p class="lead"><span data-lang="uk">Ваш курс у топ-30 світових виробників виграється в преміум-сегменті. Barpi дає для цього натуральну мʼясну сировину й технологію сушіння, яку ми готові довести проти freeze-dry на вашому продукті.</span><span data-lang="en">Your course into the world’s top-30 makers is won in the premium segment. Barpi brings the natural meat ingredient and a drying technology we are ready to prove against freeze-dry on your product.</span></p>
-    <div class="hero-photo"><img src="img/life.webp" alt="Barpi natural dried treats" loading="eager" fetchpriority="high" decoding="async"></div>
+    <p class="lead"><span data-lang="uk">Ваш курс у топ-30 світових виробників виграється в преміум-сегменті. Barpi дає для цього натуральну мʼясну сировину і власну технологію сушіння MVD SnEco, яку ми готові підтвердити на вашому продукті.</span><span data-lang="en">Your course into the world’s top-30 makers is won in the premium segment. Barpi brings the natural meat ingredient and our own MVD SnEco drying technology, ready to be validated on your product.</span></p>
+    
     <div class="badges">
       <span class="bdg">FSSC 22000</span><span class="bdg">ISO 22000</span><span class="bdg">HACCP</span>
       <span class="bdg">SIAL Innovation Award 2024</span>
@@ -485,38 +492,34 @@ body{background:var(--bg)}
     </div>
   </div></div></section>
 <section id="directions" class="sec"><div class="wrap">
-  <div class="s-head"><span class="kicker"><span data-lang="uk">Три напрями співпраці</span><span data-lang="en">Three ways to work together</span></span>
-    <h2><span data-lang="uk">Меню з трьох напрямів і рекомендований перший крок</span><span data-lang="en">A menu of three, plus a recommended first step</span></h2></div>
-  <div class="cards3">
-    <div class="uc uc-rec"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
-      <h3>A · <span data-lang="uk">Готовий treat / OEM</span><span data-lang="en">Finished treat / OEM</span></h3>
-      <p><span data-lang="uk">Монопротеїнові снеки під преміум+ лінійку. Оцінюється як продукт, без інтеграції в лінію.</span><span data-lang="en">Single-protein snacks for a premium+ line. Judged as a product, no line integration.</span></p>
-      <div class="pill"><span data-lang="uk">Рекомендований старт · низька складність</span><span data-lang="en">Recommended start · low complexity</span></div></div>
-    <div class="uc"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l3 4 5 1-3 4 1 5-6-2-6 2 1-5-3-4 5-1z"/></svg></div>
-      <h3>B · <span data-lang="uk">Топер / inclusion</span><span data-lang="en">Topper / inclusion</span></h3>
-      <p><span data-lang="uk">Уже реалізовано у нас як апетайзери (топери): рубець, печінка, легені. Готова база під ваш бренд.</span><span data-lang="en">Already live with us as appetizers (toppers): tripe, liver, lung. A ready base for your brand.</span></p>
-      <div class="pill"><span data-lang="uk">Вже в продукті · апетайзери</span><span data-lang="en">Already in product · appetizers</span></div></div>
-    <div class="uc"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20c8 2 16-4 16-16C10 4 2 10 4 20z"/><path d="M4 20C8 14 12 11 18 9"/></svg></div>
-      <h3>C · <span data-lang="uk">Чиста сировина</span><span data-lang="en">Pure ingredient</span></h3>
-      <p><span data-lang="uk">Мономʼясні компоненти, зокрема суха печінка як натуральний палатант.</span><span data-lang="en">Mono-meat components, incl. dried liver as a natural palatant.</span></p>
-      <div class="pill pill-mut"><span data-lang="uk">Паралельний трек</span><span data-lang="en">Parallel track</span></div></div>
+  <div class="s-head"><span class="kicker"><span data-lang="uk">Два напрями співпраці</span><span data-lang="en">Two ways to work together</span></span>
+    <h2><span data-lang="uk">Мʼясна сировина і OEM: два формати, один процес</span><span data-lang="en">Meat ingredient and OEM: two formats, one process</span></h2></div>
+  <div class="cards2">
+    <div class="uc uc-rec"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20c8 2 16-4 16-16C10 4 2 10 4 20z"/><path d="M4 20C8 14 12 11 18 9"/></svg></div>
+      <h3>1 · <span data-lang="uk">Мʼясна сировина</span><span data-lang="en">Meat ingredient</span></h3>
+      <p><span data-lang="uk">Сушені мономʼясні компоненти у ваші рецептури і на ваші лінії: шматочки й топери (рубець, печінка, легені, трахея, серця), гранулят і порошок під inclusion та coating, суха печінка як натуральний палатант.</span><span data-lang="en">Dried mono-meat components for your recipes and lines: pieces and toppers (tripe, liver, lung, trachea, hearts), granulate and powder for inclusion and coating, dried liver as a natural palatant.</span></p>
+      <div class="pill"><span data-lang="uk">Основний напрям · формат під вашу лінію</span><span data-lang="en">Core direction · format matched to your line</span></div></div>
+    <div class="uc"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+      <h3>2 · <span data-lang="uk">OEM · готовий treat</span><span data-lang="en">OEM · finished treat</span></h3>
+      <p><span data-lang="uk">Монопротеїнові снеки під вашу преміум-лінійку, вироблені і фасовані у нас. Оцінюється як готовий продукт, без інтеграції у ваше виробництво.</span><span data-lang="en">Single-protein snacks for your premium line, produced and packed at our site. Judged as a finished product, with no integration into your production.</span></p>
+      <div class="pill"><span data-lang="uk">Найкоротший шлях до полиці</span><span data-lang="en">Shortest path to shelf</span></div></div>
   </div>
-  <p class="foot"><span data-lang="uk">Рекомендуємо почати з A або B, де в нас уже є готовий продукт і найкоротший шлях до пілоту.</span><span data-lang="en">We suggest starting with A or B, where we already have a product and the shortest path to a pilot.</span></p></div></section>
+  <p class="foot"><span data-lang="uk">Обидва напрями стартують з однієї пілотної партії на нашій технології, тому їх можна перевіряти паралельно.</span><span data-lang="en">Both directions start from the same pilot batch on our technology, so they can be tested in parallel.</span></p></div></section>
 <section id="edge" class="sec alt"><div class="wrap">
-  <div class="s-head"><span class="kicker"><span data-lang="uk">Наша заявлена перевага</span><span data-lang="en">Our claimed edge</span></span>
-    <h2><span data-lang="uk">Ми переграємо freeze-dry там, де корм реально купують</span><span data-lang="en">We beat freeze-dry where pet food is actually bought</span></h2></div>
+  <div class="s-head"><span class="kicker"><span data-lang="uk">Унікальність MVD SnEco</span><span data-lang="en">What makes MVD SnEco unique</span></span>
+    <h2><span data-lang="uk">Власна технологія, яка дає те, чого не дає звичайне сушіння</span><span data-lang="en">A proprietary technology that delivers what conventional drying cannot</span></h2></div>
   <div class="cols3 edge">
     <div class="stat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 21c-1-2 0-3 1-4s1-3-1-4M12 21c-1-2 0-3 1-4s1-3-1-4M16 21c-1-2 0-3 1-4"/><path d="M5 9c0-4 3-6 7-6s7 2 7 6"/></svg></div><h3><span data-lang="uk">Аромат і палатабельність</span><span data-lang="en">Aroma & palatability</span></h3>
-      <div class="cap"><span data-lang="uk">Низькотемпературне вакуумне сушіння зберігає леткі ароматичні сполуки, головний важіль вибору для тварини; freeze-dry дає плаский «raw»-профіль.</span><span data-lang="en">Low-temperature vacuum drying retains volatile aroma compounds, the key driver for the animal; freeze-dry leaves a flat “raw” profile.</span> <span class="tag tag-proven"><span data-lang="uk">Доведено</span><span data-lang="en">Proven</span></span></div></div>
-    <div class="stat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l3 4 5 1-3 4 1 5-6-2-6 2 1-5-3-4 5-1z"/></svg></div><h3><span data-lang="uk">Текстура, менше крихкості</span><span data-lang="en">Texture, less breakage</span></h3>
-      <div class="cap"><span data-lang="uk">Щільніший шматочок менше кришиться при змішуванні і coating.</span><span data-lang="en">A denser piece breaks up less in mixing and coating.</span> <span class="tag tag-proven"><span data-lang="uk">Доведено</span><span data-lang="en">Proven</span></span></div></div>
+      <div class="cap"><span data-lang="uk">Сушіння при 34–38°C у вакуумі зберігає леткі ароматичні сполуки: саме вони, а не вигляд шматочка, вирішують, чи зʼїсть тварина корм.</span><span data-lang="en">Drying at 34–38°C under vacuum retains the volatile aroma compounds: it is these, not the look of the piece, that decide whether the animal eats.</span> <span class="tag tag-proven"><span data-lang="uk">Доведено</span><span data-lang="en">Proven</span></span></div></div>
+    <div class="stat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l3 4 5 1-3 4 1 5-6-2-6 2 1-5-3-4 5-1z"/></svg></div><h3><span data-lang="uk">Хрусткість і цілісність шматочка</span><span data-lang="en">Crunch and piece integrity</span></h3>
+      <div class="cap"><span data-lang="uk">Щільна хрустка структура тримає форму при змішуванні, coating і транспортуванні, менше крихти і пилу в готовому продукті.</span><span data-lang="en">A dense, crunchy structure holds its shape through mixing, coating and transport, with less dust and breakage in the finished product.</span> <span class="tag tag-proven"><span data-lang="uk">Доведено</span><span data-lang="en">Proven</span></span></div></div>
     <div class="stat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10.5c0-1.2 1.1-1.8 2.5-1.8s2.5.7 2.5 1.8-1.1 1.5-2.5 1.5-2.5.5-2.5 1.6S10.6 15 12 15s2.5-.6 2.5-1.6"/></svg></div><h3><span data-lang="uk">Собівартість і локальність</span><span data-lang="en">Cost & local supply</span></h3>
-      <div class="cap"><span data-lang="uk">Коротший цикл і нижчі капітальні витрати за freeze-dry, коротке плече до Львівщини.</span><span data-lang="en">Shorter cycle and lower capex than freeze-dry, a short haul to the Lviv region.</span> <span class="tag tag-proven"><span data-lang="uk">Доведено</span><span data-lang="en">Proven</span></span></div></div>
+      <div class="cap"><span data-lang="uk">Цикл у хвилинах замість діб і нижчі капітальні витрати дають ціну преміум-інгредієнта, доступну для серії, з коротким плечем до Львівщини.</span><span data-lang="en">A cycle of minutes instead of days and lower capex put a premium ingredient at a price that works in series, with a short haul to the Lviv region.</span> <span class="tag tag-proven"><span data-lang="uk">Доведено</span><span data-lang="en">Proven</span></span></div></div>
   </div>
   <div class="prove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 3h6M10 3v6l-5 8a2 2 0 002 3h10a2 2 0 002-3l-5-8V3"/><path d="M7.5 15h9"/></svg>
-    <p><span data-lang="uk">Готові довести це <b>side-by-side проти freeze-dry на вашому продукті, нашим коштом</b>.</span><span data-lang="en">We are ready to prove this <b>side-by-side against freeze-dry on your product, at our cost</b>.</span> <span class="tag tag-proven"><span data-lang="uk">Доведено</span><span data-lang="en">Proven</span></span></p>
+    <p><span data-lang="uk">Готові підтвердити це <b>на вашому продукті і у сліпому порівнянні з вашою поточною сировиною, нашим коштом</b>.</span><span data-lang="en">We are ready to confirm this <b>on your product, in a blind comparison against your current ingredient, at our cost</b>.</span> <span class="tag tag-proven"><span data-lang="uk">Доведено</span><span data-lang="en">Proven</span></span></p>
   </div>
-  <p class="foot"><span data-lang="uk">Чесно: де freeze-dry виграє, регідратація цілого шматка і чисте «raw», ми туди не змагаємось.</span><span data-lang="en">Honestly: where freeze-dry wins, whole-piece rehydration and pure “raw”, we do not compete.</span></p></div></section>
+  <p class="foot"><span data-lang="uk">MVD не претендує замінити всі технології. Там, де потрібна регідратація цілого шматка і чисте «raw», є freeze-dry, і це нормально. Ми закриваємо інший сценарій: аромат, хрусткість і серійну економіку.</span><span data-lang="en">MVD does not claim to replace every technology. Where whole-piece rehydration and pure “raw” are required, freeze-dry has its place. We cover a different scenario: aroma, crunch and economics at scale.</span></p></div></section>
 <section id="tech" class="sec"><div class="wrap">
   <div class="s-head"><span class="kicker"><span data-lang="uk">Технологія</span><span data-lang="en">Technology</span></span>
     <h2><span data-lang="uk">Контрольований низькотемпературний процес, доведений наукою</span><span data-lang="en">A controlled low-temperature process, backed by science</span></h2></div>
@@ -545,18 +548,30 @@ body{background:var(--bg)}
   <p class="foot small"><span data-lang="uk">Показники ефективності, які ми підтверджуємо на ваших зразках у пілоті, з COA на кожну партію.</span><span data-lang="en">Performance figures we confirm on your samples in the pilot, with a COA per batch.</span> <span class="tag tag-validation"><span data-lang="uk">У валідації</span><span data-lang="en">In validation</span></span></p></div></section>
 <section id="portfolio" class="sec"><div class="wrap">
   <div class="s-head"><span class="kicker"><span data-lang="uk">Портфель сировини</span><span data-lang="en">Ingredient portfolio</span></span>
-    <h2><span data-lang="uk">Повний ряд червоної мʼясної і субпродуктової сировини</span><span data-lang="en">A full range of red-meat and offal raw material</span></h2></div>
-  <div class="photo-strip"><figure><img src="img/p_rubets.webp" alt="Яловичина / рубець" loading="lazy"><figcaption><span data-lang="uk">Яловичина / рубець</span><span data-lang="en">Beef / tripe</span></figcaption></figure><figure><img src="img/p_pechinka.webp" alt="Печінка" loading="lazy"><figcaption><span data-lang="uk">Печінка</span><span data-lang="en">Liver</span></figcaption></figure><figure><img src="img/p_pupochky.webp" alt="Курячі шлуночки" loading="lazy"><figcaption><span data-lang="uk">Курячі шлуночки</span><span data-lang="en">Chicken gizzards</span></figcaption></figure><figure><img src="img/p_serdenka.webp" alt="Серця" loading="lazy"><figcaption><span data-lang="uk">Серця</span><span data-lang="en">Hearts</span></figcaption></figure><figure><img src="img/p_trakheia.webp" alt="Трахея" loading="lazy"><figcaption><span data-lang="uk">Трахея</span><span data-lang="en">Trachea</span></figcaption></figure><figure><img src="img/p_syr.webp" alt="Сир snEco" loading="lazy"><figcaption><span data-lang="uk">Сир snEco</span><span data-lang="en">snEco cheese</span></figcaption></figure></div><div class="grid-sku">
-    <div class="sku"><span data-lang="uk">Яловичина</span><span data-lang="en">Beef</span></div><div class="sku"><span data-lang="uk">Печінка</span><span data-lang="en">Liver</span></div>
-    <div class="sku"><span data-lang="uk">Рубець</span><span data-lang="en">Tripe</span></div><div class="sku"><span data-lang="uk">Легені</span><span data-lang="en">Lung</span></div>
-    <div class="sku"><span data-lang="uk">Трахея</span><span data-lang="en">Trachea</span></div><div class="sku"><span data-lang="uk">Серця</span><span data-lang="en">Hearts</span></div>
-    <div class="sku"><span data-lang="uk">Курячі шлуночки</span><span data-lang="en">Chicken gizzards</span></div><div class="sku"><span data-lang="uk">Фрукти / овочі / сир snEco</span><span data-lang="en">snEco fruit / veg / cheese</span></div>
+    <h2><span data-lang="uk">З чим працюємо сьогодні і що можемо дати під ваш запит</span><span data-lang="en">What we run today and what we can supply on request</span></h2></div>
+  <div class="sku-group">
+    <div class="sg-head"><span class="sg-t"><span data-lang="uk">Уже у виробництві</span><span data-lang="en">Already in production</span></span><span class="tag tag-proven"><span data-lang="uk">Доведено</span><span data-lang="en">Proven</span></span></div>
+    <div class="grid-sku">
+      <div class="sku"><span data-lang="uk">Яловичина</span><span data-lang="en">Beef</span></div><div class="sku"><span data-lang="uk">Рубець</span><span data-lang="en">Tripe</span></div>
+      <div class="sku"><span data-lang="uk">Печінка</span><span data-lang="en">Liver</span></div><div class="sku"><span data-lang="uk">Легені</span><span data-lang="en">Lung</span></div>
+      <div class="sku"><span data-lang="uk">Трахея</span><span data-lang="en">Trachea</span></div><div class="sku"><span data-lang="uk">Серця</span><span data-lang="en">Hearts</span></div>
+      <div class="sku"><span data-lang="uk">Курячі шлуночки</span><span data-lang="en">Chicken gizzards</span></div><div class="sku"><span data-lang="uk">Фрукти / овочі / сир snEco</span><span data-lang="en">snEco fruit / veg / cheese</span></div>
+    </div>
+  </div>
+  <div class="sku-group">
+    <div class="sg-head"><span class="sg-t"><span data-lang="uk">Можемо працювати, під ваш запит</span><span data-lang="en">We can run, on your request</span></span><span class="tag tag-validation"><span data-lang="uk">У валідації</span><span data-lang="en">In validation</span></span></div>
+    <div class="grid-sku">
+      <div class="sku alt"><span data-lang="uk">Курка</span><span data-lang="en">Chicken</span></div><div class="sku alt"><span data-lang="uk">Індичка</span><span data-lang="en">Turkey</span></div>
+      <div class="sku alt"><span data-lang="uk">Ягня</span><span data-lang="en">Lamb</span></div><div class="sku alt"><span data-lang="uk">Качка</span><span data-lang="en">Duck</span></div>
+      <div class="sku alt"><span data-lang="uk">Кролик</span><span data-lang="en">Rabbit</span></div><div class="sku alt"><span data-lang="uk">Риба / лосось</span><span data-lang="en">Fish / salmon</span></div>
+      <div class="sku alt"><span data-lang="uk">Нирки</span><span data-lang="en">Kidney</span></div><div class="sku alt"><span data-lang="uk">Вимʼя</span><span data-lang="en">Udder</span></div>
+    </div>
   </div>
   <div class="formats">
     <span class="fmt"><span data-lang="uk">Цілі шматки</span><span data-lang="en">Whole pieces</span></span><span class="fmt"><span data-lang="uk">Слайси</span><span data-lang="en">Slices</span></span>
     <span class="fmt"><span data-lang="uk">Кубики</span><span data-lang="en">Cubes</span></span><span class="fmt"><span data-lang="uk">Гранулят</span><span data-lang="en">Granulate</span></span><span class="fmt"><span data-lang="uk">Порошок</span><span data-lang="en">Powder</span></span>
   </div>
-  <p class="foot"><span data-lang="uk">Формати підбираються під кожен напрям: treat, топер, inclusion, палатант.</span><span data-lang="en">Formats matched to each direction: treat, topper, inclusion, palatant.</span></p></div></section>
+  <p class="foot"><span data-lang="uk">Технологія не привʼязана до виду сировини: під новий протеїн підбирається режим сушіння, який ми відпрацьовуємо на пілотній партії. Формати підбираються під напрям: treat, топер, inclusion, палатант.</span><span data-lang="en">The technology is not tied to one raw material: a new protein needs its own drying profile, which we dial in on the pilot batch. Formats are matched to the direction: treat, topper, inclusion, palatant.</span></p></div></section>
 <section id="proof" class="sec alt"><div class="wrap">
   <div class="s-head"><span class="kicker"><span data-lang="uk">Що доведено сьогодні</span><span data-lang="en">What is proven today</span></span>
     <h2><span data-lang="uk">Прозоро: доведене, у валідації, заплановане</span><span data-lang="en">Transparent: proven, in validation, planned</span></h2></div>
@@ -567,7 +582,7 @@ body{background:var(--bg)}
       <li><span data-lang="uk">Рітейл-трекшн Barpi у мережах</span><span data-lang="en">Barpi retail traction in chains</span></li>
       <li><span data-lang="uk">SIAL Innovation Award 2024 (Dairy)</span><span data-lang="en">SIAL Innovation Award 2024 (Dairy)</span></li></ul></div>
     <div class="col-val"><div class="ch"><span class="tag tag-validation"><span data-lang="uk">У валідації</span><span data-lang="en">In validation</span></span></div><ul>
-      <li><span data-lang="uk">Перевага над freeze-dry (side-by-side)</span><span data-lang="en">Edge over freeze-dry (side-by-side)</span></li>
+      <li><span data-lang="uk">Сліпе порівняння з вашою поточною сировиною</span><span data-lang="en">Blind comparison vs your current ingredient</span></li>
       <li><span data-lang="uk">Виходи по конкретній сировині</span><span data-lang="en">Yields on specific raw material</span></li>
       <li><span data-lang="uk">Потужність під ваші обсяги</span><span data-lang="en">Capacity for your volumes</span></li></ul></div>
     <div class="col-plan"><div class="ch"><span class="tag tag-planned"><span data-lang="uk">Заплановано</span><span data-lang="en">Planned</span></span></div><ul>
