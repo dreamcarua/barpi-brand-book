@@ -1,9 +1,12 @@
 name: Deploy Workers
+# NOTE (19.08.2026): push-trigger вимкнено — repo secrets CF_API_TOKEN /
+# CF_ACCOUNT_ID не налаштовані, тому кожен push у workers/** давав червоний
+# run. Робочий шлях деплою — wrangler на Mac (див. RUNBOOK). Щоб повернути
+# авто-деплой: створити CF API token (Workers Scripts:Edit + D1:Edit),
+# `gh secret set CF_API_TOKEN` + `gh secret set CF_ACCOUNT_ID`, і повернути
+# блок push: branches [main], paths ['cf-migration/workers/**'].
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ['cf-migration/workers/**']
 jobs:
   deploy:
     runs-on: ubuntu-latest

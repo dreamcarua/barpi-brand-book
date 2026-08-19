@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>База знань · Barpi</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#001154;--navy-soft:rgba(0,17,84,.08);--sky:#BAD9F4;--sky-soft:rgba(186,217,244,.35);--g:#39B44A;--r:#E84040;--d:#333333;--bg:#FAF7F7;--card:#fff;--muted:#777;--border:#E5E5DC;--line:#EEEAEA}
+*{box-sizing:border-box}
+body{background:var(--bg);font-family:Rubik,-apple-system,sans-serif;color:var(--d);margin:0;font-size:15px}
+button{font-family:Rubik,-apple-system,sans-serif}
+.kb-top{position:sticky;top:0;z-index:300;background:#1A1A1A;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--navy)}
+.kb-top .back{color:#fff;text-decoration:none;font-size:18px;opacity:.7;padding:4px 8px;border-radius:8px}
+.kb-top .back:hover{opacity:1;background:rgba(255,255,255,.1)}
+.kb-top h1{margin:0;font-size:17px;font-weight:800;letter-spacing:-.01em}
+.kb-top .sub{font-size:11px;opacity:.6;font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
+.kb-top .spacer{flex:1}
+.kb-who{font-size:13px;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);padding:6px 12px;border-radius:99px}
+.kb-who .dot{width:8px;height:8px;border-radius:50%;background:var(--g);flex:0 0 auto}
+.kb-filters{position:sticky;top:52px;z-index:280;background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.kb-search{flex:1 1 220px;max-width:340px;padding:8px 14px;border:1px solid var(--border);border-radius:99px;font-family:Rubik,sans-serif;font-size:14px;outline:none}
+.kb-search:focus{border-color:var(--navy)}
+.chip{font-size:12px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--d);transition:all .15s;white-space:nowrap}
+.chip:hover{border-color:var(--navy);color:var(--navy)}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip.ghost{border:none;background:transparent;color:var(--muted)}
+.chip.ghost:hover{color:var(--navy)}
+.kb-hero{max-width:1060px;margin:0 auto;padding:18px 20px 0}
+.kb-note{font-size:12.5px;color:var(--muted);background:var(--sky-soft);border:1px solid var(--sky);border-radius:10px;padding:10px 14px;line-height:1.5}
+.kb-progressbar{height:8px;border-radius:99px;background:#EDE8E8;overflow:hidden;margin:14px 0 6px}
+.kb-progressbar .bar{height:100%;width:0;background:linear-gradient(90deg,var(--navy),#2a4a9e);border-radius:99px;transition:width .4s}
+.kb-stats{font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.kb-stats b{color:var(--navy);font-weight:700}
+.kb-cats{max-width:1060px;margin:10px auto 0;padding:0 20px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.kb-cats::-webkit-scrollbar{display:none}
+.kb-wrap{max-width:1060px;margin:0 auto;padding:8px 20px 60px}
+.sec{margin:26px 0 12px;display:flex;align-items:center;gap:10px}
+.sec h2{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec .cnt{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--navy-soft);color:var(--navy)}
+.qcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;transition:border-color .15s}
+.qcard:hover{border-color:#d5d0c8}
+.qcard.hl{border-color:var(--navy)}
+.qhead{display:flex;align-items:flex-start;gap:12px;cursor:pointer}
+.qnum{flex:0 0 auto;font-size:12px;font-weight:800;color:var(--navy);background:var(--sky-soft);border:1px solid var(--sky);border-radius:8px;padding:4px 8px;margin-top:1px}
+.qtitle{font-size:15.5px;font-weight:600;line-height:1.4;flex:1}
+.qmeta{flex:0 0 auto;font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.qmeta b{color:var(--navy)}
+.qbody{margin-top:8px}
+.ans{border-top:1px solid var(--line);padding:12px 0 4px;margin-top:10px}
+.anshead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.aupel{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--navy-soft);color:var(--navy)}
+.aupel.ai{background:var(--sky);color:var(--navy)}
+.anshead .wc{font-weight:600}
+.anshead .spacer,.row .spacer{flex:1}
+.abtn{border:none;background:transparent;cursor:pointer;font-size:13px;color:var(--muted);padding:3px 7px;border-radius:7px}
+.abtn:hover{background:var(--navy-soft);color:var(--navy)}
+.abtn.danger{color:var(--r)}
+.abtn.danger:hover{background:rgba(232,64,64,.08)}
+.abtn.confirm{background:var(--r);color:#fff;font-weight:600}
+.atext{white-space:pre-wrap;line-height:1.6;font-size:14.5px;margin-top:8px;overflow-wrap:break-word}
+.composer{border-top:1px dashed var(--border);margin-top:12px;padding-top:12px}
+.composer textarea,.editbox textarea{width:100%;min-height:76px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:Rubik,sans-serif;font-size:15px;line-height:1.55;resize:vertical;outline:none;background:#FDFCFB}
+.composer textarea:focus,.editbox textarea:focus{border-color:var(--navy);background:#fff}
+.composer .row,.editbox .row{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+.livewc{font-size:12px;color:var(--muted)}
+.livewc b{color:var(--navy)}
+.draftmark{font-size:11px;color:#8a6d1a;background:#FCF3D7;border-radius:6px;padding:2px 8px}
+.btn{background:var(--navy);color:#fff;border:none;border-radius:99px;padding:9px 20px;font-size:13.5px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.btn:hover{opacity:.88}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.sec2{background:transparent;color:var(--navy);border:1px solid var(--navy)}
+.empty{font-size:13px;color:var(--muted);font-style:italic;margin-top:8px}
+.skel{height:120px;border-radius:14px;background:linear-gradient(90deg,#f1eded 25%,#e9e4e4 50%,#f1eded 75%);background-size:400% 100%;animation:sh 1.2s infinite;margin-bottom:14px}
+@keyframes sh{0%{background-position:100% 0}100%{background-position:0 0}}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1A1A1A;color:#fff;padding:11px 22px;border-radius:99px;font-size:13.5px;z-index:500;opacity:0;transition:all .3s;max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.err{background:var(--r)}
+.overlay{position:fixed;inset:0;background:rgba(26,26,26,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px}
+.overlay .box{background:#fff;border-radius:16px;padding:28px;max-width:380px;width:100%}
+.overlay h3{margin:0 0 6px;font-size:17px;color:var(--navy)}
+.overlay p{margin:0 0 16px;font-size:13px;color:var(--muted);line-height:1.5}
+.overlay .pick{display:block;width:100%;text-align:left;margin-bottom:8px;padding:11px 16px;border:1px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-size:14px}
+.overlay .pick:hover{border-color:var(--navy);background:var(--sky-soft)}
+.errbar{max-width:1060px;margin:14px auto 0;padding:0 20px}
+.errbar .in{background:rgba(232,64,64,.08);border:1px solid var(--r);color:var(--r);border-radius:10px;padding:12px 16px;font-size:13.5px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.page-foot{max-width:1060px;margin:0 auto;padding:0 20px 30px;font-size:12px;color:var(--muted)}
+@media (max-width:640px){
+  .kb-top{padding:10px 14px;gap:10px}
+  .kb-top .sub{display:none}
+  .kb-who{font-size:11.5px;padding:5px 10px}
+  .kb-filters{padding:8px 14px;top:49px}
+  .kb-wrap,.kb-hero,.kb-cats,.errbar{padding-left:14px;padding-right:14px}
+  .qmeta{display:none}
+  .qcard{padding:14px}
+}
+</style>
+</head>
+<body>
+
+<header class="kb-top">
+  <a class="back" href="/dashboard/" aria-label="До каталогу дашбордів">←</a>
+  <div>
+    <h1>🧠 База знань</h1>
+    <div class="sub">Чек-лист SC Consulting · 48 питань</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="kb-who" id="kb-who"><span class="dot"></span><span id="kb-who-name">…</span></div>
+</header>
+
+<div class="kb-filters">
+  <input class="kb-search" id="kb-search" type="text" placeholder="Пошук питання або відповіді…" autocomplete="off">
+  <button class="chip on" data-f="all">Всі</button>
+  <button class="chip" data-f="answered">Із відповідями</button>
+  <button class="chip" data-f="empty">Без відповідей</button>
+  <button class="chip" data-f="mine">Мої</button>
+  <span style="flex:1"></span>
+  <button class="chip ghost" id="kb-refresh" title="Оновити дані">⟳ Оновити</button>
+  <button class="chip ghost" id="kb-export" title="Завантажити всю базу у Markdown">⬇ Експорт .md</button>
+</div>
+
+<div class="kb-hero">
+  <div class="kb-note">
+    📌 Збираємо базу знань Barpi за чек-листом SC Consulting. Пишіть відповідь у поле під питанням і тисніть «Зберегти» — відповідь фіксується в базі, видно кількість слів, і з'являється нове порожнє поле. Заповнюйте лише пункти, що стосуються нашого бізнесу. Чернетки з бейджем 🤖 Claude AI — перевірте, виправте і доповніть.
+  </div>
+  <div class="kb-progressbar"><div class="bar" id="kb-bar"></div></div>
+  <div class="kb-stats" id="kb-stats">Завантаження…</div>
+</div>
+
+<nav class="kb-cats" id="kb-cats" aria-label="Категорії"></nav>
+
+<div class="errbar" id="kb-errbar" style="display:none"><div class="in"><span id="kb-errtext">Не вдалося завантажити дані.</span><button class="chip" id="kb-retry">Спробувати ще раз</button></div></div>
+
+<main class="kb-wrap" id="kb-main">
+  <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+</main>
+
+<footer class="page-foot">© ТОВ «ПЕТ КОРП» · База знань Barpi · дані у Cloudflare D1 (barpi-bible) · доступ за allowlist Cloudflare Access</footer>
+
+<div class="toast" id="kb-toast"></div>
+
+<script>
+'use strict';
+const API = 'https://barpi-api.vg-ab6.workers.dev';
+const ADMIN_EMAIL = 'vg@abrisart.com';
+const AI_EMAIL = 'ai@barpi.ua';
+const TEAM = [
+  { email: 'vg@abrisart.com',      name: 'Вадим' },
+  { email: 'fg@abrisart.com',      name: 'Пилип' },
+  { email: 'office@barpi.com.ua',  name: 'Офіс Barpi' },
+  { email: 'aksonov@barpi.com.ua', name: 'Олександр' },
+  { email: 'vg@sneco.ua',          name: 'Вадим (snEco)' },
+];
+const NAMES = { 'ai@barpi.ua': 'Claude AI' };
+TEAM.forEach(t => { NAMES[t.email] = t.name; });
+const CATS = [
+  { key: 'Бренд і маркетинг',    icon: '🎨' },
+  { key: 'Клієнти і продажі',    icon: '🤝' },
+  { key: 'Компанія і документи', icon: '📄' },
+  { key: 'Структура і персонал', icon: '👥' },
+  { key: 'Фінанси і розрахунки', icon: '💰' },
+  { key: 'Інвестиції і розвиток', icon: '🚀' },
+];
+
+let ME = null;           // { email, name }
+let QUESTIONS = [];
+let ANSWERS = [];        // non-deleted
+let FILTER = 'all';
+let QUERY = '';
+
+/* ===== utils ===== */
+function wordsOf(text) {
+  const m = String(text || '').match(/[\p{L}\p{N}][\p{L}\p{N}'’ʼ`-]*/gu);
+  return m ? m.length : 0;
+}
+function fmtDate(sqlite) {
+  if (!sqlite) return '';
+  const d = new Date(String(sqlite).replace(' ', 'T') + 'Z');
+  if (isNaN(d)) return String(sqlite);
+  const p = n => String(n).padStart(2, '0');
+  return p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+function plural(n, one, few, many) {
+  const nn = Math.abs(n) % 100, n1 = nn % 10;
+  if (nn > 10 && nn < 20) return many;
+  if (n1 > 1 && n1 < 5) return few;
+  if (n1 === 1) return one;
+  return many;
+}
+function toast(msg, isErr) {
+  const t = document.getElementById('kb-toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { t.className = 'toast'; }, 2600);
+}
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function canEdit(a) { return ME && (ME.email === a.author_email || ME.email === ADMIN_EMAIL); }
+function draftKey(qid) { return 'kb_draft_' + (ME ? ME.email : 'anon') + '_' + qid; }
+
+/* ===== identity ===== */
+async function resolveIdentity() {
+  try {
+    const r = await fetch('/cdn-cgi/access/get-identity', { credentials: 'include' });
+    if (r.ok) {
+      const j = await r.json();
+      if (j && j.email) {
+        const email = String(j.email).toLowerCase();
+        ME = { email, name: NAMES[email] || email.split('@')[0] };
+        try { localStorage.setItem('kb_me', email); } catch (e) {}
+        return;
+      }
+    }
+  } catch (e) { /* not behind CF Access (local dev) */ }
+  let saved = null;
+  try { saved = localStorage.getItem('kb_me'); } catch (e) {}
+  if (saved && NAMES[saved]) { ME = { email: saved, name: NAMES[saved] }; return; }
+  await pickIdentity();
+}
+function pickIdentity() {
+  return new Promise(resolve => {
+    const ov = el('div', 'overlay');
+    const box = el('div', 'box');
+    box.appendChild(el('h3', null, 'Хто ви?'));
+    box.appendChild(el('p', null, 'Не вдалося визначити вас автоматично. Оберіть себе — від цього імені зберігатимуться відповіді.'));
+    TEAM.forEach(t => {
+      const b = el('button', 'pick', t.name + ' · ' + t.email);
+      b.onclick = () => {
+        ME = { email: t.email, name: t.name };
+        try { localStorage.setItem('kb_me', t.email); } catch (e) {}
+        document.body.removeChild(ov);
+        renderWho();
+        resolve();
+      };
+      box.appendChild(b);
+    });
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+  });
+}
+function renderWho() {
+  document.getElementById('kb-who-name').textContent = ME ? (ME.name + ' · ' + ME.email) : 'Гість';
+}
+
+/* ===== data ===== */
+async function apiGet(path) {
+  const r = await fetch(API + path, { headers: { 'Content-Type': 'application/json' } });
+  if (!r.ok) throw new Error('API ' + r.status);
+  return r.json();
+}
+async function loadData() {
+  const [qs, ans] = await Promise.all([
+    apiGet('/kb_questions?order=sort.asc&limit=100'),
+    apiGet('/kb_answers?deleted=eq.0&order=created_at.asc&limit=10000'),
+  ]);
+  if (!Array.isArray(qs) || qs.length === 0) throw new Error('kb_questions порожня');
+  QUESTIONS = qs;
+  ANSWERS = Array.isArray(ans) ? ans : [];
+}
+
+/* ===== stats / filters ===== */
+function answersFor(qid) { return ANSWERS.filter(a => a.question_id === qid); }
+function updateStats() {
+  const answered = QUESTIONS.filter(q => answersFor(q.id).length > 0).length;
+  const totalWords = ANSWERS.reduce((s, a) => s + (a.word_count || 0), 0);
+  const mine = ME ? ANSWERS.filter(a => a.author_email === ME.email).length : 0;
+  document.getElementById('kb-bar').style.width = (QUESTIONS.length ? Math.round(answered / QUESTIONS.length * 100) : 0) + '%';
+  const st = document.getElementById('kb-stats');
+  st.innerHTML = '';
+  const s1 = el('span'); s1.append('Заповнено '); s1.appendChild(el('b', null, answered + ' із ' + QUESTIONS.length)); s1.append(' питань');
+  const s2 = el('span'); s2.appendChild(el('b', null, String(totalWords))); s2.append(' ' + plural(totalWords, 'слово', 'слова', 'слів') + ' у базі');
+  const s3 = el('span'); s3.appendChild(el('b', null, String(ANSWERS.length))); s3.append(' ' + plural(ANSWERS.length, 'відповідь', 'відповіді', 'відповідей'));
+  const s4 = el('span'); s4.append('моїх: '); s4.appendChild(el('b', null, String(mine)));
+  st.append(s1, s2, s3, s4);
+}
+function matchesFilter(q) {
+  const list = answersFor(q.id);
+  if (FILTER === 'answered' && list.length === 0) return false;
+  if (FILTER === 'empty' && list.length > 0) return false;
+  if (FILTER === 'mine' && !(ME && list.some(a => a.author_email === ME.email))) return false;
+  if (QUERY) {
+    const hay = (q.num + ' ' + q.title + ' ' + list.map(a => a.answer_text).join(' ')).toLowerCase();
+    if (!hay.includes(QUERY)) return false;
+  }
+  return true;
+}
+function applyFilters() {
+  QUESTIONS.forEach(q => {
+    const card = document.getElementById('qcard-' + q.id);
+    if (card) card.style.display = matchesFilter(q) ? '' : 'none';
+  });
+  CATS.forEach((c, i) => {
+    const sec = document.getElementById('kb-sec-' + i);
+    if (!sec) return;
+    const anyVisible = QUESTIONS.some(q => q.category === c.key && matchesFilter(q));
+    sec.style.display = anyVisible ? '' : 'none';
+  });
+}
+
+/* ===== rendering ===== */
+function authorChip(a) {
+  const isAi = a.author_email === AI_EMAIL;
+  const chip = el('span', 'aupel' + (isAi ? ' ai' : ''), (isAi ? '🤖 ' : '') + (NAMES[a.author_email] || a.author_name || a.author_email));
+  chip.title = a.author_email;
+  return chip;
+}
+function renderAnswer(a, qid) {
+  const box = el('div', 'ans');
+  box.dataset.aid = a.id;
+  const head = el('div', 'anshead');
+  head.appendChild(authorChip(a));
+  head.appendChild(el('span', null, fmtDate(a.created_at)));
+  if (a.updated_at && a.updated_at !== a.created_at) {
+    const u = el('span', null, '· ред. ' + fmtDate(a.updated_at));
+    u.style.opacity = '.7';
+    head.appendChild(u);
+  }
+  head.appendChild(el('span', 'wc', '· ' + (a.word_count || 0) + ' ' + plural(a.word_count || 0, 'слово', 'слова', 'слів')));
+  head.appendChild(el('span', 'spacer'));
+  if (canEdit(a)) {
+    const be = el('button', 'abtn', '✎ Редагувати');
+    be.onclick = () => startEdit(box, a, qid);
+    const bd = el('button', 'abtn danger', '🗑');
+    bd.title = 'Видалити';
+    bd.onclick = () => {
+      if (bd.dataset.arm === '1') { doDelete(a, qid); return; }
+      bd.dataset.arm = '1';
+      bd.textContent = 'Точно видалити?';
+      bd.classList.add('confirm');
+      setTimeout(() => { bd.dataset.arm = ''; bd.textContent = '🗑'; bd.classList.remove('confirm'); }, 3500);
+    };
+    head.append(be, bd);
+  }
+  box.appendChild(head);
+  box.appendChild(el('div', 'atext', a.answer_text));
+  return box;
+}
+function startEdit(box, a, qid) {
+  const old = box.querySelector('.atext');
+  if (!old) return;
+  const wrap = el('div', 'editbox');
+  const ta = document.createElement('textarea');
+  ta.value = a.answer_text;
+  const row = el('div', 'row');
+  const wc = el('span', 'livewc');
+  const upd = () => { wc.innerHTML = ''; wc.append('Слів: '); wc.appendChild(el('b', null, String(wordsOf(ta.value)))); };
+  ta.addEventListener('input', upd); upd();
+  const save = el('button', 'btn', 'Зберегти зміни');
+  const cancel = el('button', 'btn sec2', 'Скасувати');
+  cancel.onclick = () => { wrap.replaceWith(renderAnswerText(a)); restoreActions(); };
+  function renderAnswerText(ans) { return el('div', 'atext', ans.answer_text); }
+  function restoreActions() { box.querySelectorAll('.abtn').forEach(b => { b.style.display = ''; }); }
+  save.onclick = async () => {
+    const text = ta.value.trim();
+    if (!text) { toast('Порожня відповідь', true); return; }
+    save.disabled = true;
+    try {
+      const r = await fetch(API + '/kb_answers/' + a.id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answer_text: text, editor_email: ME.email }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      Object.assign(a, j);
+      rerenderCard(qid);
+      updateStats();
+      toast('Збережено · ' + j.word_count + ' ' + plural(j.word_count, 'слово', 'слова', 'слів'));
+    } catch (e) {
+      toast('Помилка збереження: ' + e.message, true);
+      save.disabled = false;
+    }
+  };
+  row.append(wc, el('span', 'spacer'), save, cancel);
+  wrap.append(ta, row);
+  old.replaceWith(wrap);
+  box.querySelectorAll('.abtn').forEach(b => { b.style.display = 'none'; });
+  ta.focus();
+}
+async function doDelete(a, qid) {
+  try {
+    const r = await fetch(API + '/kb_answers/' + a.id + '?editor=' + encodeURIComponent(ME.email), { method: 'DELETE' });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    ANSWERS = ANSWERS.filter(x => x.id !== a.id);
+    rerenderCard(qid);
+    updateStats();
+    applyFilters();
+    toast('Відповідь видалено');
+  } catch (e) {
+    toast('Помилка видалення: ' + e.message, true);
+  }
+}
+function renderComposer(q) {
+  const c = el('div', 'composer');
+  const ta = document.createElement('textarea');
+  ta.placeholder = 'Додати відповідь… (нове поле — нова відповідь у базі)';
+  const row = el('div', 'row');
+  const wc = el('span', 'livewc');
+  const draftmark = el('span', 'draftmark', 'чернетку відновлено');
+  draftmark.style.display = 'none';
+  const updWc = () => { wc.innerHTML = ''; wc.append('Слів: '); wc.appendChild(el('b', null, String(wordsOf(ta.value)))); };
+  let saved = '';
+  try { saved = localStorage.getItem(draftKey(q.id)) || ''; } catch (e) {}
+  if (saved) { ta.value = saved; draftmark.style.display = ''; }
+  updWc();
+  let dt;
+  ta.addEventListener('input', () => {
+    updWc();
+    draftmark.style.display = 'none';
+    clearTimeout(dt);
+    dt = setTimeout(() => {
+      try {
+        if (ta.value.trim()) localStorage.setItem(draftKey(q.id), ta.value);
+        else localStorage.removeItem(draftKey(q.id));
+      } catch (e) {}
+    }, 400);
+  });
+  const btn = el('button', 'btn', 'Зберегти відповідь');
+  btn.onclick = async () => {
+    const text = ta.value.trim();
+    if (!text) { toast('Спершу напишіть відповідь', true); ta.focus(); return; }
+    if (!ME) { toast('Невідомий автор', true); return; }
+    btn.disabled = true; btn.textContent = 'Зберігаю…';
+    try {
+      const r = await fetch(API + '/kb_answers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question_id: q.id, author_email: ME.email, author_name: ME.name, answer_text: text }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      ANSWERS.push(j);
+      try { localStorage.removeItem(draftKey(q.id)); } catch (e) {}
+      rerenderCard(q.id);
+      updateStats();
+      applyFilters();
+      toast('Збережено · у відповіді ' + j.word_count + ' ' + plural(j.word_count, 'слово', 'слова', 'слів'));
+      const fresh = document.querySelector('#qcard-' + q.id + ' .composer textarea');
+      if (fresh) fresh.focus();
+    } catch (e) {
+      toast('Не збереглося: ' + e.message, true);
+      btn.disabled = false; btn.textContent = 'Зберегти відповідь';
+    }
+  };
+  row.append(wc, draftmark, el('span', 'spacer'), btn);
+  c.append(ta, row);
+  return c;
+}
+function renderCard(q) {
+  const card = el('div', 'qcard');
+  card.id = 'qcard-' + q.id;
+  const list = answersFor(q.id);
+  const head = el('div', 'qhead');
+  head.appendChild(el('span', 'qnum', '№' + q.num));
+  head.appendChild(el('div', 'qtitle', q.title));
+  const meta = el('div', 'qmeta');
+  const w = list.reduce((s, a) => s + (a.word_count || 0), 0);
+  if (list.length) {
+    meta.appendChild(el('div')).append(list.length + ' ' + plural(list.length, 'відповідь', 'відповіді', 'відповідей'));
+    const b = el('div'); b.appendChild(el('b', null, w + ' ' + plural(w, 'слово', 'слова', 'слів'))); meta.appendChild(b);
+  } else {
+    meta.appendChild(el('div', null, 'ще порожньо'));
+  }
+  head.appendChild(meta);
+  card.appendChild(head);
+  const body = el('div', 'qbody');
+  if (list.length === 0) body.appendChild(el('div', 'empty', 'Ще немає відповідей — будьте першим.'));
+  list.forEach(a => body.appendChild(renderAnswer(a, q.id)));
+  body.appendChild(renderComposer(q));
+  card.appendChild(body);
+  return card;
+}
+function rerenderCard(qid) {
+  const q = QUESTIONS.find(x => x.id === qid);
+  const old = document.getElementById('qcard-' + qid);
+  if (q && old) {
+    const fresh = renderCard(q);
+    fresh.style.display = old.style.display;
+    old.replaceWith(fresh);
+  }
+}
+function renderAll() {
+  const main = document.getElementById('kb-main');
+  main.innerHTML = '';
+  const cats = document.getElementById('kb-cats');
+  cats.innerHTML = '';
+  CATS.forEach((c, i) => {
+    const qs = QUESTIONS.filter(q => q.category === c.key);
+    if (!qs.length) return;
+    const chip = el('button', 'chip', c.icon + ' ' + c.key);
+    chip.onclick = () => {
+      const s = document.getElementById('kb-sec-' + i);
+      if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    cats.appendChild(chip);
+    const sec = el('div');
+    sec.id = 'kb-sec-' + i;
+    sec.style.scrollMarginTop = '120px';
+    const h = el('div', 'sec');
+    h.appendChild(el('h2', null, c.icon + ' ' + c.key));
+    h.appendChild(el('span', 'cnt', qs.length + ' пит.'));
+    sec.appendChild(h);
+    qs.forEach(q => sec.appendChild(renderCard(q)));
+    main.appendChild(sec);
+  });
+  updateStats();
+  applyFilters();
+}
+
+/* ===== export ===== */
+function exportMd() {
+  const lines = ['# База знань Barpi — чек-лист SC Consulting', '', '_Експорт: ' + fmtDate(new Date().toISOString().slice(0, 19).replace('T', ' ')) + '_', ''];
+  CATS.forEach(c => {
+    const qs = QUESTIONS.filter(q => q.category === c.key);
+    if (!qs.length) return;
+    lines.push('## ' + c.icon + ' ' + c.key, '');
+    qs.forEach(q => {
+      lines.push('### №' + q.num + '. ' + q.title, '');
+      const list = answersFor(q.id);
+      if (!list.length) { lines.push('_Немає відповідей._', ''); return; }
+      list.forEach(a => {
+        lines.push('**' + (NAMES[a.author_email] || a.author_email) + '** · ' + fmtDate(a.created_at) + ' · ' + (a.word_count || 0) + ' слів:', '');
+        lines.push(a.answer_text, '');
+      });
+    });
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  a.download = 'barpi-knowledge-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '.md';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast('Markdown завантажено');
+}
+
+/* ===== boot ===== */
+async function refresh(silent) {
+  try {
+    document.getElementById('kb-errbar').style.display = 'none';
+    await loadData();
+    renderAll();
+    if (!silent) toast('Дані оновлено');
+  } catch (e) {
+    document.getElementById('kb-errbar').style.display = '';
+    document.getElementById('kb-errtext').textContent = 'Не вдалося завантажити дані: ' + e.message;
+  }
+}
+document.querySelectorAll('.kb-filters .chip[data-f]').forEach(ch => {
+  ch.addEventListener('click', () => {
+    document.querySelectorAll('.kb-filters .chip[data-f]').forEach(x => x.classList.remove('on'));
+    ch.classList.add('on');
+    FILTER = ch.dataset.f;
+    applyFilters();
+  });
+});
+document.getElementById('kb-search').addEventListener('input', e => {
+  QUERY = e.target.value.trim().toLowerCase();
+  applyFilters();
+});
+document.getElementById('kb-refresh').addEventListener('click', () => refresh(false));
+document.getElementById('kb-export').addEventListener('click', exportMd);
+document.getElementById('kb-retry').addEventListener('click', () => refresh(false));
+let lastFocusSync = Date.now();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && Date.now() - lastFocusSync > 60000) {
+    lastFocusSync = Date.now();
+    refresh(true);
+  }
+});
+(async function init() {
+  await resolveIdentity();
+  renderWho();
+  await refresh(true);
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,19 @@
 # Barpi Brand Bible — Changelog
 
+## v7.2 (19.08.2026) — 🧠 База знань за чек-листом SC Consulting
+
+### 🧠 /dashboard/knowledge/ (нове)
+- **Сторінка «База знань»** — 48 питань чек-листа SC Consulting у 6 категоріях (Бренд і маркетинг, Клієнти і продажі, Компанія і документи, Структура і персонал, Фінанси і розрахунки, Інвестиції і розвиток). Під кожним питанням — текстове поле; після збереження відповідь фіксується в D1, показується кількість слів, і з'являється нове порожнє поле.
+- **Спільна видимість**: усі бачать усі відповіді з бейджем автора; редагування/видалення — автор своїх, vg@abrisart.com — усіх (адмін). Ідентифікація через CF Access `/cdn-cgi/access/get-identity`, fallback-вибір автора.
+- **UX**: пошук, фільтри (Всі/Із відповідями/Без/Мої), прогрес-бар X/48, автозбереження чернеток у localStorage, експорт усієї бази у Markdown, м'яке двокрокове видалення без native confirm, mobile-friendly.
+- **Прозорість AI**: 33 стартові чернетки від автора «🤖 Claude AI» (ai@barpi.ua) на основі фактів Brand Bible/CLAUDE.md — позначені окремим бейджем для перевірки командою.
+
+### ⚙️ Backend
+- **D1**: нові таблиці `kb_questions` (48 рядків) і `kb_answers` (uuid, автор, текст, word_count server-side, soft-delete) + індекс.
+- **Worker barpi-api**: нові endpoints `POST /kb_answers`, `PATCH /kb_answers/:id`, `DELETE /kb_answers/:id` (allowlist авторів, перевірка автор/адмін, ліміт 40K символів); kb-таблиці додано у weekly-backup (`scheduled()`) і `/export`.
+- **Repo sync**: `cf-migration/workers/barpi-api/src/index.js` синхронізовано з продакшн-кодом (закрито P1-2 «live worker drift»); hardened-варіант 12.06.2026 збережено в git history (1ce1786). `wrangler.toml` доповнено R2 binding `barpi-backups` і cron `0 4 * * 0`.
+- **Каталог**: картка «База знань» на /dashboard/ (двомовна).
+
 ## v7.1 (07.07.2026) — 📖 Book UX: наскрізна нумерація, prev/next, архітектура бренду
 
 ### 📖 Структура книги

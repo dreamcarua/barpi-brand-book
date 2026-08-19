@@ -1,6 +1,6 @@
 name = "barpi-api"
 main = "src/index.js"
-compatibility_date = "2026-06-01"
+compatibility_date = "2024-09-23"
 account_id = "ab63a85bdfbf5894c28efe7076acbd82"
 
 # To make SENSITIVE-resource auth fully effective, route the API under the
@@ -12,6 +12,15 @@ binding = "DB"
 database_name = "barpi-bible"
 database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
 
+# R2 archive for weekly backups (scheduled handler writes weekly/*.json)
+[[r2_buckets]]
+binding = "BACKUPS"
+bucket_name = "barpi-backups"
+
+# Weekly backup + alerts regen (Sunday 04:00 UTC) — handled by scheduled()
+[triggers]
+crons = ["0 4 * * SUN"]
+
 [vars]
 ENVIRONMENT = "production"
 STRICT_ORIGIN = "1"
@@ -19,9 +28,6 @@ ALLOWED_ORIGINS = "https://brand.barpi.ua,https://barpi-brand-book.pages.dev,htt
 # Cloudflare Access (set ACCESS_AUD after creating the api.barpi.ua Access app):
 ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
 # ACCESS_AUD = "<application-audience-tag>"
-# Deploy now is non-breaking. AFTER api.barpi.ua + CF Access routing exists and
-# dashboards point to it, flip this to "1" to block PII via spoofed Origin:
-# ENFORCE_SENSITIVE = "1"
 
 # Secrets (wrangler secret put):
 #   API_AUTH_KEY — admin/backend access
