@@ -17,6 +17,11 @@ database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
 binding = "BACKUPS"
 bucket_name = "barpi-backups"
 
+# R2 storage for Knowledge Base attachments (/dashboard/knowledge/)
+[[r2_buckets]]
+binding = "KBFILES"
+bucket_name = "barpi-kb-files"
+
 # Weekly backup + alerts regen (Sunday 04:00 UTC) — handled by scheduled()
 [triggers]
 crons = ["0 4 * * SUN"]

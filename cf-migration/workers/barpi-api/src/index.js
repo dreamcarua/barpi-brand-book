@@ -1,5 +1,6 @@
 /* ============================================================
    barpi-api Worker — REST API for dashboards reading from D1
+   v2026-08-21: + kb_files (R2 attachments) + kb_question_state (чек-лист поля)
    v2026-08-19: + kb_questions/kb_answers (База знань — /dashboard/knowledge/)
    Base = code deployed in production (scheduled backups, alerts, R2),
    synced back to repo to resolve P1-2 "live worker drift".
@@ -16,6 +17,10 @@
      POST /kb_answers          — create answer (word_count server-side)
      PATCH /kb_answers/:id     — edit answer (author or admin)
      DELETE /kb_answers/:id    — soft-delete answer (author or admin)
+     POST /kb_files            — upload attachment (multipart, R2 barpi-kb-files)
+     GET  /kb_files/:id/download — stream attachment (Content-Disposition: attachment)
+     DELETE /kb_files/:id      — soft-delete attachment (author or admin; R2 object kept)
+     PUT  /kb_state/:qid       — upsert Є/немає · Де зберігається · Відповідальний
      GET  /healthz             — health check
    Auth: protected at edge by Cloudflare Access (when bound to barpi.ua route)
    ============================================================ */
@@ -340,6 +345,116 @@ async function kbUpdateAnswer(env, id, body) {
   return await env.DB.prepare(`SELECT * FROM kb_answers WHERE id = ?`).bind(id).first();
 }
 
+// --- kb_files: attachments per question (R2 bucket barpi-kb-files) ---
+const KB_MAX_FILE_BYTES = 20 * 1024 * 1024;      // 20 MB per file
+const KB_UPLOADS_PER_HOUR = 60;                   // cheap abuse guard
+const KB_ALLOWED_EXT = new Set([
+  'pdf', 'doc', 'docx', 'rtf', 'odt', 'txt', 'md',
+  'xls', 'xlsx', 'ods', 'csv',
+  'ppt', 'pptx', 'odp', 'key',
+  'png', 'jpg', 'jpeg', 'webp', 'gif', 'heic', 'tif', 'tiff',
+  'zip', 'json', 'xml', 'eml', 'msg', 'mp4', 'mov', 'ai', 'psd', 'indd',
+]);
+
+function kbSafeName(raw) {
+  // strip any path prefix, control chars and quotes (Content-Disposition safe)
+  let n = String(raw || 'file').split(/[\\/]/).pop();
+  n = n.replace(/[\u0000-\u001f\u007f"]/g, '').trim();
+  if (!n || n === '.' || n === '..') n = 'file';
+  return n.slice(0, 180);
+}
+
+function kbExtOf(name) {
+  const m = String(name).match(/\.([A-Za-z0-9]{1,8})$/);
+  return m ? m[1].toLowerCase() : '';
+}
+
+async function kbUploadFile(env, req) {
+  if (!env.KBFILES) return { _status: 500, error: 'file storage not configured' };
+  let form;
+  try { form = await req.formData(); }
+  catch (e) { return { _status: 400, error: 'expected multipart/form-data' }; }
+
+  const file = form.get('file');
+  if (!file || typeof file === 'string' || typeof file.stream !== 'function') {
+    return { _status: 400, error: 'file field required' };
+  }
+  const qid = parseInt(form.get('question_id'), 10);
+  if (isNaN(qid) || qid < 1) return { _status: 400, error: 'question_id required' };
+  const email = String(form.get('author_email') || '').trim().toLowerCase();
+  if (!KB_AUTHOR_EMAILS.has(email)) return { _status: 403, error: 'author_email not allowed' };
+
+  const q = await env.DB.prepare(`SELECT id FROM kb_questions WHERE id = ?`).bind(qid).first();
+  if (!q) return { _status: 404, error: 'question not found' };
+
+  const filename = kbSafeName(file.name);
+  const ext = kbExtOf(filename);
+  if (!ext || !KB_ALLOWED_EXT.has(ext)) {
+    return { _status: 415, error: 'file type not allowed', ext: ext || null };
+  }
+  const size = Number(file.size || 0);
+  if (size <= 0) return { _status: 400, error: 'empty file' };
+  if (size > KB_MAX_FILE_BYTES) return { _status: 413, error: 'file too large', max_bytes: KB_MAX_FILE_BYTES };
+
+  const recent = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM kb_files WHERE created_at > datetime('now','-1 hour')`
+  ).first();
+  if ((recent?.n || 0) >= KB_UPLOADS_PER_HOUR) return { _status: 429, error: 'too many uploads, try later' };
+
+  const id = crypto.randomUUID();
+  const key = `kb/q${qid}/${id}.${ext}`;
+  const contentType = file.type || 'application/octet-stream';
+  await env.KBFILES.put(key, file.stream(), {
+    httpMetadata: { contentType },
+    customMetadata: { question_id: String(qid), author: email, filename },
+  });
+  await env.DB.prepare(
+    `INSERT INTO kb_files (id, question_id, author_email, author_name, filename, content_type, size_bytes, r2_key, deleted, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`
+  ).bind(id, qid, email, form.get('author_name') ? String(form.get('author_name')).slice(0, 100) : null,
+    filename, contentType, size, key).run();
+  return await env.DB.prepare(`SELECT * FROM kb_files WHERE id = ?`).bind(id).first();
+}
+
+async function kbDeleteFile(env, id, editorRaw) {
+  const row = await env.DB.prepare(`SELECT * FROM kb_files WHERE id = ? AND deleted = 0`).bind(id).first();
+  if (!row) return { _status: 404, error: 'not found' };
+  const editor = String(editorRaw || '').trim().toLowerCase();
+  if (editor !== row.author_email && editor !== KB_ADMIN_EMAIL) {
+    return { _status: 403, error: 'only author or admin can delete' };
+  }
+  // Soft-delete the row; the R2 object is kept so an admin can restore it.
+  await env.DB.prepare(`UPDATE kb_files SET deleted = 1 WHERE id = ?`).bind(id).run();
+  return { ok: true, id };
+}
+
+// --- kb_question_state: чек-лист поля «Є/немає · Де зберігається · Відповідальний» ---
+const KB_VALID_STATUS = ['todo', 'in_progress', 'done', 'na'];
+async function kbSaveState(env, qid, body) {
+  const id = parseInt(qid, 10);
+  if (isNaN(id) || id < 1) return { _status: 400, error: 'bad question_id' };
+  const editor = String(body.editor_email || '').trim().toLowerCase();
+  if (!KB_AUTHOR_EMAILS.has(editor)) return { _status: 403, error: 'editor_email not allowed' };
+  const q = await env.DB.prepare(`SELECT id FROM kb_questions WHERE id = ?`).bind(id).first();
+  if (!q) return { _status: 404, error: 'question not found' };
+
+  const status = body.status === undefined || body.status === null ? 'todo' : String(body.status);
+  if (!KB_VALID_STATUS.includes(status)) return { _status: 400, error: 'invalid status', allowed: KB_VALID_STATUS };
+  const storage = body.storage_ref === undefined || body.storage_ref === null ? null : String(body.storage_ref).slice(0, 500);
+  const ownerRaw = String(body.owner_email || '').trim().toLowerCase();
+  if (ownerRaw && !KB_AUTHOR_EMAILS.has(ownerRaw)) return { _status: 400, error: 'owner_email not allowed' };
+
+  await env.DB.prepare(
+    `INSERT INTO kb_question_state (question_id, status, storage_ref, owner_email, updated_by, updated_at)
+     VALUES (?, ?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(question_id) DO UPDATE SET
+       status = excluded.status, storage_ref = excluded.storage_ref,
+       owner_email = excluded.owner_email, updated_by = excluded.updated_by,
+       updated_at = datetime('now')`
+  ).bind(id, status, storage, ownerRaw || null, editor).run();
+  return await env.DB.prepare(`SELECT * FROM kb_question_state WHERE question_id = ?`).bind(id).first();
+}
+
 async function kbDeleteAnswer(env, id, editorRaw) {
   const row = await env.DB.prepare(`SELECT * FROM kb_answers WHERE id = ? AND deleted = 0`).bind(id).first();
   if (!row) return { _status: 404, error: 'not found' };
@@ -414,7 +529,7 @@ export default {
   async scheduled(event, env, ctx) {
     const startedAt = new Date().toISOString();
     try {
-      const critTables = ['brand_ideas', 'sync_state', 'partner_pipeline', 'events', 'sku_catalog', 'partners', 'kb_questions', 'kb_answers'];
+      const critTables = ['brand_ideas', 'sync_state', 'partner_pipeline', 'events', 'sku_catalog', 'partners', 'kb_questions', 'kb_answers', 'kb_files', 'kb_question_state'];
       const dump = { version: 1, generated_at: startedAt, d1_db: 'barpi-bible', tables: {} };
       for (const t of critTables) {
         try {
@@ -576,7 +691,7 @@ export default {
         const onlyParam = url.searchParams.get('tables');
         const all = url.searchParams.get('all') === '1';
         // Safety default: only critical non-MS tables
-        const defaultTables = ['brand_ideas', 'sync_state', 'partner_pipeline', 'events', 'inventory_snapshot', 'smm_content_log', 'kb_questions', 'kb_answers'];
+        const defaultTables = ['brand_ideas', 'sync_state', 'partner_pipeline', 'events', 'inventory_snapshot', 'smm_content_log', 'kb_questions', 'kb_answers', 'kb_files', 'kb_question_state'];
         let tables = defaultTables;
         if (onlyParam) tables = onlyParam.split(',').map(s => s.trim()).filter(Boolean);
         else if (all) {
@@ -657,6 +772,49 @@ export default {
       if (kbMatch && req.method === 'DELETE') {
         const editor = url.searchParams.get('editor') || '';
         const result = await kbDeleteAnswer(env, kbMatch[1], editor);
+        if (result && result._status) { const { _status, ...rest } = result; return json(rest, _status, headers); }
+        return json(result, 200, headers);
+      }
+
+      // === kb_files (attachments) ===
+      // Download must be matched BEFORE the generic table reader.
+      const kbDl = url.pathname.match(/^\/kb_files\/([a-f0-9-]+)\/download$/);
+      if (kbDl && req.method === 'GET') {
+        const row = await env.DB.prepare(`SELECT * FROM kb_files WHERE id = ? AND deleted = 0`).bind(kbDl[1]).first();
+        if (!row) return json({ error: 'not found' }, 404, headers);
+        if (!env.KBFILES) return json({ error: 'file storage not configured' }, 500, headers);
+        const obj = await env.KBFILES.get(row.r2_key);
+        if (!obj) return json({ error: 'file missing in storage' }, 404, headers);
+        return new Response(obj.body, {
+          status: 200,
+          headers: {
+            ...headers,
+            'Content-Type': row.content_type || 'application/octet-stream',
+            'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(row.filename)}`,
+            'X-Content-Type-Options': 'nosniff',
+            'Cache-Control': 'private, max-age=60',
+          },
+        });
+      }
+      if (url.pathname === '/kb_files' && req.method === 'POST') {
+        const result = await kbUploadFile(env, req);
+        if (result && result._status) { const { _status, ...rest } = result; return json(rest, _status, headers); }
+        return json(result, 201, headers);
+      }
+      const kbFileMatch = url.pathname.match(/^\/kb_files\/([a-f0-9-]+)$/);
+      if (kbFileMatch && req.method === 'DELETE') {
+        const result = await kbDeleteFile(env, kbFileMatch[1], url.searchParams.get('editor') || '');
+        if (result && result._status) { const { _status, ...rest } = result; return json(rest, _status, headers); }
+        return json(result, 200, headers);
+      }
+
+      // === kb_question_state (Є/немає · Де зберігається · Відповідальний) ===
+      const kbStateMatch = url.pathname.match(/^\/kb_state\/(\d+)$/);
+      if (kbStateMatch && (req.method === 'PUT' || req.method === 'POST')) {
+        let body;
+        try { body = await req.json(); }
+        catch (e) { return json({ error: 'invalid json' }, 400, headers); }
+        const result = await kbSaveState(env, kbStateMatch[1], body);
         if (result && result._status) { const { _status, ...rest } = result; return json(rest, _status, headers); }
         return json(result, 200, headers);
       }

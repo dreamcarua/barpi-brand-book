@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--navy:#001154;--navy-soft:rgba(0,17,84,.08);--sky:#BAD9F4;--sky-soft:rgba(186,217,244,.35);--g:#39B44A;--r:#E84040;--d:#333333;--bg:#FAF7F7;--card:#fff;--muted:#777;--border:#E5E5DC;--line:#EEEAEA}
+:root{--navy:#001154;--navy-soft:rgba(0,17,84,.08);--sky:#BAD9F4;--sky-soft:rgba(186,217,244,.35);--g:#2E9E3E;--g-soft:rgba(46,158,62,.12);--r:#E84040;--d:#333333;--bg:#FAF7F7;--card:#fff;--muted:#777;--border:#E5E5DC;--line:#EEEAEA}
 *{box-sizing:border-box}
 body{background:var(--bg);font-family:Rubik,-apple-system,sans-serif;color:var(--d);margin:0;font-size:15px}
-button{font-family:Rubik,-apple-system,sans-serif}
+button,input,select,textarea{font-family:Rubik,-apple-system,sans-serif}
 .kb-top{position:sticky;top:0;z-index:300;background:#1A1A1A;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--navy)}
 .kb-top .back{color:#fff;text-decoration:none;font-size:18px;opacity:.7;padding:4px 8px;border-radius:8px}
 .kb-top .back:hover{opacity:1;background:rgba(255,255,255,.1)}
@@ -21,15 +21,16 @@ button{font-family:Rubik,-apple-system,sans-serif}
 .kb-who{font-size:13px;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);padding:6px 12px;border-radius:99px}
 .kb-who .dot{width:8px;height:8px;border-radius:50%;background:var(--g);flex:0 0 auto}
 .kb-filters{position:sticky;top:52px;z-index:280;background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.kb-search{flex:1 1 220px;max-width:340px;padding:8px 14px;border:1px solid var(--border);border-radius:99px;font-family:Rubik,sans-serif;font-size:14px;outline:none}
+.kb-search{flex:1 1 200px;max-width:320px;padding:8px 14px;border:1px solid var(--border);border-radius:99px;font-size:14px;outline:none}
 .kb-search:focus{border-color:var(--navy)}
 .chip{font-size:12px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--d);transition:all .15s;white-space:nowrap}
 .chip:hover{border-color:var(--navy);color:var(--navy)}
 .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .chip.ghost{border:none;background:transparent;color:var(--muted)}
 .chip.ghost:hover{color:var(--navy)}
+.kb-sep{width:1px;height:22px;background:var(--line)}
 .kb-hero{max-width:1060px;margin:0 auto;padding:18px 20px 0}
-.kb-note{font-size:12.5px;color:var(--muted);background:var(--sky-soft);border:1px solid var(--sky);border-radius:10px;padding:10px 14px;line-height:1.5}
+.kb-note{font-size:12.5px;color:var(--muted);background:var(--sky-soft);border:1px solid var(--sky);border-radius:10px;padding:10px 14px;line-height:1.55}
 .kb-progressbar{height:8px;border-radius:99px;background:#EDE8E8;overflow:hidden;margin:14px 0 6px}
 .kb-progressbar .bar{height:100%;width:0;background:linear-gradient(90deg,var(--navy),#2a4a9e);border-radius:99px;transition:width .4s}
 .kb-stats{font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
@@ -41,29 +42,58 @@ button{font-family:Rubik,-apple-system,sans-serif}
 .sec h2{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .sec::after{content:"";flex:1;height:1px;background:var(--line)}
 .sec .cnt{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--navy-soft);color:var(--navy)}
-.qcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;transition:border-color .15s}
+.sec .lead-chip{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--sky);color:var(--navy);white-space:nowrap;cursor:help;text-transform:none;letter-spacing:0}
+.respbadge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--sky-soft);color:var(--navy);border:1px solid var(--sky);white-space:nowrap;cursor:help}
+.respbadge.mine{background:var(--navy);color:#fff;border-color:var(--navy)}
+.respbadge.na{background:#EFEDEB;color:#6b665f;border-color:#d8d3cc}
+.qcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;transition:border-color .15s,box-shadow .15s}
 .qcard:hover{border-color:#d5d0c8}
-.qcard.hl{border-color:var(--navy)}
-.qhead{display:flex;align-items:flex-start;gap:12px;cursor:pointer}
+.qcard.na{opacity:.55}
+.qcard.drop{border-color:var(--navy);box-shadow:0 0 0 3px var(--sky-soft)}
+.qhead{display:flex;align-items:flex-start;gap:12px}
 .qnum{flex:0 0 auto;font-size:12px;font-weight:800;color:var(--navy);background:var(--sky-soft);border:1px solid var(--sky);border-radius:8px;padding:4px 8px;margin-top:1px}
 .qtitle{font-size:15.5px;font-weight:600;line-height:1.4;flex:1}
 .qmeta{flex:0 0 auto;font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
 .qmeta b{color:var(--navy)}
+.metabar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding:10px 12px;background:#FBFAF9;border:1px solid var(--line);border-radius:10px}
+.metabar .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.st{font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:99px;border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--muted)}
+.st:hover{border-color:var(--navy);color:var(--navy)}
+.st.on[data-s="done"]{background:var(--g-soft);border-color:var(--g);color:#1d6b29}
+.st.on[data-s="in_progress"]{background:var(--sky-soft);border-color:var(--navy);color:var(--navy)}
+.st.on[data-s="na"]{background:#EFEDEB;border-color:#c9c4bd;color:#6b665f}
+.metabar input,.metabar select{font-size:12.5px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;outline:none;color:var(--d)}
+.metabar input{flex:1 1 190px;min-width:140px}
+.metabar input:focus,.metabar select:focus{border-color:var(--navy)}
+.metaflash{font-size:11px;color:var(--g);font-weight:600;opacity:0;transition:opacity .2s}
+.metaflash.on{opacity:1}
 .qbody{margin-top:8px}
 .ans{border-top:1px solid var(--line);padding:12px 0 4px;margin-top:10px}
 .anshead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 .aupel{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--navy-soft);color:var(--navy)}
 .aupel.ai{background:var(--sky);color:var(--navy)}
 .anshead .wc{font-weight:600}
-.anshead .spacer,.row .spacer{flex:1}
+.anshead .spacer,.row .spacer,.fhead .spacer{flex:1}
 .abtn{border:none;background:transparent;cursor:pointer;font-size:13px;color:var(--muted);padding:3px 7px;border-radius:7px}
 .abtn:hover{background:var(--navy-soft);color:var(--navy)}
 .abtn.danger{color:var(--r)}
 .abtn.danger:hover{background:rgba(232,64,64,.08)}
 .abtn.confirm{background:var(--r);color:#fff;font-weight:600}
 .atext{white-space:pre-wrap;line-height:1.6;font-size:14.5px;margin-top:8px;overflow-wrap:break-word}
+.files{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
+.fhead{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px}
+.frow{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;background:#FDFCFB;font-size:13px}
+.frow .fic{font-size:16px;flex:0 0 auto}
+.frow .fname{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frow .fmeta{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.fadd{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--navy);background:var(--sky-soft);border:1px dashed var(--sky);border-radius:9px;padding:8px 14px;cursor:pointer}
+.fadd:hover{background:var(--sky);border-style:solid}
+.fhint{font-size:11.5px;color:var(--muted);margin-left:10px}
+.fprog{height:5px;border-radius:99px;background:#EDE8E8;overflow:hidden;margin-top:8px;display:none}
+.fprog.on{display:block}
+.fprog i{display:block;height:100%;width:0;background:var(--navy);transition:width .2s}
 .composer{border-top:1px dashed var(--border);margin-top:12px;padding-top:12px}
-.composer textarea,.editbox textarea{width:100%;min-height:76px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:Rubik,sans-serif;font-size:15px;line-height:1.55;resize:vertical;outline:none;background:#FDFCFB}
+.composer textarea,.editbox textarea{width:100%;min-height:76px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:15px;line-height:1.55;resize:vertical;outline:none;background:#FDFCFB}
 .composer textarea:focus,.editbox textarea:focus{border-color:var(--navy);background:#fff}
 .composer .row,.editbox .row{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
 .livewc{font-size:12px;color:var(--muted)}
@@ -96,6 +126,7 @@ button{font-family:Rubik,-apple-system,sans-serif}
   .kb-wrap,.kb-hero,.kb-cats,.errbar{padding-left:14px;padding-right:14px}
   .qmeta{display:none}
   .qcard{padding:14px}
+  .metabar input{flex:1 1 100%}
 }
 </style>
 </head>
@@ -112,19 +143,25 @@ button{font-family:Rubik,-apple-system,sans-serif}
 </header>
 
 <div class="kb-filters">
-  <input class="kb-search" id="kb-search" type="text" placeholder="Пошук питання або відповіді…" autocomplete="off">
+  <input class="kb-search" id="kb-search" type="text" placeholder="Пошук питання, відповіді, файлу…" autocomplete="off">
   <button class="chip on" data-f="all">Всі</button>
   <button class="chip" data-f="answered">Із відповідями</button>
   <button class="chip" data-f="empty">Без відповідей</button>
-  <button class="chip" data-f="mine">Мої</button>
+  <button class="chip" data-f="files">З файлами</button>
+  <button class="chip" data-f="myresp" title="Питання, де ви — пріоритетний виконавець за чек-листом">Мій блок</button>
+  <button class="chip" data-f="mine">Мої записи</button>
+  <span class="kb-sep"></span>
+  <button class="chip" id="kb-order" title="Порядок питань">№ 1→48</button>
   <span style="flex:1"></span>
   <button class="chip ghost" id="kb-refresh" title="Оновити дані">⟳ Оновити</button>
-  <button class="chip ghost" id="kb-export" title="Завантажити всю базу у Markdown">⬇ Експорт .md</button>
+  <button class="chip ghost" id="kb-export">⬇ .md</button>
+  <button class="chip ghost" id="kb-export-csv" title="Таблиця у форматі чек-листа SC Consulting">⬇ .csv</button>
 </div>
 
 <div class="kb-hero">
   <div class="kb-note">
-    📌 Збираємо базу знань Barpi за чек-листом SC Consulting. Пишіть відповідь у поле під питанням і тисніть «Зберегти» — відповідь фіксується в базі, видно кількість слів, і з'являється нове порожнє поле. Заповнюйте лише пункти, що стосуються нашого бізнесу. Чернетки з бейджем 🤖 Claude AI — перевірте, виправте і доповніть.
+    📌 Збираємо базу знань Barpi за чек-листом SC Consulting. Під кожним питанням: позначте стан (Є / В роботі / Не стосується), вкажіть де зберігається і хто відповідальний, напишіть відповідь і прикріпіть файли — можна просто перетягнути їх на картку. Чернетки з бейджем 🤖 Claude AI — перевірте, виправте і доповніть.<br>
+    👤 Бейдж біля питання і в заголовку блоку — <b>пріоритетний виконавець</b> із вашої колонки «Відповідальний» у чек-листі (В = Вадим, А = Олександр, Ф = Пилип). Це підказка «з чого почати», а не обмеження — доповнювати може будь-хто. Фільтр «Мій блок» покаже тільки ваші питання.
   </div>
   <div class="kb-progressbar"><div class="bar" id="kb-bar"></div></div>
   <div class="kb-stats" id="kb-stats">Завантаження…</div>
@@ -138,7 +175,7 @@ button{font-family:Rubik,-apple-system,sans-serif}
   <div class="skel"></div><div class="skel"></div><div class="skel"></div>
 </main>
 
-<footer class="page-foot">© ТОВ «ПЕТ КОРП» · База знань Barpi · дані у Cloudflare D1 (barpi-bible) · доступ за allowlist Cloudflare Access</footer>
+<footer class="page-foot">© ТОВ «ПЕТ КОРП» · База знань Barpi · дані у Cloudflare D1 (barpi-bible), файли у R2 (barpi-kb-files) · доступ за allowlist Cloudflare Access</footer>
 
 <div class="toast" id="kb-toast"></div>
 
@@ -156,20 +193,41 @@ const TEAM = [
 ];
 const NAMES = { 'ai@barpi.ua': 'Claude AI' };
 TEAM.forEach(t => { NAMES[t.email] = t.name; });
+// Пріоритетні виконавці — з вашої колонки «Відповідальний» у чек-листі SC
+// (В = Вадим, А = Олександр, Ф = Пилип). Доповнювати може будь-хто.
 const CATS = [
-  { key: 'Бренд і маркетинг',    icon: '🎨' },
-  { key: 'Клієнти і продажі',    icon: '🤝' },
-  { key: 'Компанія і документи', icon: '📄' },
-  { key: 'Структура і персонал', icon: '👥' },
-  { key: 'Фінанси і розрахунки', icon: '💰' },
-  { key: 'Інвестиції і розвиток', icon: '🚀' },
+  { key: 'Бренд і маркетинг',     icon: '🎨', lead: 'Вадим + Олександр', hint: 'Вадим 9 · Олександр 8 · Пилип 2' },
+  { key: 'Клієнти і продажі',     icon: '🤝', lead: 'Вадим + Олександр', hint: 'Вадим 5 · Олександр 4' },
+  { key: 'Компанія і документи',  icon: '📄', lead: 'Пилип',             hint: 'Пилип 4 · Вадим 2 · Олександр 2' },
+  { key: 'Структура і персонал',  icon: '👥', lead: 'Олександр',         hint: 'Олександр 6 · Пилип 2 · Вадим 1' },
+  { key: 'Фінанси і розрахунки',  icon: '💰', lead: 'Олександр + Пилип', hint: 'Олександр 4 · Пилип 3 · Вадим 2' },
+  { key: 'Інвестиції і розвиток', icon: '🚀', lead: 'Вадим + Пилип',     hint: 'Вадим 4 · Пилип 4 · Олександр 3' },
 ];
+// resp_code з чек-листа -> люди (для бейджа на картці і фільтра «Мої за чек-листом»)
+const RESP_PEOPLE = { V: ['Вадим'], A: ['Олександр'], F: ['Пилип'], ALL: ['Вадим', 'Олександр', 'Пилип'], NA: [] };
+const RESP_LABEL = { V: 'Вадим', A: 'Олександр', F: 'Пилип', 'V+A': 'Вадим + Олександр', 'V+F': 'Вадим + Пилип', ALL: 'Уся команда', NA: 'Не застосовується' };
+// хто я «за кодом» чек-листа
+const EMAIL_TO_PERSON = {
+  'vg@abrisart.com': 'Вадим', 'vg@sneco.ua': 'Вадим',
+  'fg@abrisart.com': 'Пилип',
+  'aksonov@barpi.com.ua': 'Олександр', 'office@barpi.com.ua': 'Олександр',
+};
+function respPeople(code) {
+  if (!code) return [];
+  if (RESP_PEOPLE[code]) return RESP_PEOPLE[code];
+  return code.split('+').flatMap(p => RESP_PEOPLE[p] || []);
+}
+function respLabel(code) {
+  if (!code) return '';
+  return RESP_LABEL[code] || respPeople(code).join(' + ');
+}
+const STATUS_LABEL = { todo: 'Не почато', in_progress: 'В роботі', done: 'Є', na: 'Не стосується' };
+const STATUS_ORDER = ['done', 'in_progress', 'na'];
+const MAX_FILE_BYTES = 20 * 1024 * 1024;
 
-let ME = null;           // { email, name }
-let QUESTIONS = [];
-let ANSWERS = [];        // non-deleted
-let FILTER = 'all';
-let QUERY = '';
+let ME = null;
+let QUESTIONS = [], ANSWERS = [], FILES = [], STATE = {};
+let FILTER = 'all', QUERY = '', ORDER = 'num';
 
 /* ===== utils ===== */
 function wordsOf(text) {
@@ -183,6 +241,12 @@ function fmtDate(sqlite) {
   const p = n => String(n).padStart(2, '0');
   return p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
 }
+function fmtSize(b) {
+  b = Number(b) || 0;
+  if (b < 1024) return b + ' Б';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(0) + ' КБ';
+  return (b / 1024 / 1024).toFixed(1).replace('.', ',') + ' МБ';
+}
 function plural(n, one, few, many) {
   const nn = Math.abs(n) % 100, n1 = nn % 10;
   if (nn > 10 && nn < 20) return many;
@@ -190,12 +254,24 @@ function plural(n, one, few, many) {
   if (n1 === 1) return one;
   return many;
 }
+function fileIcon(name) {
+  const e = String(name).split('.').pop().toLowerCase();
+  if (e === 'pdf') return '📕';
+  if (['doc', 'docx', 'rtf', 'odt', 'txt', 'md'].includes(e)) return '📘';
+  if (['xls', 'xlsx', 'ods', 'csv'].includes(e)) return '📗';
+  if (['ppt', 'pptx', 'odp', 'key'].includes(e)) return '📙';
+  if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'heic', 'tif', 'tiff'].includes(e)) return '🖼';
+  if (['mp4', 'mov'].includes(e)) return '🎬';
+  if (e === 'zip') return '🗜';
+  if (['ai', 'psd', 'indd'].includes(e)) return '🎨';
+  return '📄';
+}
 function toast(msg, isErr) {
   const t = document.getElementById('kb-toast');
   t.textContent = msg;
   t.className = 'toast show' + (isErr ? ' err' : '');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => { t.className = 'toast'; }, 2600);
+  toast._t = setTimeout(() => { t.className = 'toast'; }, 3000);
 }
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -203,7 +279,7 @@ function el(tag, cls, text) {
   if (text !== undefined) e.textContent = text;
   return e;
 }
-function canEdit(a) { return ME && (ME.email === a.author_email || ME.email === ADMIN_EMAIL); }
+function canEdit(row) { return ME && (ME.email === row.author_email || ME.email === ADMIN_EMAIL); }
 function draftKey(qid) { return 'kb_draft_' + (ME ? ME.email : 'anon') + '_' + qid; }
 
 /* ===== identity ===== */
@@ -230,7 +306,7 @@ function pickIdentity() {
     const ov = el('div', 'overlay');
     const box = el('div', 'box');
     box.appendChild(el('h3', null, 'Хто ви?'));
-    box.appendChild(el('p', null, 'Не вдалося визначити вас автоматично. Оберіть себе — від цього імені зберігатимуться відповіді.'));
+    box.appendChild(el('p', null, 'Не вдалося визначити вас автоматично. Оберіть себе — від цього імені зберігатимуться відповіді і файли.'));
     TEAM.forEach(t => {
       const b = el('button', 'pick', t.name + ' · ' + t.email);
       b.onclick = () => {
@@ -257,37 +333,54 @@ async function apiGet(path) {
   return r.json();
 }
 async function loadData() {
-  const [qs, ans] = await Promise.all([
+  const [qs, ans, files, states] = await Promise.all([
     apiGet('/kb_questions?order=sort.asc&limit=100'),
     apiGet('/kb_answers?deleted=eq.0&order=created_at.asc&limit=10000'),
+    apiGet('/kb_files?deleted=eq.0&order=created_at.asc&limit=10000'),
+    apiGet('/kb_question_state?limit=100'),
   ]);
   if (!Array.isArray(qs) || qs.length === 0) throw new Error('kb_questions порожня');
   QUESTIONS = qs;
   ANSWERS = Array.isArray(ans) ? ans : [];
+  FILES = Array.isArray(files) ? files : [];
+  STATE = {};
+  (Array.isArray(states) ? states : []).forEach(s => { STATE[s.question_id] = s; });
 }
+function answersFor(qid) { return ANSWERS.filter(a => a.question_id === qid); }
+function filesFor(qid) { return FILES.filter(f => f.question_id === qid); }
+function stateOf(qid) { return STATE[qid] || { question_id: qid, status: 'todo', storage_ref: '', owner_email: '' }; }
 
 /* ===== stats / filters ===== */
-function answersFor(qid) { return ANSWERS.filter(a => a.question_id === qid); }
 function updateStats() {
-  const answered = QUESTIONS.filter(q => answersFor(q.id).length > 0).length;
+  const na = QUESTIONS.filter(q => stateOf(q.id).status === 'na');
+  const relevant = QUESTIONS.filter(q => stateOf(q.id).status !== 'na');
+  const covered = relevant.filter(q => answersFor(q.id).length > 0 || stateOf(q.id).status === 'done');
   const totalWords = ANSWERS.reduce((s, a) => s + (a.word_count || 0), 0);
   const mine = ME ? ANSWERS.filter(a => a.author_email === ME.email).length : 0;
-  document.getElementById('kb-bar').style.width = (QUESTIONS.length ? Math.round(answered / QUESTIONS.length * 100) : 0) + '%';
+  const fileBytes = FILES.reduce((s, f) => s + (f.size_bytes || 0), 0);
+  document.getElementById('kb-bar').style.width = (relevant.length ? Math.round(covered.length / relevant.length * 100) : 0) + '%';
+
   const st = document.getElementById('kb-stats');
   st.innerHTML = '';
-  const s1 = el('span'); s1.append('Заповнено '); s1.appendChild(el('b', null, answered + ' із ' + QUESTIONS.length)); s1.append(' питань');
-  const s2 = el('span'); s2.appendChild(el('b', null, String(totalWords))); s2.append(' ' + plural(totalWords, 'слово', 'слова', 'слів') + ' у базі');
+  const s1 = el('span'); s1.append('Опрацьовано '); s1.appendChild(el('b', null, covered.length + ' із ' + relevant.length)); s1.append(' питань');
+  st.appendChild(s1);
+  if (na.length) { const s0 = el('span'); s0.append(na.length + ' не стосується нас'); st.appendChild(s0); }
+  const s2 = el('span'); s2.appendChild(el('b', null, String(totalWords))); s2.append(' ' + plural(totalWords, 'слово', 'слова', 'слів'));
   const s3 = el('span'); s3.appendChild(el('b', null, String(ANSWERS.length))); s3.append(' ' + plural(ANSWERS.length, 'відповідь', 'відповіді', 'відповідей'));
-  const s4 = el('span'); s4.append('моїх: '); s4.appendChild(el('b', null, String(mine)));
-  st.append(s1, s2, s3, s4);
+  const s4 = el('span'); s4.appendChild(el('b', null, String(FILES.length))); s4.append(' ' + plural(FILES.length, 'файл', 'файли', 'файлів') + (FILES.length ? ' · ' + fmtSize(fileBytes) : ''));
+  const s5 = el('span'); s5.append('моїх відповідей: '); s5.appendChild(el('b', null, String(mine)));
+  st.append(s2, s3, s4, s5);
 }
 function matchesFilter(q) {
-  const list = answersFor(q.id);
+  const list = answersFor(q.id), fl = filesFor(q.id);
   if (FILTER === 'answered' && list.length === 0) return false;
-  if (FILTER === 'empty' && list.length > 0) return false;
-  if (FILTER === 'mine' && !(ME && list.some(a => a.author_email === ME.email))) return false;
+  if (FILTER === 'empty' && (list.length > 0 || stateOf(q.id).status === 'na')) return false;
+  if (FILTER === 'files' && fl.length === 0) return false;
+  if (FILTER === 'mine' && !(ME && (list.some(a => a.author_email === ME.email) || fl.some(f => f.author_email === ME.email) || stateOf(q.id).owner_email === ME.email))) return false;
+  if (FILTER === 'myresp' && !(ME && respPeople(q.resp_code).includes(EMAIL_TO_PERSON[ME.email]))) return false;
   if (QUERY) {
-    const hay = (q.num + ' ' + q.title + ' ' + list.map(a => a.answer_text).join(' ')).toLowerCase();
+    const hay = (q.num + ' ' + q.title + ' ' + list.map(a => a.answer_text).join(' ') + ' ' +
+      fl.map(f => f.filename).join(' ') + ' ' + (stateOf(q.id).storage_ref || '')).toLowerCase();
     if (!hay.includes(QUERY)) return false;
   }
   return true;
@@ -300,12 +393,196 @@ function applyFilters() {
   CATS.forEach((c, i) => {
     const sec = document.getElementById('kb-sec-' + i);
     if (!sec) return;
-    const anyVisible = QUESTIONS.some(q => q.category === c.key && matchesFilter(q));
-    sec.style.display = anyVisible ? '' : 'none';
+    sec.style.display = QUESTIONS.some(q => q.category === c.key && matchesFilter(q)) ? '' : 'none';
   });
 }
 
-/* ===== rendering ===== */
+/* ===== checklist meta bar ===== */
+function renderMeta(q) {
+  const s = stateOf(q.id);
+  const bar = el('div', 'metabar');
+  const flash = el('span', 'metaflash', '✓ збережено');
+
+  let pending = s.status, pendingStore = s.storage_ref || '', pendingOwner = s.owner_email || '';
+  let timer;
+  async function save() {
+    try {
+      const r = await fetch(API + '/kb_state/' + q.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: pending, storage_ref: pendingStore, owner_email: pendingOwner, editor_email: ME.email }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      STATE[q.id] = j;
+      flash.classList.add('on');
+      setTimeout(() => flash.classList.remove('on'), 1400);
+      const card = document.getElementById('qcard-' + q.id);
+      if (card) card.classList.toggle('na', j.status === 'na');
+      updateStats();
+    } catch (e) { toast('Стан не збережено: ' + e.message, true); }
+  }
+  function queue() { clearTimeout(timer); timer = setTimeout(save, 500); }
+
+  bar.appendChild(el('span', 'lbl', 'Стан'));
+  STATUS_ORDER.forEach(code => {
+    const b = el('button', 'st' + (pending === code ? ' on' : ''), STATUS_LABEL[code]);
+    b.dataset.s = code;
+    b.onclick = () => {
+      pending = (pending === code) ? 'todo' : code;
+      bar.querySelectorAll('.st').forEach(x => x.classList.toggle('on', x.dataset.s === pending));
+      save();
+    };
+    bar.appendChild(b);
+  });
+
+  const store = document.createElement('input');
+  store.type = 'text';
+  store.placeholder = 'Де зберігається / ресурс…';
+  store.value = pendingStore;
+  store.oninput = () => { pendingStore = store.value; queue(); };
+  bar.appendChild(store);
+
+  const own = document.createElement('select');
+  own.appendChild(new Option(q.resp_code && q.resp_code !== 'NA' ? 'Відповідальний — за чек-листом: ' + respLabel(q.resp_code) : 'Відповідальний —', ''));
+  TEAM.forEach(t => own.appendChild(new Option(t.name, t.email)));
+  own.value = pendingOwner;
+  own.onchange = () => { pendingOwner = own.value; save(); };
+  bar.appendChild(own);
+  bar.appendChild(flash);
+  return bar;
+}
+
+/* ===== files ===== */
+function renderFiles(q) {
+  const wrap = el('div', 'files');
+  const list = filesFor(q.id);
+  const head = el('div', 'fhead');
+  head.appendChild(el('span', null, '📎 Файли' + (list.length ? ' (' + list.length + ')' : '')));
+  wrap.appendChild(head);
+
+  list.forEach(f => {
+    const row = el('div', 'frow');
+    row.appendChild(el('span', 'fic', fileIcon(f.filename)));
+    row.appendChild(el('span', 'fname', f.filename));
+    row.appendChild(el('span', 'fmeta', fmtSize(f.size_bytes) + ' · ' + (NAMES[f.author_email] || f.author_email) + ' · ' + fmtDate(f.created_at)));
+    row.appendChild(el('span', 'spacer'));
+    const dl = el('button', 'abtn', '⬇');
+    dl.title = 'Завантажити';
+    dl.onclick = () => downloadFile(f, dl);
+    row.appendChild(dl);
+    if (canEdit(f)) {
+      const rm = el('button', 'abtn danger', '🗑');
+      rm.title = 'Видалити';
+      rm.onclick = () => {
+        if (rm.dataset.arm === '1') { deleteFile(f, q.id); return; }
+        rm.dataset.arm = '1'; rm.textContent = 'Точно видалити?'; rm.classList.add('confirm');
+        setTimeout(() => { rm.dataset.arm = ''; rm.textContent = '🗑'; rm.classList.remove('confirm'); }, 3500);
+      };
+      row.appendChild(rm);
+    }
+    wrap.appendChild(row);
+  });
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.multiple = true;
+  input.style.display = 'none';
+  input.onchange = () => { if (input.files.length) uploadFiles(q.id, input.files); input.value = ''; };
+  const add = el('label', 'fadd', '＋ Додати файл');
+  add.appendChild(input);
+  add.onclick = e => { if (e.target !== input) { e.preventDefault(); input.click(); } };
+  const line = el('div');
+  line.appendChild(add);
+  line.appendChild(el('span', 'fhint', 'або перетягніть на картку · до 20 МБ'));
+  wrap.appendChild(line);
+
+  const prog = el('div', 'fprog');
+  prog.id = 'fprog-' + q.id;
+  prog.appendChild(el('i'));
+  wrap.appendChild(prog);
+  return wrap;
+}
+async function downloadFile(f, btn) {
+  const old = btn.textContent;
+  btn.textContent = '…';
+  try {
+    const r = await fetch(API + '/kb_files/' + f.id + '/download');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = f.filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  } catch (e) { toast('Не вдалося завантажити: ' + e.message, true); }
+  btn.textContent = old;
+}
+async function deleteFile(f, qid) {
+  try {
+    const r = await fetch(API + '/kb_files/' + f.id + '?editor=' + encodeURIComponent(ME.email), { method: 'DELETE' });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    FILES = FILES.filter(x => x.id !== f.id);
+    rerenderCard(qid);
+    updateStats();
+    applyFilters();
+    toast('Файл видалено');
+  } catch (e) { toast('Помилка видалення: ' + e.message, true); }
+}
+function uploadOne(qid, file) {
+  return new Promise((resolve, reject) => {
+    const fd = new FormData();
+    fd.append('question_id', String(qid));
+    fd.append('author_email', ME.email);
+    fd.append('author_name', ME.name);
+    fd.append('file', file, file.name);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', API + '/kb_files');
+    const bar = document.querySelector('#fprog-' + qid + ' i');
+    const box = document.getElementById('fprog-' + qid);
+    if (box) box.classList.add('on');
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable && bar) bar.style.width = Math.round(e.loaded / e.total * 100) + '%';
+    };
+    xhr.onload = () => {
+      if (box) { box.classList.remove('on'); if (bar) bar.style.width = '0'; }
+      let j = {};
+      try { j = JSON.parse(xhr.responseText); } catch (e) {}
+      if (xhr.status >= 200 && xhr.status < 300) resolve(j);
+      else reject(new Error(j.error || ('HTTP ' + xhr.status)));
+    };
+    xhr.onerror = () => {
+      if (box) box.classList.remove('on');
+      reject(new Error('мережа недоступна'));
+    };
+    xhr.send(fd);
+  });
+}
+async function uploadFiles(qid, fileList) {
+  if (!ME) { toast('Невідомий автор', true); return; }
+  const files = Array.from(fileList);
+  let ok = 0;
+  for (const f of files) {
+    if (f.size > MAX_FILE_BYTES) { toast('«' + f.name + '» більший за 20 МБ', true); continue; }
+    try {
+      const row = await uploadOne(qid, f);
+      FILES.push(row);
+      ok++;
+    } catch (e) {
+      toast('«' + f.name + '»: ' + e.message, true);
+    }
+  }
+  if (ok) {
+    rerenderCard(qid);
+    updateStats();
+    applyFilters();
+    toast(ok + ' ' + plural(ok, 'файл додано', 'файли додано', 'файлів додано'));
+  }
+}
+
+/* ===== answers ===== */
 function authorChip(a) {
   const isAi = a.author_email === AI_EMAIL;
   const chip = el('span', 'aupel' + (isAi ? ' ai' : ''), (isAi ? '🤖 ' : '') + (NAMES[a.author_email] || a.author_name || a.author_email));
@@ -332,9 +609,7 @@ function renderAnswer(a, qid) {
     bd.title = 'Видалити';
     bd.onclick = () => {
       if (bd.dataset.arm === '1') { doDelete(a, qid); return; }
-      bd.dataset.arm = '1';
-      bd.textContent = 'Точно видалити?';
-      bd.classList.add('confirm');
+      bd.dataset.arm = '1'; bd.textContent = 'Точно видалити?'; bd.classList.add('confirm');
       setTimeout(() => { bd.dataset.arm = ''; bd.textContent = '🗑'; bd.classList.remove('confirm'); }, 3500);
     };
     head.append(be, bd);
@@ -355,9 +630,7 @@ function startEdit(box, a, qid) {
   ta.addEventListener('input', upd); upd();
   const save = el('button', 'btn', 'Зберегти зміни');
   const cancel = el('button', 'btn sec2', 'Скасувати');
-  cancel.onclick = () => { wrap.replaceWith(renderAnswerText(a)); restoreActions(); };
-  function renderAnswerText(ans) { return el('div', 'atext', ans.answer_text); }
-  function restoreActions() { box.querySelectorAll('.abtn').forEach(b => { b.style.display = ''; }); }
+  cancel.onclick = () => rerenderCard(qid);
   save.onclick = async () => {
     const text = ta.value.trim();
     if (!text) { toast('Порожня відповідь', true); return; }
@@ -395,9 +668,7 @@ async function doDelete(a, qid) {
     updateStats();
     applyFilters();
     toast('Відповідь видалено');
-  } catch (e) {
-    toast('Помилка видалення: ' + e.message, true);
-  }
+  } catch (e) { toast('Помилка видалення: ' + e.message, true); }
 }
 function renderComposer(q) {
   const c = el('div', 'composer');
@@ -455,28 +726,71 @@ function renderComposer(q) {
   c.append(ta, row);
   return c;
 }
+
+/* ===== card ===== */
 function renderCard(q) {
-  const card = el('div', 'qcard');
+  const s = stateOf(q.id);
+  const card = el('div', 'qcard' + (s.status === 'na' ? ' na' : ''));
   card.id = 'qcard-' + q.id;
-  const list = answersFor(q.id);
+  const list = answersFor(q.id), fl = filesFor(q.id);
+
   const head = el('div', 'qhead');
   head.appendChild(el('span', 'qnum', '№' + q.num));
-  head.appendChild(el('div', 'qtitle', q.title));
+  const title = el('div', 'qtitle', q.title);
+  if (q.resp_code) {
+    const people = respPeople(q.resp_code);
+    const isMine = ME && people.includes(EMAIL_TO_PERSON[ME.email]);
+    const badge = el('span', 'respbadge' + (q.resp_code === 'NA' ? ' na' : (isMine ? ' mine' : '')),
+      '  ' + (q.resp_code === 'NA' ? '— не застосовується' : '👤 ' + respLabel(q.resp_code)));
+    badge.title = 'Пріоритетний виконавець за чек-листом SC. Доповнювати може будь-хто.';
+    title.appendChild(badge);
+  }
+  if (ORDER === 'num') {
+    const cat = CATS.find(c => c.key === q.category);
+    if (cat) {
+      const tag = el('span', null, '  ' + cat.icon);
+      tag.title = cat.key + ' · пріоритетно: ' + cat.lead;
+      tag.style.opacity = '.6';
+      title.appendChild(tag);
+    }
+  }
+  head.appendChild(title);
   const meta = el('div', 'qmeta');
-  const w = list.reduce((s, a) => s + (a.word_count || 0), 0);
-  if (list.length) {
-    meta.appendChild(el('div')).append(list.length + ' ' + plural(list.length, 'відповідь', 'відповіді', 'відповідей'));
-    const b = el('div'); b.appendChild(el('b', null, w + ' ' + plural(w, 'слово', 'слова', 'слів'))); meta.appendChild(b);
+  const w = list.reduce((s2, a) => s2 + (a.word_count || 0), 0);
+  if (list.length || fl.length) {
+    meta.appendChild(el('div', null, (list.length ? list.length + ' ' + plural(list.length, 'відповідь', 'відповіді', 'відповідей') : '') +
+      (fl.length ? (list.length ? ' · ' : '') + '📎 ' + fl.length : '')));
+    if (w) { const b = el('div'); b.appendChild(el('b', null, w + ' ' + plural(w, 'слово', 'слова', 'слів'))); meta.appendChild(b); }
   } else {
     meta.appendChild(el('div', null, 'ще порожньо'));
   }
   head.appendChild(meta);
   card.appendChild(head);
+  card.appendChild(renderMeta(q));
+
   const body = el('div', 'qbody');
   if (list.length === 0) body.appendChild(el('div', 'empty', 'Ще немає відповідей — будьте першим.'));
   list.forEach(a => body.appendChild(renderAnswer(a, q.id)));
+  body.appendChild(renderFiles(q));
   body.appendChild(renderComposer(q));
   card.appendChild(body);
+
+  // drag & drop upload onto the whole card
+  let depth = 0;
+  card.addEventListener('dragenter', e => {
+    if (!e.dataTransfer || Array.from(e.dataTransfer.types || []).indexOf('Files') === -1) return;
+    e.preventDefault(); depth++; card.classList.add('drop');
+  });
+  card.addEventListener('dragover', e => {
+    if (!e.dataTransfer || Array.from(e.dataTransfer.types || []).indexOf('Files') === -1) return;
+    e.preventDefault();
+  });
+  card.addEventListener('dragleave', () => { depth = Math.max(0, depth - 1); if (!depth) card.classList.remove('drop'); });
+  card.addEventListener('drop', e => {
+    if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+    e.preventDefault(); depth = 0; card.classList.remove('drop');
+    uploadFiles(q.id, e.dataTransfer.files);
+  });
   return card;
 }
 function rerenderCard(qid) {
@@ -490,58 +804,91 @@ function rerenderCard(qid) {
 }
 function renderAll() {
   const main = document.getElementById('kb-main');
-  main.innerHTML = '';
   const cats = document.getElementById('kb-cats');
+  main.innerHTML = '';
   cats.innerHTML = '';
-  CATS.forEach((c, i) => {
-    const qs = QUESTIONS.filter(q => q.category === c.key);
-    if (!qs.length) return;
-    const chip = el('button', 'chip', c.icon + ' ' + c.key);
-    chip.onclick = () => {
-      const s = document.getElementById('kb-sec-' + i);
-      if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-    cats.appendChild(chip);
-    const sec = el('div');
-    sec.id = 'kb-sec-' + i;
-    sec.style.scrollMarginTop = '120px';
-    const h = el('div', 'sec');
-    h.appendChild(el('h2', null, c.icon + ' ' + c.key));
-    h.appendChild(el('span', 'cnt', qs.length + ' пит.'));
-    sec.appendChild(h);
-    qs.forEach(q => sec.appendChild(renderCard(q)));
-    main.appendChild(sec);
-  });
+  if (ORDER === 'num') {
+    cats.style.display = 'none';
+    QUESTIONS.slice().sort((a, b) => a.num - b.num).forEach(q => main.appendChild(renderCard(q)));
+  } else {
+    cats.style.display = '';
+    CATS.forEach((c, i) => {
+      const qs = QUESTIONS.filter(q => q.category === c.key).sort((a, b) => a.num - b.num);
+      if (!qs.length) return;
+      const chip = el('button', 'chip', c.icon + ' ' + c.key);
+      chip.onclick = () => {
+        const s = document.getElementById('kb-sec-' + i);
+        if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+      cats.appendChild(chip);
+      const sec = el('div');
+      sec.id = 'kb-sec-' + i;
+      sec.style.scrollMarginTop = '120px';
+      const h = el('div', 'sec');
+      h.appendChild(el('h2', null, c.icon + ' ' + c.key));
+      h.appendChild(el('span', 'cnt', qs.length + ' пит.'));
+      const lead = el('span', 'lead-chip', '👤 ' + c.lead);
+      lead.title = 'Пріоритетно за чек-листом: ' + c.hint + '. Доповнювати може будь-хто.';
+      h.appendChild(lead);
+      sec.appendChild(h);
+      qs.forEach(q => sec.appendChild(renderCard(q)));
+      main.appendChild(sec);
+    });
+  }
   updateStats();
   applyFilters();
 }
 
 /* ===== export ===== */
-function exportMd() {
-  const lines = ['# База знань Barpi — чек-лист SC Consulting', '', '_Експорт: ' + fmtDate(new Date().toISOString().slice(0, 19).replace('T', ' ')) + '_', ''];
-  CATS.forEach(c => {
-    const qs = QUESTIONS.filter(q => q.category === c.key);
-    if (!qs.length) return;
-    lines.push('## ' + c.icon + ' ' + c.key, '');
-    qs.forEach(q => {
-      lines.push('### №' + q.num + '. ' + q.title, '');
-      const list = answersFor(q.id);
-      if (!list.length) { lines.push('_Немає відповідей._', ''); return; }
-      list.forEach(a => {
-        lines.push('**' + (NAMES[a.author_email] || a.author_email) + '** · ' + fmtDate(a.created_at) + ' · ' + (a.word_count || 0) + ' слів:', '');
-        lines.push(a.answer_text, '');
-      });
-    });
-  });
-  const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
+function saveBlob(blob, name) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  const d = new Date(), p = n => String(n).padStart(2, '0');
-  a.download = 'barpi-knowledge-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '.md';
+  a.download = name;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+}
+function stamp() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function exportMd() {
+  const lines = ['# База знань Barpi — чек-лист SC Consulting', '', '_Експорт: ' + stamp() + '_', ''];
+  const ordered = QUESTIONS.slice().sort((a, b) => a.num - b.num);
+  ordered.forEach(q => {
+    const s = stateOf(q.id);
+    lines.push('### №' + q.num + '. ' + q.title, '');
+    if (q.resp_code) lines.push('- **Пріоритетно (чек-лист):** ' + respLabel(q.resp_code));
+    lines.push('- **Стан:** ' + (STATUS_LABEL[s.status] || s.status));
+    if (s.storage_ref) lines.push('- **Де зберігається:** ' + s.storage_ref);
+    if (s.owner_email) lines.push('- **Відповідальний:** ' + (NAMES[s.owner_email] || s.owner_email));
+    const fl = filesFor(q.id);
+    if (fl.length) lines.push('- **Файли:** ' + fl.map(f => f.filename + ' (' + fmtSize(f.size_bytes) + ')').join('; '));
+    lines.push('');
+    const list = answersFor(q.id);
+    if (!list.length) { lines.push('_Немає відповідей._', ''); return; }
+    list.forEach(a => {
+      lines.push('**' + (NAMES[a.author_email] || a.author_email) + '** · ' + fmtDate(a.created_at) + ' · ' + (a.word_count || 0) + ' слів:', '');
+      lines.push(a.answer_text, '');
+    });
+  });
+  saveBlob(new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' }), 'barpi-knowledge-' + stamp() + '.md');
   toast('Markdown завантажено');
+}
+function exportCsv() {
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const rows = [['№', 'Задача', 'Є/немає', 'Де зберігаються/ресурс', 'Відповідальний', 'Примітка']];
+  QUESTIONS.slice().sort((a, b) => a.num - b.num).forEach(q => {
+    const s = stateOf(q.id);
+    const fl = filesFor(q.id);
+    const note = answersFor(q.id).map(a => (NAMES[a.author_email] || a.author_email) + ': ' + a.answer_text).join('\n\n') +
+      (fl.length ? '\n\nФайли: ' + fl.map(f => f.filename).join('; ') : '');
+    rows.push([q.num, q.title, STATUS_LABEL[s.status] || '', s.storage_ref || '',
+      NAMES[s.owner_email] || s.owner_email || respLabel(q.resp_code) || '', note.trim()]);
+  });
+  const csv = '﻿' + rows.map(r => r.map(esc).join(',')).join('\r\n');
+  saveBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'barpi-checklist-SC-' + stamp() + '.csv');
+  toast('CSV у форматі чек-листа завантажено');
 }
 
 /* ===== boot ===== */
@@ -568,9 +915,22 @@ document.getElementById('kb-search').addEventListener('input', e => {
   QUERY = e.target.value.trim().toLowerCase();
   applyFilters();
 });
+const orderBtn = document.getElementById('kb-order');
+function paintOrderBtn() { orderBtn.textContent = ORDER === 'num' ? '№ 1→48' : '📂 За темами'; }
+orderBtn.addEventListener('click', () => {
+  ORDER = ORDER === 'num' ? 'cat' : 'num';
+  try { localStorage.setItem('kb_order', ORDER); } catch (e) {}
+  paintOrderBtn();
+  renderAll();
+});
 document.getElementById('kb-refresh').addEventListener('click', () => refresh(false));
 document.getElementById('kb-export').addEventListener('click', exportMd);
+document.getElementById('kb-export-csv').addEventListener('click', exportCsv);
 document.getElementById('kb-retry').addEventListener('click', () => refresh(false));
+// stop the browser from opening a file dropped outside a card
+['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => {
+  if (e.dataTransfer && Array.from(e.dataTransfer.types || []).indexOf('Files') !== -1 && !e.target.closest('.qcard')) e.preventDefault();
+}));
 let lastFocusSync = Date.now();
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && Date.now() - lastFocusSync > 60000) {
@@ -579,6 +939,8 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 (async function init() {
+  try { ORDER = localStorage.getItem('kb_order') === 'cat' ? 'cat' : 'num'; } catch (e) {}
+  paintOrderBtn();
   await resolveIdentity();
   renderWho();
   await refresh(true);
