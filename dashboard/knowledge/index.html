@@ -6,6 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#001154;--navy-soft:rgba(0,17,84,.08);--sky:#BAD9F4;--sky-soft:rgba(186,217,244,.35);--g:#2E9E3E;--g-soft:rgba(46,158,62,.12);--r:#E84040;--d:#333333;--bg:#FAF7F7;--card:#fff;--muted:#777;--border:#E5E5DC;--line:#EEEAEA}
@@ -128,6 +130,19 @@ button,input,select,textarea{font-family:Rubik,-apple-system,sans-serif}
   .qcard{padding:14px}
   .metabar input{flex:1 1 100%}
 }
+.atext.md{white-space:normal}
+.atext.md h1,.atext.md h2,.atext.md h3,.atext.md h4{color:var(--navy);margin:16px 0 6px;line-height:1.3}
+.atext.md h1{font-size:17px}.atext.md h2{font-size:16px}.atext.md h3{font-size:15px}.atext.md h4{font-size:14px}
+.atext.md p{margin:6px 0}.atext.md ul,.atext.md ol{margin:6px 0 6px 20px;padding:0}.atext.md li{margin:2px 0}
+.atext.md table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px;display:block;overflow-x:auto}
+.atext.md th,.atext.md td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+.atext.md th{background:var(--sky-soft);color:var(--navy);font-weight:600}
+.atext.md code{background:#F3F0EE;padding:1px 5px;border-radius:4px;font-size:13px}
+.atext.md blockquote{border-left:3px solid var(--sky);margin:8px 0;padding:4px 12px;color:var(--muted)}
+.atext.md hr{border:none;border-top:1px solid var(--line);margin:12px 0}
+.atext.collapsed{max-height:520px;overflow:hidden;position:relative}
+.atext.collapsed::after{content:"";position:absolute;left:0;right:0;bottom:0;height:80px;background:linear-gradient(transparent,#fff)}
+.amore{margin-top:6px;font-size:13px;font-weight:600;color:var(--navy);background:var(--sky-soft);border:1px solid var(--sky);border-radius:99px;padding:6px 14px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -589,6 +604,24 @@ function authorChip(a) {
   chip.title = a.author_email;
   return chip;
 }
+function looksMarkdown(t){ return /(^|\n)\s*(#{1,4} |\|.*\||[-*] |\d+\. |\*\*)/.test(t || ''); }
+function renderAnswerText(text) {
+  const d = el('div', 'atext');
+  if (looksMarkdown(text) && window.marked && window.DOMPurify) {
+    d.classList.add('md');
+    try { d.innerHTML = DOMPurify.sanitize(marked.parse(text, { gfm: true, breaks: true })); }
+    catch (e) { d.classList.remove('md'); d.textContent = text; }
+  } else d.textContent = text;
+  const wrap = el('div');
+  wrap.appendChild(d);
+  if (String(text || '').length > 2500) {
+    d.classList.add('collapsed');
+    const more = el('button', 'amore', 'Показати повністю ↓');
+    more.onclick = () => { const c = d.classList.toggle('collapsed'); more.textContent = c ? 'Показати повністю ↓' : 'Згорнути ↑'; };
+    wrap.appendChild(more);
+  }
+  return wrap;
+}
 function renderAnswer(a, qid) {
   const box = el('div', 'ans');
   box.dataset.aid = a.id;
@@ -615,7 +648,7 @@ function renderAnswer(a, qid) {
     head.append(be, bd);
   }
   box.appendChild(head);
-  box.appendChild(el('div', 'atext', a.answer_text));
+  box.appendChild(renderAnswerText(a.answer_text));
   return box;
 }
 function startEdit(box, a, qid) {
