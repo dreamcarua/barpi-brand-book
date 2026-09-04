@@ -1,16 +1,18 @@
 # Barpi Brand Book — відкриті задачі
 
-Оновлено: 03.09.2026
+Оновлено: 04.09.2026
 Трекер: немає (GitHub Issues порожні станом на 03.09.2026). Джерела рядків нижче: `BACKLOG.md` (07.07.2026), `PRIORITIZED_BACKLOG.md` (07.07.2026), `AUDIT_REPORT_2026-06-12.md`, `CHANGELOG.md`, `DEPLOY_NOTES.md`, коментарі у воркфлоу. Формулювання — цитатами з цих файлів; статуси там не переписані.
 
 🔴 ламає продакшн · 🟡 незакінчений хвіст · ⚪ у черзі · ⏸ чекає рішення людини
 
 ## 🔴 Ламає продакшн
 
-- **Злити гілку `memory-v8`** — установка системи пам'яті v8 (03.09.2026). Наступний крок: подивитися diff `main...memory-v8`, змерджити, видалити гілку. До злиття `AGENTS.md` і `docs/` не читаються сесіями, що працюють з `main`.
-- **Живий воркер `barpi-api` старіший за копію в репо** — `PRIORITIZED_BACKLOG.md`, P1-2: «✅ у repo / 🔧 **live воркер = стара версія (`demand_rows:2110`), треба redeploy**». Наслідок: `/healthz` витікає лічильники, `X-Query-Failed` витікає SQL-помилки, гейт на PII-ресурси не активний. Наступний крок: `wrangler deploy` з `cf-migration/workers/barpi-api/` на Mac + `curl /healthz` (`RUNBOOK.md` §1).
+- (немає)
 
 ## 🟡 Хвости — почато, не закінчено
+
+- **`/healthz` віддає `demand_rows`, `X-Query-Failed` віддає текст SQL-помилки** — це стан коду в `main`, а не дрейф деплою. Перевірено 04.09.2026: задеплоєний бандл `barpi-api` і `cf-migration/workers/barpi-api/src/index.js` збігаються за набором функцій, роутів і констант (коміт `1e4cb53` від 19.08.2026 синхронізував репо з продом; заголовок файлу це фіксує). **Редеплой нічого не змінить** — попередній рядок P1-2 «live воркер = стара версія (`demand_rows:2110`)» знято як застарілий. Наступний крок: або прибрати лічильник з `/healthz` і замінити `X-Query-Failed` на код без тексту (правка на 2 рядки, деплой з Mac), або закрити разом із P0-1 через `api.barpi.ua` за CF Access.
+
 
 - **P0-1 PII через Origin-spoof** — код закрито, live не закрито. `AUDIT_REPORT_2026-06-12.md`: «ПОТРІБНО ВІД VG щоб фікс став LIVE (інакше витік триває)». Наступний крок: новий CF API token → роут `api.barpi.ua` за CF Access → `ACCESS_AUD` у `wrangler.toml` → деплой → `ENFORCE_SENSITIVE=1` → перепідключити дашборди на новий хост.
 - **P1-1 security-заголовки** — `PRIORITIZED_BACKLOG.md`: «🔧 ruleset готовий + workflow активний → треба CF_API_TOKEN». Наступний крок: поставити `CF_API_TOKEN` і `CF_ZONE_ID`, тоді `gh workflow run deploy-cf-headers.yml -R dreamcarua/barpi-brand-book`.
