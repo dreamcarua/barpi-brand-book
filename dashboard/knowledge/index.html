@@ -101,6 +101,20 @@ button,input,select,textarea{font-family:Rubik,-apple-system,sans-serif}
 .livewc{font-size:12px;color:var(--muted)}
 .livewc b{color:var(--navy)}
 .draftmark{font-size:11px;color:#8a6d1a;background:#FCF3D7;border-radius:6px;padding:2px 8px}
+.unsavedmark{font-size:11px;font-weight:700;color:#7a5e0e;background:#FCF3D7;border:1px solid #E9D58A;border-radius:6px;padding:2px 8px}
+.saveerr{margin-top:9px;background:rgba(232,64,64,.07);border:1px solid var(--r);color:var(--r);border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.saveerr .t{flex:1 1 220px}
+.saveerr .chip{border-color:var(--r);color:var(--r);background:#fff}
+.kb-recent{max-width:1060px;margin:14px auto 0;padding:0 20px}
+.kb-recent .box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 15px}
+.kb-recent h3{margin:0 0 8px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.kb-recent ul{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.kb-recent li{font-size:12.5px;display:flex;gap:7px;align-items:baseline;flex-wrap:wrap;line-height:1.45}
+.kb-recent .who{font-weight:700;color:var(--navy);white-space:nowrap}
+.kb-recent .when{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.kb-recent a{color:var(--d);text-decoration:none;border-bottom:1px dotted var(--border);cursor:pointer}
+.kb-recent a:hover{color:var(--navy);border-bottom-color:var(--navy)}
+.qcard.flash{box-shadow:0 0 0 3px var(--sky);transition:box-shadow .3s}
 .btn{background:var(--navy);color:#fff;border:none;border-radius:99px;padding:9px 20px;font-size:13.5px;font-weight:600;cursor:pointer;transition:opacity .15s}
 .btn:hover{opacity:.88}
 .btn:disabled{opacity:.4;cursor:default}
@@ -125,7 +139,7 @@ button,input,select,textarea{font-family:Rubik,-apple-system,sans-serif}
   .kb-top .sub{display:none}
   .kb-who{font-size:11.5px;padding:5px 10px}
   .kb-filters{padding:8px 14px;top:49px}
-  .kb-wrap,.kb-hero,.kb-cats,.errbar{padding-left:14px;padding-right:14px}
+  .kb-wrap,.kb-hero,.kb-cats,.errbar,.kb-recent{padding-left:14px;padding-right:14px}
   .qmeta{display:none}
   .qcard{padding:14px}
   .metabar input{flex:1 1 100%}
@@ -181,6 +195,13 @@ button,input,select,textarea{font-family:Rubik,-apple-system,sans-serif}
   <div class="kb-progressbar"><div class="bar" id="kb-bar"></div></div>
   <div class="kb-stats" id="kb-stats">Завантаження…</div>
 </div>
+
+<section class="kb-recent" id="kb-recent" style="display:none" aria-label="Останні зміни">
+  <div class="box">
+    <h3>🕘 Останні зміни в базі</h3>
+    <ul id="kb-recent-list"></ul>
+  </div>
+</section>
 
 <nav class="kb-cats" id="kb-cats" aria-label="Категорії"></nav>
 
@@ -409,6 +430,63 @@ function applyFilters() {
     const sec = document.getElementById('kb-sec-' + i);
     if (!sec) return;
     sec.style.display = QUESTIONS.some(q => q.category === c.key && matchesFilter(q)) ? '' : 'none';
+  });
+}
+
+/* ===== останні зміни ===== */
+function qById(qid) { return QUESTIONS.filter(q => q.id === qid)[0] || null; }
+function focusQuestion(qid) {
+  const card = document.getElementById('qcard-' + qid);
+  if (!card) return;
+  if (card.style.display === 'none') {
+    FILTER = 'all';
+    QUERY = '';
+    const s = document.getElementById('kb-search');
+    if (s) s.value = '';
+    document.querySelectorAll('.kb-filters .chip[data-f]').forEach(x => {
+      if (x.dataset.f === 'all') x.classList.add('on'); else x.classList.remove('on');
+    });
+    applyFilters();
+  }
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.add('flash');
+  setTimeout(() => card.classList.remove('flash'), 1800);
+}
+function recentEvents() {
+  const ev = [];
+  ANSWERS.forEach(a => {
+    ev.push({ t: a.created_at, qid: a.question_id, who: a.author_email, nm: a.author_name, ic: '💬', what: 'відповідь' });
+    if (a.updated_at && a.updated_at !== a.created_at) {
+      ev.push({ t: a.updated_at, qid: a.question_id, who: a.author_email, nm: a.author_name, ic: '✎', what: 'правка відповіді' });
+    }
+  });
+  FILES.forEach(f => {
+    ev.push({ t: f.created_at, qid: f.question_id, who: f.author_email, nm: '', ic: '📎', what: 'файл «' + f.filename + '»' });
+  });
+  return ev.filter(e => e.t).sort((a, b) => String(b.t).localeCompare(String(a.t))).slice(0, 10);
+}
+function renderRecent() {
+  const box = document.getElementById('kb-recent');
+  const ul = document.getElementById('kb-recent-list');
+  if (!box || !ul) return;
+  const ev = recentEvents();
+  ul.innerHTML = '';
+  if (!ev.length) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  ev.forEach(e => {
+    const li = el('li');
+    li.appendChild(el('span', null, e.ic));
+    li.appendChild(el('span', 'who', NAMES[e.who] || e.nm || e.who || '—'));
+    li.appendChild(el('span', null, e.what + ' →'));
+    const q = qById(e.qid);
+    const a = el('a', null, q ? ('№' + q.num + '. ' + q.title) : ('питання ' + e.qid));
+    a.setAttribute('role', 'button');
+    a.tabIndex = 0;
+    a.addEventListener('click', () => focusQuestion(e.qid));
+    a.addEventListener('keydown', k => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); focusQuestion(e.qid); } });
+    li.appendChild(a);
+    li.appendChild(el('span', 'when', '· ' + fmtDate(e.t)));
+    ul.appendChild(li);
   });
 }
 
@@ -703,6 +781,10 @@ async function doDelete(a, qid) {
     toast('Відповідь видалено');
   } catch (e) { toast('Помилка видалення: ' + e.message, true); }
 }
+// Питання, у полі яких лежить набраний, але ще НЕ відправлений у базу текст.
+const DIRTY = new Map();
+function dirtyCount() { let n = 0; DIRTY.forEach(v => { if (v) n++; }); return n; }
+
 function renderComposer(q) {
   const c = el('div', 'composer');
   const ta = document.createElement('textarea');
@@ -711,14 +793,38 @@ function renderComposer(q) {
   const wc = el('span', 'livewc');
   const draftmark = el('span', 'draftmark', 'чернетку відновлено');
   draftmark.style.display = 'none';
+  const unsaved = el('span', 'unsavedmark', '⚠️ не збережено в базі');
+  unsaved.title = 'Текст лежить тільки у вашому браузері. Натисніть «Зберегти відповідь», щоб він потрапив у базу і його побачили інші.';
+  unsaved.style.display = 'none';
+
+  const err = el('div', 'saveerr');
+  err.style.display = 'none';
+  const errText = el('span', 't');
+  const errRetry = el('button', 'chip', 'Спробувати ще раз');
+  const errHide = el('button', 'chip', 'Сховати');
+  err.append(errText, errRetry, errHide);
+  const showErr = msg => {
+    errText.textContent = 'Не збереглося в базу: ' + msg + '. Текст залишився у полі і в чернетці браузера — не закривайте вкладку, поки не збережете.';
+    err.style.display = '';
+  };
+  const hideErr = () => { err.style.display = 'none'; };
+  errHide.onclick = hideErr;
+
   const updWc = () => { wc.innerHTML = ''; wc.append('Слів: '); wc.appendChild(el('b', null, String(wordsOf(ta.value)))); };
+  const markDirty = () => {
+    const has = !!ta.value.trim();
+    DIRTY.set(q.id, has);
+    unsaved.style.display = has ? '' : 'none';
+  };
   let saved = '';
   try { saved = localStorage.getItem(draftKey(q.id)) || ''; } catch (e) {}
   if (saved) { ta.value = saved; draftmark.style.display = ''; }
   updWc();
+  markDirty();
   let dt;
   ta.addEventListener('input', () => {
     updWc();
+    markDirty();
     draftmark.style.display = 'none';
     clearTimeout(dt);
     dt = setTimeout(() => {
@@ -729,11 +835,12 @@ function renderComposer(q) {
     }, 400);
   });
   const btn = el('button', 'btn', 'Зберегти відповідь');
-  btn.onclick = async () => {
+  const doSave = async () => {
     const text = ta.value.trim();
     if (!text) { toast('Спершу напишіть відповідь', true); ta.focus(); return; }
     if (!ME) { toast('Невідомий автор', true); return; }
     btn.disabled = true; btn.textContent = 'Зберігаю…';
+    errRetry.disabled = true;
     try {
       const r = await fetch(API + '/kb_answers', {
         method: 'POST',
@@ -744,6 +851,8 @@ function renderComposer(q) {
       if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
       ANSWERS.push(j);
       try { localStorage.removeItem(draftKey(q.id)); } catch (e) {}
+      DIRTY.set(q.id, false);
+      hideErr();
       rerenderCard(q.id);
       updateStats();
       applyFilters();
@@ -751,12 +860,16 @@ function renderComposer(q) {
       const fresh = document.querySelector('#qcard-' + q.id + ' .composer textarea');
       if (fresh) fresh.focus();
     } catch (e) {
+      showErr(e.message);
       toast('Не збереглося: ' + e.message, true);
       btn.disabled = false; btn.textContent = 'Зберегти відповідь';
+      errRetry.disabled = false;
     }
   };
-  row.append(wc, draftmark, el('span', 'spacer'), btn);
-  c.append(ta, row);
+  btn.onclick = doSave;
+  errRetry.onclick = doSave;
+  row.append(wc, draftmark, unsaved, el('span', 'spacer'), btn);
+  c.append(ta, row, err);
   return c;
 }
 
@@ -834,6 +947,7 @@ function rerenderCard(qid) {
     fresh.style.display = old.style.display;
     old.replaceWith(fresh);
   }
+  renderRecent();
 }
 function renderAll() {
   const main = document.getElementById('kb-main');
@@ -870,6 +984,7 @@ function renderAll() {
   }
   updateStats();
   applyFilters();
+  renderRecent();
 }
 
 /* ===== export ===== */
@@ -964,6 +1079,10 @@ document.getElementById('kb-retry').addEventListener('click', () => refresh(fals
 ['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => {
   if (e.dataTransfer && Array.from(e.dataTransfer.types || []).indexOf('Files') !== -1 && !e.target.closest('.qcard')) e.preventDefault();
 }));
+// не даємо мовчки закрити вкладку з набраним, але не відправленим текстом
+window.addEventListener('beforeunload', e => {
+  if (dirtyCount() > 0) { e.preventDefault(); e.returnValue = ''; return ''; }
+});
 let lastFocusSync = Date.now();
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && Date.now() - lastFocusSync > 60000) {
