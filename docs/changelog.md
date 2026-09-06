@@ -6,6 +6,7 @@
 
 | Дата | Що змінилось | Як (скрипт / команда / UI) | Бекап / як відкотити |
 |---|---|---|---|
+| 06.09.2026 | Воркер `barpi-api` о 10:54 UTC задеплоєно через script API повз репо — злетіли R2-біндинги `KBFILES` і `BACKUPS`, файли в Базі знань перестали додаватись і скачуватись. Живий CRUD `partner_pipeline` (від 04.09) перенесено в репо, воркер передеплоєно з `wrangler.toml`. Версія `dff0dac3`. | `npx wrangler deploy` у `cf-migration/workers/barpi-api` | попередня версія `6ba9f1e7` у `wrangler deployments list`, відкат через `wrangler rollback` |
 | 03.09.2026 | Встановлено систему пам'яті агента v8 у гілку `memory-v8`: `AGENTS.md`, `docs/` (tasks, traps, tooling, architecture, decisions, personal, open-questions, changelog, handoff). Старий `CLAUDE.md` (130 рядків) скопійовано дослівно в `docs/archive/CLAUDE.md.03.09.2026.md`, новий `CLAUDE.md` — рядок `@AGENTS.md`. Жоден наявний файл не видалено і не скорочено. | git, гілка `memory-v8` | видалити гілку `memory-v8`; архівна копія `CLAUDE.md` лишається в `docs/archive/` |
 | 07.06.2026 | Ротовано `SYNC_API_KEY` на воркері `barpi-sync` — старий ключ дає 403 | `wrangler secret put SYNC_API_KEY --name barpi-sync` | нового бекапу немає: ротація незворотна, старий ключ мертвий |
 | 07.06.2026 | Ротовано / створено `API_AUTH_KEY` на воркері `barpi-api` | `wrangler secret put API_AUTH_KEY --name barpi-api` | те саме |

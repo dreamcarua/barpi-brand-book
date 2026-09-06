@@ -727,6 +727,71 @@ export default {
       }
 
       // brand_ideas GET — use generic readResource (supports all PostgREST filters)
+      // ===== partner_pipeline CRUD (B2B воронка) — додано 04.09.2026 =====
+      // Було задеплоєно повз репо; повернено в репо 06.09.2026 разом з R2-біндингом KBFILES.
+      const PP_FIELDS = ['partner_name', 'stage', 'partner_type', 'country', 'contact_date',
+        'next_action', 'next_action_date', 'owner', 'probability', 'notes',
+        'potential_kg_month', 'potential_uah', 'ms_agent_id'];
+      const PP_STAGES = new Set(['contact', 'samples', 'test', 'contract', 'active', 'lost']);
+
+      if (url.pathname === '/partner_pipeline' && req.method === 'POST') {
+        let body;
+        try { body = await req.json(); }
+        catch (e) { return json({ error: 'invalid json', message: e.message }, 400, headers); }
+        if (!body.partner_name) return json({ error: 'partner_name required' }, 400, headers);
+        const stage = body.stage || 'contact';
+        if (!PP_STAGES.has(stage)) {
+          return json({ error: 'invalid stage', allowed: [...PP_STAGES] }, 400, headers);
+        }
+        const cols = [], vals = [];
+        for (const f of PP_FIELDS) {
+          if (body[f] !== undefined) { cols.push(f); vals.push(body[f]); }
+        }
+        if (!cols.includes('stage')) { cols.push('stage'); vals.push(stage); }
+        cols.push('created_at', 'updated_at');
+        const ph = cols.map((c) => (c === 'created_at' || c === 'updated_at') ? "datetime('now')" : '?').join(', ');
+        await env.DB.prepare(
+          `INSERT INTO partner_pipeline (${cols.join(', ')}) VALUES (${ph})`
+        ).bind(...vals).run();
+        const row = await env.DB.prepare(
+          `SELECT * FROM partner_pipeline ORDER BY id DESC LIMIT 1`
+        ).first();
+        return json(row, 201, headers);
+      }
+
+      const ppMatch = url.pathname.match(/^\/partner_pipeline\/(\d+)$/);
+      if (ppMatch && req.method === 'PATCH') {
+        let body;
+        try { body = await req.json(); }
+        catch (e) { return json({ error: 'invalid json', message: e.message }, 400, headers); }
+        const id = ppMatch[1];
+        const exists = await env.DB.prepare(`SELECT id FROM partner_pipeline WHERE id = ?`).bind(id).first();
+        if (!exists) return json({ error: 'not found', id }, 404, headers);
+        if (body.stage !== undefined && !PP_STAGES.has(body.stage)) {
+          return json({ error: 'invalid stage', allowed: [...PP_STAGES] }, 400, headers);
+        }
+        const sets = [], vals = [];
+        for (const f of PP_FIELDS) {
+          if (body[f] !== undefined) { sets.push(`${f} = ?`); vals.push(body[f]); }
+        }
+        if (!sets.length) return json({ error: 'no updatable fields' }, 400, headers);
+        sets.push("updated_at = datetime('now')");
+        vals.push(id);
+        await env.DB.prepare(
+          `UPDATE partner_pipeline SET ${sets.join(', ')} WHERE id = ?`
+        ).bind(...vals).run();
+        const row = await env.DB.prepare(`SELECT * FROM partner_pipeline WHERE id = ?`).bind(id).first();
+        return json(row, 200, headers);
+      }
+
+      if (ppMatch && req.method === 'DELETE') {
+        const id = ppMatch[1];
+        const exists = await env.DB.prepare(`SELECT id FROM partner_pipeline WHERE id = ?`).bind(id).first();
+        if (!exists) return json({ error: 'not found', id }, 404, headers);
+        await env.DB.prepare(`DELETE FROM partner_pipeline WHERE id = ?`).bind(id).run();
+        return json({ deleted: id }, 200, headers);
+      }
+
       if (url.pathname === '/brand_ideas' && req.method === 'GET') {
         // Default order if not specified
         if (!url.searchParams.get('order')) {
