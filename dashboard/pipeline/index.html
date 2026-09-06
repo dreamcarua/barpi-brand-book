@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pipeline · Barpi</title>
+<meta name="description" content="Barpi Pipeline — воронка замовлень та B2B партнери. Внутрішній дашборд.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/bb.css">
+<style>
+:root{--y:#001154;--y-soft:rgba(0,17,84,.13);--g:#39B44A;--g-soft:rgba(57,180,74,.13);--r:#E84040;--r-soft:rgba(232,64,64,.1);--bl:#3B82F6;--bl-soft:rgba(59,130,246,.13);--or:#F59E0B;--or-soft:rgba(245,158,11,.13);--d:#1A1A1A;--bg:#FAF7F7;--card:#fff;--muted:#888;--line:#EEE}
+body{background:var(--bg);font-family:Rubik,-apple-system,sans-serif;color:var(--d);margin:0;line-height:1.55}
+.pp-top{position:sticky;top:0;z-index:200;background:var(--d);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--y);flex-wrap:wrap}
+.pp-top h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.pp-top .sub{font-size:11px;opacity:.6;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.pp-top .spacer{flex:1}
+.pp-wrap{max-width:1320px;margin:0 auto;padding:20px 24px 60px}
+.tabs{display:flex;gap:4px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:20px;width:fit-content;max-width:100%;overflow-x:auto}
+.tabs button{border:0;background:transparent;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);padding:9px 18px;border-radius:9px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.tabs button.on{background:var(--y);color:#fff}
+.tabs button:hover:not(.on){background:#F4F4F0;color:var(--d)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chips button{border:1px solid var(--line);background:#fff;font-family:inherit;font-size:12px;font-weight:600;color:var(--muted);padding:6px 14px;border-radius:99px;cursor:pointer;transition:all .15s}
+.chips button.on{background:var(--y);color:#fff;border-color:var(--y)}
+.sec{margin:26px 0 12px;display:flex;align-items:center;gap:10px}
+.sec h2{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--y-soft);color:var(--y)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.g4{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:all .2s}
+.kpi:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,17,84,.06)}
+.kpi .lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.kpi .val{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:6px}
+.kpi.cy{border-bottom:3px solid var(--y)}.kpi.cg{border-bottom:3px solid var(--g)}
+.kpi.cb{border-bottom:3px solid var(--bl)}.kpi.co{border-bottom:3px solid var(--or)}
+.kpi.cr{border-bottom:3px solid var(--r)}
+.cc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.cc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.cc-head h3{margin:0;font-size:14px;font-weight:700}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}
+table.dt th{text-align:left;padding:8px 12px;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--muted);background:#FAFAF5;border-bottom:1px solid var(--line);letter-spacing:.05em;white-space:nowrap}
+table.dt td{padding:9px 12px;border-bottom:1px solid #F4F4F0}
+table.dt tbody tr:hover{background:#FAFAF5}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.tag.s1{background:#F0F0EC;color:#777}
+.tag.s2{background:var(--bl-soft);color:var(--bl)}
+.tag.s3{background:var(--or-soft);color:#B45309}
+.tag.s4{background:var(--y-soft);color:var(--y)}
+.tag.s5{background:var(--g-soft);color:var(--g)}
+.tag.s0{background:var(--r-soft);color:var(--r)}
+.tag.risk3{background:var(--r-soft);color:var(--r)}
+.tag.risk2{background:var(--or-soft);color:#B45309}
+.funnel-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.funnel-lbl{width:200px;font-size:12px;font-weight:600;flex-shrink:0}
+.funnel-bar{flex:1;height:30px;background:#F4F4F0;border-radius:6px;overflow:hidden;position:relative}
+.funnel-fill{height:100%;border-radius:6px;transition:width .4s ease}
+.funnel-val{width:190px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);flex-shrink:0}
+.funnel-val b{color:var(--d);font-weight:700}
+@media(max-width:700px){.funnel-lbl{width:120px;font-size:11px}.funnel-val{width:120px;font-size:11px}}
+.kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:start}
+@media(max-width:1100px){.kanban{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.kanban{grid-template-columns:1fr}}
+.kcol{background:#F4F4F0;border-radius:12px;padding:10px;min-height:80px}
+.kcol h4{margin:0 0 4px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--d)}
+.kcol .kmeta{font-size:10px;color:var(--muted);margin-bottom:10px}
+.kcard{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.kcard:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,17,84,.08);border-color:var(--y)}
+.kcard .n{font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.25}
+.kcard .m{font-size:10px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.kcard .act{font-size:11px;margin-top:6px;padding-top:6px;border-top:1px solid #F4F4F0;color:var(--d)}
+.kcard .act.due{color:var(--r);font-weight:600}
+.btn{border:0;background:var(--y);color:#fff;font-family:inherit;font-size:12px;font-weight:700;padding:9px 18px;border-radius:9px;cursor:pointer;transition:opacity .15s}
+.btn:hover{opacity:.87}
+.btn.ghost{background:#fff;color:var(--y);border:1px solid var(--line)}
+.btn.danger{background:var(--r)}
+.modal{position:fixed;inset:0;background:rgba(26,26,26,.5);z-index:900;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.on{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:24px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto}
+.modal-box h3{margin:0 0 16px;font-size:16px;font-weight:800}
+.fld{margin-bottom:12px}
+.fld label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+.fld input,.fld select,.fld textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:13px;color:var(--d);background:#fff}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:2px solid var(--y-soft);border-color:var(--y)}
+.fld textarea{min-height:64px;resize:vertical}
+.fld-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:8px;margin-top:18px}
+.modal-actions .spacer{flex:1}
+.fresh{font-size:11px;color:var(--muted);margin-top:12px;display:flex;align-items:center;gap:6px}
+.fresh::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block}
+.empty{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px}
+.skel{background:linear-gradient(90deg,#F0F0EC 25%,#F8F8F4 50%,#F0F0EC 75%);background-size:200% 100%;animation:sh 1.3s infinite;border-radius:6px;height:14px}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.note{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:12px 16px;color:#1E3A8A;font-size:12px;margin-bottom:16px}
+.hide{display:none}
+</style></head>
+<body>
+<header class="pp-top">
+  <h1>🔀 Barpi · <span class="sub">Pipeline</span></h1>
+  <span class="spacer"></span>
+  <span id="freshTop" class="sub"></span>
+</header>
+
+<div class="pp-wrap">
+  <div class="tabs">
+    <button id="tabOrders" class="on" onclick="showTab('orders')">📦 Воронка замовлень</button>
+    <button id="tabPartners" onclick="showTab('partners')">🤝 B2B партнери</button>
+  </div>
+
+  <!-- ============ TAB: ORDERS ============ -->
+  <div id="paneOrders">
+    <div class="chips" id="periodChips">
+      <button data-days="30">30 днів</button>
+      <button data-days="90" class="on">90 днів</button>
+      <button data-days="180">180 днів</button>
+      <button data-days="0">Весь час</button>
+    </div>
+
+    <div class="g4" id="oKpis">
+      <div class="kpi cy"><div class="lbl">В роботі</div><div class="val"><div class="skel"></div></div></div>
+      <div class="kpi cr"><div class="lbl">Зависли</div><div class="val"><div class="skel"></div></div></div>
+      <div class="kpi cg"><div class="lbl">Закрито</div><div class="val"><div class="skel"></div></div></div>
+      <div class="kpi cb"><div class="lbl">Середній цикл</div><div class="val"><div class="skel"></div></div></div>
+    </div>
+
+    <div class="sec"><h2>Воронка по стадіях</h2><span class="badge" id="oFunnelBadge"></span></div>
+    <div class="cc"><div id="oFunnel"><div class="skel" style="height:180px"></div></div></div>
+
+    <div class="sec"><h2>🔴 Зависли — потребують дії</h2><span class="badge" id="oStuckBadge"></span></div>
+    <div class="cc">
+      <div class="cc-head"><h3>Незакриті замовлення, старші 30 днів</h3></div>
+      <div style="overflow-x:auto"><table class="dt" id="oStuckTable"><tbody><tr><td><div class="skel"></div></td></tr></tbody></table></div>
+      <div class="fresh" id="oFresh"></div>
+    </div>
+
+    <div class="sec"><h2>Хто гальмує — за контрагентами</h2></div>
+    <div class="cc"><div style="overflow-x:auto"><table class="dt" id="oAgentTable"><tbody><tr><td><div class="skel"></div></td></tr></tbody></table></div></div>
+  </div>
+
+  <!-- ============ TAB: PARTNERS ============ -->
+  <div id="panePartners" class="hide">
+    <div class="note" id="linkNote"></div>
+
+    <div class="g4" id="pKpis">
+      <div class="kpi cy"><div class="lbl">Всього партнерів</div><div class="val"><div class="skel"></div></div></div>
+      <div class="kpi cb"><div class="lbl">У переговорах</div><div class="val"><div class="skel"></div></div></div>
+      <div class="kpi cg"><div class="lbl">Активних</div><div class="val"><div class="skel"></div></div></div>
+      <div class="kpi co"><div class="lbl">Потенціал</div><div class="val"><div class="skel"></div></div></div>
+    </div>
+
+    <div class="sec"><h2>Воронка партнерів</h2><span class="spacer"></span></div>
+    <div class="cc-head" style="margin-bottom:12px">
+      <button class="btn" onclick="openPartner(null)">+ Додати партнера</button>
+      <span style="flex:1"></span>
+      <button class="btn ghost" onclick="toggleLost()" id="lostBtn">Показати втрачених</button>
+    </div>
+    <div class="kanban" id="pKanban"></div>
+
+    <div class="sec"><h2>⏰ Наступні дії</h2><span class="badge" id="pActionsBadge"></span></div>
+    <div class="cc"><div style="overflow-x:auto"><table class="dt" id="pActionsTable"><tbody></tbody></table></div></div>
+  </div>
+</div>
+
+<!-- Partner modal -->
+<div class="modal" id="pModal">
+  <div class="modal-box">
+    <h3 id="pModalTitle">Партнер</h3>
+    <input type="hidden" id="fId">
+    <div class="fld"><label>Назва *</label><input id="fName" placeholder="Напр. Fressnapf DE"></div>
+    <div class="fld-row">
+      <div class="fld"><label>Стадія</label><select id="fStage">
+        <option value="contact">1 · Контакт</option>
+        <option value="samples">2 · Зразки надіслані</option>
+        <option value="test">3 · Тестовий продаж</option>
+        <option value="contract">4 · Контракт</option>
+        <option value="active">5 · Активний</option>
+        <option value="lost">✗ Втрачений</option>
+      </select></div>
+      <div class="fld"><label>Країна</label><input id="fCountry" placeholder="UA / PL / DE" value="UA"></div>
+    </div>
+    <div class="fld-row">
+      <div class="fld"><label>Тип</label><select id="fType">
+        <option value="">—</option>
+        <option value="national_chain">Національна мережа</option>
+        <option value="local">Локальний</option>
+        <option value="marketplace">Маркетплейс</option>
+        <option value="premium_retail">Преміум ритейл</option>
+        <option value="vet_specialty">Ветеринарний</option>
+        <option value="distributor">Дистриб'ютор</option>
+      </select></div>
+      <div class="fld"><label>Відповідальний</label><input id="fOwner" placeholder="Олександр"></div>
+    </div>
+    <div class="fld-row">
+      <div class="fld"><label>Потенціал, кг/міс</label><input id="fKg" type="number" step="1" placeholder="150"></div>
+      <div class="fld"><label>Ймовірність, %</label><input id="fProb" type="number" min="0" max="100" step="10" placeholder="40"></div>
+    </div>
+    <div class="fld-row">
+      <div class="fld"><label>Наступна дія</label><input id="fAction" placeholder="Надіслати зразки"></div>
+      <div class="fld"><label>Коли</label><input id="fActionDate" type="date"></div>
+    </div>
+    <div class="fld"><label>Контрагент у МойСклад (для фактичної виручки)</label>
+      <select id="fAgent"><option value="">— не пов'язано —</option></select></div>
+    <div class="fld"><label>Нотатки</label><textarea id="fNotes"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn danger" id="pDelete" onclick="deletePartner()">Видалити</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" onclick="closePartner()">Скасувати</button>
+      <button class="btn" onclick="savePartner()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://barpi-api.vg-ab6.workers.dev';
+const STAGES = [
+  {k:'contact', n:'Контакт',  cls:'s1'},
+  {k:'samples', n:'Зразки',   cls:'s2'},
+  {k:'test',    n:'Тест',     cls:'s3'},
+  {k:'contract',n:'Контракт', cls:'s4'},
+  {k:'active',  n:'Активний', cls:'s5'}
+];
+const state = { days:90, orders:[], partners:[], agents:[], showLost:false };
+
+const fmt  = n => (n||0).toLocaleString('uk-UA',{maximumFractionDigits:0});
+const fmtK = n => !n ? '0' : Math.abs(n)>=1e6 ? (n/1e6).toFixed(2)+'M' : Math.abs(n)>=1e3 ? Math.round(n/1e3)+'K' : Math.round(n);
+const esc  = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function api(path, opts) {
+  const r = await fetch(API + path, opts);
+  if (!r.ok) throw new Error(path + ' → ' + r.status);
+  return r.json();
+}
+
+function showTab(t) {
+  const isO = t === 'orders';
+  document.getElementById('paneOrders').classList.toggle('hide', !isO);
+  document.getElementById('panePartners').classList.toggle('hide', isO);
+  document.getElementById('tabOrders').classList.toggle('on', isO);
+  document.getElementById('tabPartners').classList.toggle('on', !isO);
+  if (!isO && !state.partners.length) loadPartners();
+}
+
+/* ================= ORDERS ================= */
+function cutoff(days) {
+  if (!days) return '2000-01-01';
+  const d = new Date(); d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0,10);
+}
+
+async function loadOrders() {
+  const from = cutoff(state.days);
+  // Один запит — фільтруємо і агрегуємо на клієнті (≤1800 рядків, швидше за N запитів)
+  const rows = await api(`/v_pipeline_orders?moment=gt.${from}&order=sum_uah.desc&limit=5000`);
+  state.orders = rows;
+  renderOrderKpis(rows);
+  renderFunnel(rows);
+  renderStuck(rows);
+  renderAgents(rows);
+  const stamp = new Date().toLocaleString('uk-UA',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('oFresh').textContent = `Оновлено ${stamp} · джерело: moysklad_customer_orders`;
+  document.getElementById('freshTop').textContent = stamp;
+}
+
+function renderOrderKpis(rows) {
+  const open   = rows.filter(r => r.stage_n < 5);
+  const closed = rows.filter(r => r.stage_n === 5);
+  const stuck  = open.filter(r => r.age_days > 30);
+  const openAmt  = open.reduce((s,r)=>s+(r.sum_uah||0),0);
+  const stuckAmt = stuck.reduce((s,r)=>s+(r.sum_uah||0),0);
+  const conv = rows.length ? (closed.length/rows.length*100) : 0;
+  const cycle = closed.length ? closed.reduce((s,r)=>s+(r.age_days||0),0)/closed.length : 0;
+  document.getElementById('oKpis').innerHTML = `
+    <div class="kpi cy"><div class="lbl">В роботі</div><div class="val">${fmtK(openAmt)} ₴</div><div class="sub">${open.length} замовлень</div></div>
+    <div class="kpi cr"><div class="lbl">Зависли &gt;30 днів</div><div class="val" style="color:${stuck.length?'var(--r)':'var(--d)'}">${fmtK(stuckAmt)} ₴</div><div class="sub">${stuck.length} замовлень</div></div>
+    <div class="kpi cg"><div class="lbl">Закрито</div><div class="val">${conv.toFixed(0)}%</div><div class="sub">${closed.length} з ${rows.length}</div></div>
+    <div class="kpi cb"><div class="lbl">Середній цикл</div><div class="val">${cycle.toFixed(0)} дн</div><div class="sub">від замовлення до закриття</div></div>`;
+}
+
+function renderFunnel(rows) {
+  const byStage = {};
+  rows.forEach(r => {
+    const k = r.stage_n;
+    if (!byStage[k]) byStage[k] = { n:0, amt:0, stage:r.stage, age:0 };
+    byStage[k].n++; byStage[k].amt += (r.sum_uah||0); byStage[k].age += (r.age_days||0);
+  });
+  const max = Math.max(1, ...Object.values(byStage).map(v=>v.amt));
+  const colors = {1:'#BDBDB8',2:'#3B82F6',3:'#F59E0B',4:'#001154',5:'#39B44A'};
+  let html = '';
+  for (let s = 1; s <= 5; s++) {
+    const v = byStage[s] || { n:0, amt:0, stage:'—', age:0 };
+    const pct = v.amt / max * 100;
+    const avgAge = v.n ? Math.round(v.age/v.n) : 0;
+    html += `<div class="funnel-row">
+      <div class="funnel-lbl">${s} · ${esc(v.stage)}</div>
+      <div class="funnel-bar"><div class="funnel-fill" style="width:${pct}%;background:${colors[s]}"></div></div>
+      <div class="funnel-val"><b>${fmt(v.amt)} ₴</b> · ${v.n} шт · ${avgAge} дн</div>
+    </div>`;
+  }
+  document.getElementById('oFunnel').innerHTML = html;
+  document.getElementById('oFunnelBadge').textContent = rows.length + ' замовлень';
+}
+
+function renderStuck(rows) {
+  const stuck = rows.filter(r => r.stage_n < 5 && r.age_days > 30)
+                    .sort((a,b) => (b.sum_uah||0)-(a.sum_uah||0)).slice(0,25);
+  document.getElementById('oStuckBadge').textContent = stuck.length;
+  const t = document.getElementById('oStuckTable');
+  if (!stuck.length) { t.innerHTML = '<tbody><tr><td class="empty">Немає зависань — усе рухається 👍</td></tr></tbody>'; return; }
+  t.innerHTML = `<thead><tr><th>Замовлення</th><th>Контрагент</th><th class="num">Сума</th><th>Стадія</th><th class="num">Днів</th></tr></thead><tbody>` +
+    stuck.map(r => `<tr>
+      <td>${esc(r.order_no)}</td>
+      <td>${esc(r.agent)}</td>
+      <td class="num">${fmt(r.sum_uah)} ₴</td>
+      <td><span class="tag s${r.stage_n}">${esc(r.stage)}</span></td>
+      <td class="num"><span class="tag risk${r.risk>=3?3:2}">${r.age_days}</span></td>
+    </tr>`).join('') + '</tbody>';
+}
+
+function renderAgents(rows) {
+  const by = {};
+  rows.filter(r => r.stage_n < 5).forEach(r => {
+    const k = r.agent || '—';
+    if (!by[k]) by[k] = { n:0, amt:0, oldest:0 };
+    by[k].n++; by[k].amt += (r.sum_uah||0);
+    by[k].oldest = Math.max(by[k].oldest, r.age_days||0);
+  });
+  const list = Object.entries(by).sort((a,b)=>b[1].amt-a[1].amt).slice(0,15);
+  const t = document.getElementById('oAgentTable');
+  if (!list.length) { t.innerHTML = '<tbody><tr><td class="empty">Немає відкритих замовлень</td></tr></tbody>'; return; }
+  t.innerHTML = `<thead><tr><th>Контрагент</th><th class="num">Відкритих</th><th class="num">Сума в роботі</th><th class="num">Найстаріше</th></tr></thead><tbody>` +
+    list.map(([k,v]) => `<tr>
+      <td>${esc(k)}</td>
+      <td class="num">${v.n}</td>
+      <td class="num">${fmt(v.amt)} ₴</td>
+      <td class="num">${v.oldest > 30 ? `<span class="tag risk${v.oldest>60?3:2}">${v.oldest} дн</span>` : v.oldest + ' дн'}</td>
+    </tr>`).join('') + '</tbody>';
+}
+
+/* ================= PARTNERS ================= */
+async function loadPartners() {
+  const [p, a] = await Promise.all([
+    api('/v_partner_pipeline?order=stage_n.desc'),
+    api('/moysklad_counterparties?select=ms_id,ms_name&order=ms_name.asc&limit=500').catch(()=>[])
+  ]);
+  state.partners = p; state.agents = a;
+  const sel = document.getElementById('fAgent');
+  sel.innerHTML = '<option value="">— не пов\'язано —</option>' +
+    a.map(x => `<option value="${esc(x.ms_id)}">${esc(x.ms_name)}</option>`).join('');
+  renderPartnerKpis(); renderKanban(); renderActions();
+  const unlinked = p.filter(x => !x.ms_agent_id && x.stage === 'active').length;
+  document.getElementById('linkNote').innerHTML = unlinked
+    ? `ℹ️ <b>${unlinked}</b> активних партнерів не пов'язані з контрагентом у МойСклад — фактична виручка не показується. Відкрий картку → поле «Контрагент у МойСклад».`
+    : `✓ Усі активні партнери пов'язані з МойСклад.`;
+}
+
+function renderPartnerKpis() {
+  const p = state.partners;
+  const negotiating = p.filter(x => ['contact','samples','test','contract'].includes(x.stage));
+  const active = p.filter(x => x.stage === 'active');
+  const potKg = negotiating.reduce((s,x)=>s+(x.potential_kg_month||0),0);
+  const actRev = active.reduce((s,x)=>s+(x.actual_revenue||0),0);
+  document.getElementById('pKpis').innerHTML = `
+    <div class="kpi cy"><div class="lbl">Всього</div><div class="val">${p.length}</div><div class="sub">у воронці</div></div>
+    <div class="kpi cb"><div class="lbl">У переговорах</div><div class="val">${negotiating.length}</div><div class="sub">стадії 1–4</div></div>
+    <div class="kpi cg"><div class="lbl">Активних</div><div class="val">${active.length}</div><div class="sub">${actRev ? fmtK(actRev)+" ₴ факт" : "виручка не пов'язана"}</div></div>
+    <div class="kpi co"><div class="lbl">Потенціал</div><div class="val">${fmt(potKg)} кг</div><div class="sub">на місяць, у переговорах</div></div>`;
+}
+
+function renderKanban() {
+  const cols = state.showLost ? STAGES.concat([{k:'lost',n:'Втрачені',cls:'s0'}]) : STAGES;
+  document.getElementById('pKanban').style.gridTemplateColumns = `repeat(${cols.length},1fr)`;
+  document.getElementById('pKanban').innerHTML = cols.map(st => {
+    const items = state.partners.filter(p => p.stage === st.k);
+    const kg = items.reduce((s,x)=>s+(x.potential_kg_month||0),0);
+    return `<div class="kcol">
+      <h4>${esc(st.n)}</h4>
+      <div class="kmeta">${items.length} шт${kg ? ' · ' + fmt(kg) + ' кг/міс' : ''}</div>
+      ${items.length ? items.map(p => card(p)).join('') : '<div style="font-size:11px;color:#aaa;padding:8px 4px">порожньо</div>'}
+    </div>`;
+  }).join('');
+}
+
+function card(p) {
+  const due = p.days_to_action != null && p.days_to_action <= 0;
+  return `<div class="kcard" onclick="openPartner(${p.id})">
+    <div class="n">${esc(p.partner_name)}</div>
+    <div class="m">
+      ${p.country ? `<span>${esc(p.country)}</span>` : ''}
+      ${p.potential_kg_month ? `<span>· ${fmt(p.potential_kg_month)} кг/міс</span>` : ''}
+      ${p.actual_revenue ? `<span>· ${fmtK(p.actual_revenue)} ₴</span>` : ''}
+      ${p.owner ? `<span>· ${esc(p.owner)}</span>` : ''}
+    </div>
+    ${p.next_action ? `<div class="act ${due?'due':''}">${due?'⚠ ':'→ '}${esc(p.next_action)}${p.next_action_date ? ' · ' + esc(p.next_action_date) : ''}</div>` : ''}
+  </div>`;
+}
+
+function renderActions() {
+  const withAct = state.partners
+    .filter(p => p.next_action && p.stage !== 'lost')
+    .sort((a,b) => (a.next_action_date||'9999') < (b.next_action_date||'9999') ? -1 : 1);
+  document.getElementById('pActionsBadge').textContent = withAct.length;
+  const t = document.getElementById('pActionsTable');
+  if (!withAct.length) { t.innerHTML = '<tbody><tr><td class="empty">Наступні дії не заповнені. Відкрий картку партнера і додай.</td></tr></tbody>'; return; }
+  t.innerHTML = `<thead><tr><th>Партнер</th><th>Дія</th><th>Коли</th><th>Хто</th><th>Стадія</th></tr></thead><tbody>` +
+    withAct.map(p => {
+      const due = p.days_to_action != null && p.days_to_action <= 0;
+      return `<tr><td>${esc(p.partner_name)}</td><td>${esc(p.next_action)}</td>
+        <td>${p.next_action_date ? (due ? `<span class="tag risk3">${esc(p.next_action_date)}</span>` : esc(p.next_action_date)) : '—'}</td>
+        <td>${esc(p.owner||'—')}</td>
+        <td><span class="tag s${p.stage_n}">${esc(p.stage)}</span></td></tr>`;
+    }).join('') + '</tbody>';
+}
+
+function toggleLost() {
+  state.showLost = !state.showLost;
+  document.getElementById('lostBtn').textContent = state.showLost ? 'Сховати втрачених' : 'Показати втрачених';
+  renderKanban();
+}
+
+function openPartner(id) {
+  const p = id ? state.partners.find(x => x.id == id) : null;
+  document.getElementById('pModalTitle').textContent = p ? 'Партнер: ' + p.partner_name : 'Новий партнер';
+  document.getElementById('fId').value        = p ? p.id : '';
+  document.getElementById('fName').value      = p ? (p.partner_name||'') : '';
+  document.getElementById('fStage').value     = p ? (p.stage||'contact') : 'contact';
+  document.getElementById('fCountry').value   = p ? (p.country||'UA') : 'UA';
+  document.getElementById('fType').value      = p ? (p.partner_type||'') : '';
+  document.getElementById('fOwner').value     = p ? (p.owner||'') : '';
+  document.getElementById('fKg').value        = p ? (p.potential_kg_month||'') : '';
+  document.getElementById('fProb').value      = p ? (p.probability||'') : '';
+  document.getElementById('fAction').value    = p ? (p.next_action||'') : '';
+  document.getElementById('fActionDate').value= p ? (p.next_action_date||'') : '';
+  document.getElementById('fAgent').value     = p ? (p.ms_agent_id||'') : '';
+  document.getElementById('fNotes').value     = p ? (p.notes||'') : '';
+  document.getElementById('pDelete').style.display = p ? 'block' : 'none';
+  document.getElementById('pModal').classList.add('on');
+}
+function closePartner(){ document.getElementById('pModal').classList.remove('on'); }
+
+async function savePartner() {
+  const id = document.getElementById('fId').value;
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { alert('Вкажи назву партнера'); return; }
+  const num = v => v === '' ? null : Number(v);
+  const body = {
+    partner_name: name,
+    stage:        document.getElementById('fStage').value,
+    country:      document.getElementById('fCountry').value.trim() || null,
+    partner_type: document.getElementById('fType').value || null,
+    owner:        document.getElementById('fOwner').value.trim() || null,
+    potential_kg_month: num(document.getElementById('fKg').value),
+    probability:  num(document.getElementById('fProb').value),
+    next_action:  document.getElementById('fAction').value.trim() || null,
+    next_action_date: document.getElementById('fActionDate').value || null,
+    ms_agent_id:  document.getElementById('fAgent').value || null,
+    notes:        document.getElementById('fNotes').value.trim() || null
+  };
+  try {
+    await api(id ? `/partner_pipeline/${id}` : '/partner_pipeline', {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    closePartner();
+    state.partners = [];
+    await loadPartners();
+  } catch (e) { alert('Не збереглось: ' + e.message); }
+}
+
+async function deletePartner() {
+  const id = document.getElementById('fId').value;
+  if (!id || !confirm('Видалити партнера з воронки?')) return;
+  try {
+    await api(`/partner_pipeline/${id}`, { method: 'DELETE' });
+    closePartner();
+    state.partners = [];
+    await loadPartners();
+  } catch (e) { alert('Не видалилось: ' + e.message); }
+}
+
+/* ================= INIT ================= */
+document.querySelectorAll('#periodChips button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#periodChips button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    state.days = Number(b.dataset.days);
+    loadOrders().catch(e => console.error(e));
+  });
+});
+document.getElementById('pModal').addEventListener('click', e => { if (e.target.id === 'pModal') closePartner(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePartner(); });
+
+loadOrders().catch(e => {
+  document.getElementById('oFunnel').innerHTML = `<div class="empty">Не вдалось завантажити: ${esc(e.message)}</div>`;
+});
+</script>
+<script src="/assets/bb.js"></script>
+</body></html>
