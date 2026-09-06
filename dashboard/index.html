@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboards · Barpi Brand Bible</title>
-<meta name="description" content="Внутрішні дашборди Barpi: Customer 360, Sales Performance, Financial P&L, Production, Inventory, Events. Дані з МойСклад через Cloudflare D1, оновлення щогодини.">
+<meta name="description" content="Внутрішні дашборди Barpi: Customer 360, Sales Performance, Financial P&L, Production, Inventory, Events, Pipeline. Дані з МойСклад через Cloudflare D1, оновлення щогодини.">
 <link rel="canonical" href="https://brand.barpi.ua/dashboard/">
 <link rel="icon" href="/favicon.ico">
 <link rel="stylesheet" href="/assets/bb.css">
@@ -40,8 +40,8 @@
     <span class="chapter-num">16 · <span data-lang="uk">Сервіс</span><span data-lang="en">Service</span></span>
     <h1>📊 <span data-lang="uk">Дашборди</span><span data-lang="en">Dashboards</span></h1>
     <p class="lead">
-      <span data-lang="uk">Внутрішні інструменти команди Barpi. 6 дашбордів — Customer 360, Sales Performance, Financial P&L, Production, Inventory, Events — та База знань за чек-листом SC Consulting.</span>
-      <span data-lang="en">Internal Barpi team tools. 6 dashboards covering Sales, Customer, Financial, Production, Inventory, Events — plus the SC Consulting Knowledge Base.</span>
+      <span data-lang="uk">Внутрішні інструменти команди Barpi. 7 дашбордів — Customer 360, Sales Performance, Financial P&L, Production, Inventory, Events, Pipeline — та База знань за чек-листом SC Consulting.</span>
+      <span data-lang="en">Internal Barpi team tools. 7 dashboards covering Sales, Customer, Financial, Production, Inventory, Events, Pipeline — plus the SC Consulting Knowledge Base.</span>
     </p>
 
     <div class="dash-section-title"><span data-lang="uk">🧠 База знань</span><span data-lang="en">🧠 Knowledge Base</span></div>
@@ -90,6 +90,12 @@
         <p><span data-lang="uk">Фестивалі, дегустації, ROI. 17 подій у 2026.</span><span data-lang="en">Events calendar, ROI.</span></p>
         <div class="meta"><strong>Доступ:</strong> Олександр + Альона + Вадим</div>
       </a>
+
+      <a class="dash-card" href="pipeline/">
+        <h3>🔀 Pipeline <span class="status live">LIVE</span></h3>
+        <p><span data-lang="uk">Воронка замовлень (рахунок → оплата → відвантаження) з aging і зависаннями. Плюс B2B воронка партнерів і дистриб'юторів з kanban та наступними діями.</span><span data-lang="en">Order funnel with aging and stuck-deal detection, plus B2B partner pipeline kanban.</span></p>
+        <div class="meta"><strong>Дані:</strong> v_pipeline_orders (1781 замовлень) · v_partner_pipeline · стадії з грошей, не з ручних статусів</div>
+      </a>
     </div>
 
     <div class="dash-section-title"><span data-lang="uk">📦 Заплановано (P3)</span><span data-lang="en">📦 Planned (P3)</span></div>
@@ -98,11 +104,6 @@
         <h3>🤝 Procurement <span class="status planned">PLANNED</span></h3>
         <p><span data-lang="uk">Pipeline закупок: replan з фактом, lead time на сировину, alert якщо PO ще не приїхав.</span><span data-lang="en">Purchase pipeline.</span></p>
         <div class="meta"><strong>Дані готові:</strong> 162 purchase_orders + 168 supplies</div>
-      </a>
-      <a class="dash-card" href="#" onclick="alert('B2B Partners pipeline — coming soon');return false">
-        <h3>📞 Partner Pipeline <span class="status planned">PLANNED</span></h3>
-        <p><span data-lang="uk">B2B-вирва: 1502 customer_orders (Status / Funnel chart). Win rate, conversion stages.</span><span data-lang="en">B2B funnel.</span></p>
-        <div class="meta"><strong>Дані готові:</strong> 1502 customer_orders</div>
       </a>
     </div>
 
