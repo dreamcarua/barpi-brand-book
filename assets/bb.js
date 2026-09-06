@@ -1,5 +1,6 @@
 /* ============================================================
-   Barpi Brand Bible v4.4 — Global JS
+   Barpi Brand Bible v4.5 — Global JS
+   v4.5: + Pipeline dashboard у topnav (воронка замовлень + B2B партнери)
    v4.4: prev/next навігація розділів (BB.PAGE_ORDER + BB.injectPageNav)
    v4.3: a11y — skip-link before sidebar, aria-current=page on active nav
    v4.2: SMM cleanup — викинуто HQ SMM + SMM v1 (Supabase project deleted)
@@ -33,8 +34,8 @@ BB.SIDEBAR_HTML = `
     <a class="sidebar-brand" href="/">
       <img src="${BB.LOGO_DATA}" alt="Barpi" width="200" height="96" loading="eager">
       <div class="brand-text-sub">
-        <span data-lang="uk">Brand Bible · v4.4</span>
-        <span data-lang="en">Brand Bible · v4.4</span>
+        <span data-lang="uk">Brand Bible · v4.5</span>
+        <span data-lang="en">Brand Bible · v4.5</span>
       </div>
     </a>
     <div class="sidebar-search" style="position:relative">
@@ -252,7 +253,7 @@ BB.SEARCH_INDEX = [
   { id: 'documents', uk: 'Документи', en: 'Documents', url: '/documents/', words: 'ТМ ТУ патент сертифікат лабораторний 383307 160558 ПЕТ КОРП 45519838 IBAN' },
   { id: 'downloads', uk: 'Завантаження', en: 'Downloads', url: '/downloads/', words: 'downloads презентація pdf docx прайс каталог сертифікат патент ТМ ТУ лабораторний реквізити виписка завантажити drive' },
   { id: 'roadmap', uk: 'Roadmap', en: 'Roadmap', url: '/roadmap/', words: 'roadmap Q3 пріоритети strategy 2026' },
-  { id: 'dashboards', uk: 'Дашборди', en: 'Dashboards', url: '/dashboard/', words: 'dashboards Sales Inventory Events Customer 360 Financial Production' },
+  { id: 'dashboards', uk: 'Дашборди', en: 'Dashboards', url: '/dashboard/', words: 'dashboards Sales Inventory Events Customer 360 Financial Production Pipeline воронка замовлення партнери дистрибутори B2B' },
   { id: 'architecture', uk: 'Архітектура бренду', en: 'Brand architecture', url: '/architecture/', words: 'architecture snEco SNECO brand hierarchy branded house портфель лінійки naming написання назв барпі co-branding кобрендинг конкуренти Cosset Pala Brovko Trixie' },
   { id: 'ideas', uk: 'Ідеї та пропозиції', en: 'Ideas & proposals', url: '/ideas/', words: 'ideas propose suggest пропозиції' },
   { id: 'logo', uk: 'Логотип', en: 'Logo', url: '/logo/', words: 'logo лого wordmark barpi paw лапка dot крапка master files png webp clear space' },
@@ -318,6 +319,7 @@ BB.DASHBOARD_LINKS = [
   {href:'/dashboard/production/', label:'🏭 Production', match:'production'},
   {href:'/dashboard/inventory/', label:'📦 Inventory', match:'inventory'},
   {href:'/dashboard/events/', label:'🎪 Events', match:'events'},
+  {href:'/dashboard/pipeline/', label:'🔀 Pipeline', match:'pipeline'},
   {href:'/dashboard/', label:'📋 Усі', match:'__index__'},
   {href:'/', label:'📘 Brand Bible', match:'__brandbible__'},
 ];
