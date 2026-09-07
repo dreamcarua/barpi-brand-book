@@ -600,6 +600,26 @@ async function runFullSync(env, opts = {}) {
 // FETCH HANDLER (manual trigger + status)
 // ============================================================
 
+
+// ---------- Site orders → MoySklad customerorder (07.09.2026) ----------
+// Called by barpi-site Pages Functions via service binding SYNC (+ X-Order-Key = ORDER_API_KEY).
+// Body: { name, organization, agent, store, description, positions: [{ product, quantity, price_kop }] }
+async function createCustomerOrder(env, body) {
+  const meta = (type, id) => ({ meta: { href: `${env.MS_BASE_URL}/entity/${type}/${id}`, type, mediaType: 'application/json' } });
+  const payload = {
+    name: String(body.name || '').slice(0, 60) || undefined,
+    organization: meta('organization', body.organization),
+    agent: meta('counterparty', body.agent),
+    store: body.store ? meta('store', body.store) : undefined,
+    description: String(body.description || '').slice(0, 4000),
+    positions: (body.positions || []).map((p) => ({ quantity: Number(p.quantity) || 1, price: Math.round(Number(p.price_kop) || 0), assortment: meta('product', p.product) })),
+  };
+  const r = await fetch(`${env.MS_BASE_URL}/entity/customerorder`, { method: 'POST', headers: MS_HEADERS(env.MOYSKLAD_TOKEN), body: JSON.stringify(payload) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((j.errors && j.errors[0] && j.errors[0].error) || `MS HTTP ${r.status}`);
+  return { id: j.id, name: j.name };
+}
+
 export default {
   // Cron Trigger — щогодини. Повний ребілд sales_sku раз на добу о 03:00 UTC.
   async scheduled(event, env, ctx) {
@@ -611,12 +631,25 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
 
+    // POST /customerorder — site order → MoySklad (key: ORDER_API_KEY)
+    if (req.method === 'POST' && url.pathname === '/customerorder') {
+      const key = req.headers.get('X-Order-Key');
+      if (!env.ORDER_API_KEY || key !== env.ORDER_API_KEY) return new Response('Forbidden', { status: 403 });
+      let body; try { body = await req.json(); } catch { return new Response(JSON.stringify({ ok: false, error: 'bad json' }), { status: 400, headers: { 'Content-Type': 'application/json' } }); }
+      try {
+        const res = await createCustomerOrder(env, body);
+        return new Response(JSON.stringify({ ok: true, ...res }), { headers: { 'Content-Type': 'application/json' } });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: e.message || String(e) }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+      }
+    }
+
     // GET / — status + last sync state
     if (req.method === 'GET' && url.pathname === '/') {
       const state = await env.DB.prepare(`SELECT entity, last_synced_at, rows_synced, last_error FROM sync_state ORDER BY entity`).all();
       return new Response(JSON.stringify({
         worker: 'barpi-sync',
-        version: '1.1-cost-fix',
+        version: '1.2-site-orders',
         status: 'alive',
         d1: 'barpi-bible',
         cron: '0 * * * * (hourly)',
