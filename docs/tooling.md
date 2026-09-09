@@ -58,13 +58,25 @@
 
 `/dashboard/knowledge/` — База знань за чек-листом SC Consulting (з 19.08.2026). Питання й відповіді — таблиці `kb_questions`, `kb_answers`, `kb_question_state` у D1; вкладення — R2-бакет `barpi-kb-files` через `POST /kb_files` воркера `barpi-api`. Видалення файлу — м'яке: рядок позначається `deleted=1`, об'єкт у R2 лишається. Відповіді рендеряться як Markdown (marked + DOMPurify) з 02.09.2026.
 
-## Reporting — канал звітів
+## Reporting
 
-**Станом на 03.09.2026 канал не підключений.** У репо немає жодного GitHub-секрета (`gh secret list -R dreamcarua/barpi-brand-book` порожній), тому воркфлоу `report-to-telegram.yml` не створювався: він упав би з порожньою змінною.
+Канал один на всі проєкти: приватний міст у `dreamcarua/memory-kit`.
 
-Що є натомість: Edge Function `telegram-bot` у Supabase (`supabase/functions/telegram-bot/`) — вона приймає команди від людей (`/sale`, `/stats`, `/publications`), а не надсилає звіти агента, і живе в контурі `barpi-hq`, який зараз під питанням (P2-9).
+Механізм: закомітити `cowork-notify/<YYYY-MM-DD-HHMM>-<slug>.json` у гілку `main` репозиторію
+`dreamcarua/memory-kit` з полями `{text, type, project, link}`. Воркфлоу `cowork-tg-notify.yml`
+вибирає бота за полем `project`, шле повідомлення в приватний чат Вадима і архівує файл.
 
-Щоб увімкнути канал: поставити два секрети (команди — у `docs/tasks.md`, розділ ⏸), після чого додати `.github/workflows/report-to-telegram.yml` за шаблоном A.8 набору memory-kit і `reports/README.md`. До того момент Exit-звіт віддається у відповіді користувачу і рядком у `docs/tasks.md`.
+Для цього носія `project` = `barpi`.
+
+- `text` — суть зробленого, дозволений Telegram HTML (`<b>`, `<code>`, `\n`)
+- `type` — короткий ярлик: `deploy`, `fix`, `security`, `maintenance`, `report`
+- `link` — посилання на коміт, файл або запуск воркфлоу
+
+Коли: наприкінці кожної задачі, що змінила стан проєкту — закрита задача, пуш, деплой,
+виправлення в проді. Не для читання, проміжних комітів і правок одруківок.
+
+Старий міст у публічному `dreamcarua/dreamcar-team` не використовується з 05.09.2026:
+репозиторій публічний, і кожен звіт лишався в його історії назавжди.
 
 ## Межі — чого агент свідомо не робить
 
