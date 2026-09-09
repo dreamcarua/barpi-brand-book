@@ -11,6 +11,7 @@
 | HQ SMM | https://brand.barpi.ua/dashboard/hq/ | live |
 | Supabase backend | https://zrcqmwlpsggiqgipvxhv.supabase.co | live |
 | Telegram bot Edge Function | /functions/v1/telegram-bot | deployed (active v1) |
+| Презентація для інвестора | https://brand.barpi.ua/deck | live, під паролем (worker `barpi-deck` + R2) |
 
 ## ⚠️ Потребує ручної дії (UI-кліки)
 
@@ -46,6 +47,8 @@
 - **Supabase project:** zrcqmwlpsggiqgipvxhv (eu-central-1, barpi-hq)
 - **D1 database:** barpi-bible (Cloudflare)
 - **KV namespace:** barpi-bible-acl (Cloudflare)
+- **R2 bucket:** barpi-deck (приватний, контент презентації — НЕ в цьому репозиторії)
+- **Workers:** barpi-auth (OTP для дашбордів), barpi-deck (пароль для `/deck`)
 
 ## 📦 Edge Functions на Supabase
 
