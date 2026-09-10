@@ -28,7 +28,7 @@ const PAGES = {
     note: 'Робоча база знань компанії. Сторінка дозволяє редагування — пароль видається лише тим, кому це дозволено.',
   },
   '/checklist': {
-    key: 'checklist.html', pdf: null, pdfName: null,
+    key: 'checklist.html', pdf: null, pdfName: null, files: true,
     cookie: 'barpi_chk', secret: 'CHECKLIST_PASSWORD',
     title: 'Відповіді на чек-лист · 48 пунктів',
     note: 'Робочий документ для консультанта і сторони, яка підписала NDA. Передачі третім особам не підлягає.',
@@ -234,6 +234,38 @@ export default {
     if (!ok) return sub === '' ? loginPage(page, base, null) : redirect(base);
 
     if (sub === '') return serveObject(env, page.key, 'text/html; charset=utf-8');
+
+    // --- document proxy: /checklist/file/<uuid> ---
+    if (page.files && sub.startsWith('/file/')) {
+      const id = sub.slice(6);
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        return new Response('Не знайдено', { status: 404, headers: BASE_HEADERS });
+      }
+      let up;
+      try {
+        up = await fetch(`https://barpi-api.vg-ab6.workers.dev/kb_files/${id}/download`,
+                         { headers: { Origin: 'https://brand.barpi.ua' } });
+      } catch {
+        return new Response('Файл недоступний', { status: 502, headers: BASE_HEADERS });
+      }
+      if (!up.ok) return new Response('Файл недоступний', { status: 502, headers: BASE_HEADERS });
+      const h = new Headers(BASE_HEADERS);
+      h.set('Content-Type', up.headers.get('content-type') || 'application/octet-stream');
+      // readable filename from the page (?n=…), sanitised; fall back to upstream
+      const want = (url.searchParams.get('n') || '')
+        .replace(/[\x00-\x1f\x7f"\\\/]/g, '').trim().slice(0, 160);
+      if (want) {
+        h.set('Content-Disposition',
+              `attachment; filename*=UTF-8''${encodeURIComponent(want)}`);
+      } else {
+        const cd = up.headers.get('content-disposition');
+        if (cd) h.set('Content-Disposition', cd);
+      }
+      const cl = up.headers.get('content-length');
+      if (cl) h.set('Content-Length', cl);
+      return new Response(up.body, { headers: h });
+    }
+
     if (sub === '/pdf' && page.pdf) {
       return serveObject(env, page.pdf, 'application/pdf', page.pdfName);
     }

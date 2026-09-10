@@ -7,3 +7,6 @@ __pycache__/
 *.pyc
 venv/
 .venv/
+
+# gated page snapshots — content lives in private R2, never in this public repo
+barpi-deck/*.html
