@@ -1,8 +1,14 @@
 # barpi-deck
 
-Cloudflare Worker — сторінка інвестиційної презентації Barpi під паролем.
+Cloudflare Worker — закриті паролем сторінки Barpi.
 
-**Адреса:** https://brand.barpi.ua/deck
+| Сторінка | Адреса | Пароль | Для кого |
+|---|---|---|---|
+| Інвестиційна презентація | https://brand.barpi.ua/deck | `DECK_PASSWORD` | покупець частки після NDA |
+| Відповіді на чек-лист SC Consulting, 48 пунктів | https://brand.barpi.ua/checklist | `CHECKLIST_PASSWORD` | консультанти з супроводу угоди |
+
+Паролі і сесії роздільні: пароль від однієї сторінки не відкриває іншу.
+Додати сторінку = один запис у `PAGES` в `src/index.js`, один секрет і один файл у R2.
 
 ## Чому саме так
 
@@ -17,15 +23,16 @@ CF Access на `/dashboard/*` не підходить: він працює за 
 
 | Метод | Шлях | Що робить |
 |---|---|---|
-| GET | `/deck` | є сесія — віддає презентацію з R2; немає — форма пароля |
-| POST | `/deck` | перевіряє пароль, ставить підписану cookie, редірект на `/deck` |
-| GET | `/deck/pdf` | PDF-дубль, тільки з сесією |
-| GET | `/deck/exit` | стирає сесію |
+| GET | `/deck`, `/checklist` | є сесія — віддає сторінку з R2; немає — форма пароля |
+| POST | `/deck`, `/checklist` | перевіряє пароль, ставить підписану cookie, редірект назад |
+| GET | `/deck/pdf` | PDF-дубль презентації, тільки з сесією |
+| GET | `/deck/exit`, `/checklist/exit` | стирає сесію цієї сторінки |
 
 ## Як влаштований захист
 
-- Cookie `barpi_deck` = `<exp>.<HMAC-SHA256(exp, SESSION_SECRET)>` — сесія на 30 днів,
-  `HttpOnly; Secure; SameSite=Lax; Path=/deck`. Стану на сервері немає.
+- Cookie (`barpi_deck` / `barpi_chk`) = `<exp>.<HMAC-SHA256(exp, SESSION_SECRET)>` — сесія на 30 днів,
+  `HttpOnly; Secure; SameSite=Lax`, `Path` дорівнює шляху сторінки. Стану на сервері немає.
+- Throttle рахується окремо по IP + сторінка, тому підбір пароля до однієї не блокує іншу.
 - Порівняння пароля і підпису — constant-time, без ранньої зупинки.
 - Throttle перебору: 12 невдалих спроб з одного IP за 15 хвилин → 429. Лічильник у KV
   `barpi-bible-acl`, best-effort: збій KV не ламає вхід.
@@ -42,6 +49,7 @@ CF Access на `/dashboard/*` не підходить: він працює за 
 ```bash
 cd barpi-deck
 printf '%s' '<пароль>'      | npx wrangler secret put DECK_PASSWORD
+printf '%s' '<пароль>'      | npx wrangler secret put CHECKLIST_PASSWORD
 printf '%s' "$(openssl rand -hex 32)" | npx wrangler secret put SESSION_SECRET
 ```
 
@@ -55,6 +63,8 @@ npx wrangler r2 object put barpi-deck/index.html --file=<нова>.html \
   --content-type="text/html; charset=utf-8" --remote
 npx wrangler r2 object put barpi-deck/deck.pdf --file=<новий>.pdf \
   --content-type="application/pdf" --remote
+npx wrangler r2 object put barpi-deck/checklist.html --file=<нова>.html \
+  --content-type="text/html; charset=utf-8" --remote
 ```
 
 Деплою воркера при цьому не потрібно — він читає R2 на кожен запит.

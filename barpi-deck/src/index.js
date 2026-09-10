@@ -10,7 +10,25 @@
  *   GET  /deck/exit       → clear session
  */
 
-const COOKIE = 'barpi_deck';
+/**
+ * Each gated page: its own path, its own R2 object, its own password and cookie.
+ * Adding a page = one entry here + one wrangler secret + one file in R2.
+ */
+const PAGES = {
+  '/deck': {
+    key: 'index.html', pdf: 'deck.pdf', pdfName: 'Barpi_investor_deck.pdf',
+    cookie: 'barpi_deck', secret: 'DECK_PASSWORD',
+    title: 'Інвестиційна презентація · 2026',
+    note: 'Матеріал призначений виключно для сторони, яка підписала NDA, і не підлягає передачі третім особам.',
+  },
+  '/checklist': {
+    key: 'checklist.html', pdf: null, pdfName: null,
+    cookie: 'barpi_chk', secret: 'CHECKLIST_PASSWORD',
+    title: 'Відповіді на чек-лист · 48 пунктів',
+    note: 'Робочий документ для консультанта і сторони, яка підписала NDA. Передачі третім особам не підлягає.',
+  },
+};
+
 const TTL_S = 60 * 60 * 24 * 30; // 30 days
 const MAX_FAILS = 12;            // per IP per 15 min
 
@@ -68,7 +86,7 @@ const BASE_HEADERS = {
 
 /* ---------- login page ---------- */
 
-function loginPage(error, status = 200) {
+function loginPage(page, path, error, status = 200) {
   const msg = error
     ? `<p class="err">${error}</p>`
     : '<p class="hint">Сторінка захищена. Пароль надає компанія.</p>';
@@ -76,7 +94,7 @@ function loginPage(error, status = 200) {
   const html = `<!doctype html><html lang="uk"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Barpi — доступ до презентації</title>
+<title>Barpi — доступ за паролем</title>
 <style>
 :root{--navy:#001154;--sky:#BAD9F4}
 *{box-sizing:border-box}
@@ -106,18 +124,17 @@ button:hover{background:#D3E7FA}
 </style></head><body>
 <div class="box">
  <p class="mark">barpi<span>.</span></p>
- <p class="sup">Інвестиційна презентація · 2026</p>
+ <p class="sup">${page.title}</p>
  <div class="card">
   <h1>Доступ за паролем</h1>
   ${msg}
   <form method="POST" action="/deck">
    <label for="p">Пароль</label>
    <input id="p" name="password" type="password" autocomplete="current-password" autofocus required>
-   <button type="submit">Відкрити презентацію</button>
+   <button type="submit">Відкрити</button>
   </form>
  </div>
- <p class="foot">Конфіденційно. Матеріал призначений виключно для сторони, яка підписала NDA,
- і не підлягає передачі третім особам.</p>
+ <p class="foot">Конфіденційно. ${page.note}</p>
 </div></body></html>`;
 
   return new Response(html, {
@@ -156,66 +173,64 @@ async function serveObject(env, key, contentType, filename) {
 
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-    const path = url.pathname.replace(/\/+$/, '') || '/deck';
+    const url  = new URL(request.url);
+    const path = url.pathname.replace(/\/+$/, '') || '/';
+    const ip   = request.headers.get('CF-Connecting-IP') || '';
     const secret = env.SESSION_SECRET;
-    const ip = request.headers.get('CF-Connecting-IP') || '';
 
-    if (!secret || !env.DECK_PASSWORD) {
+    // which gated page does this request belong to?
+    const base = Object.keys(PAGES).find(p => path === p || path.startsWith(p + '/'));
+    if (!base) return new Response('Не знайдено', { status: 404, headers: BASE_HEADERS });
+    const page = PAGES[base];
+    const sub  = path.slice(base.length);       // '', '/pdf', '/exit'
+    const pass = env[page.secret];
+
+    if (!secret || !pass) {
       return new Response('Сервіс не налаштований', { status: 503, headers: BASE_HEADERS });
     }
 
+    const redirect = (to) => {
+      const h = new Headers(BASE_HEADERS); h.set('Location', to);
+      return new Response(null, { status: 303, headers: h });
+    };
+
     // --- logout ---
-    if (path === '/deck/exit') {
+    if (sub === '/exit') {
       const h = new Headers(BASE_HEADERS);
-      h.set('Location', '/deck');
-      h.set('Set-Cookie', `${COOKIE}=; Path=/deck; Max-Age=0; HttpOnly; Secure; SameSite=Lax`);
+      h.set('Location', base);
+      h.set('Set-Cookie', `${page.cookie}=; Path=${base}; Max-Age=0; HttpOnly; Secure; SameSite=Lax`);
       return new Response(null, { status: 303, headers: h });
     }
 
     // --- login ---
-    if (request.method === 'POST' && path === '/deck') {
-      const fails = await failCount(env, ip);
+    if (request.method === 'POST' && sub === '') {
+      const fails = await failCount(env, ip + base);
       if (fails >= MAX_FAILS) {
-        return loginPage('Забагато спроб. Спробуйте за 15 хвилин.', 429);
+        return loginPage(page, base, 'Забагато спроб. Спробуйте за 15 хвилин.', 429);
       }
       let given = '';
-      try {
-        const form = await request.formData();
-        given = String(form.get('password') || '');
-      } catch { /* ignore */ }
+      try { given = String((await request.formData()).get('password') || ''); } catch { /* ignore */ }
 
-      if (!safeEqual(given.trim(), env.DECK_PASSWORD)) {
-        await bumpFail(env, ip, fails);
-        return loginPage('Невірний пароль. Перевірте розкладку і спробуйте ще раз.', 401);
+      if (!safeEqual(given.trim(), pass)) {
+        await bumpFail(env, ip + base, fails);
+        return loginPage(page, base, 'Невірний пароль. Перевірте розкладку і спробуйте ще раз.', 401);
       }
-
-      await clearFail(env, ip);
+      await clearFail(env, ip + base);
       const h = new Headers(BASE_HEADERS);
-      h.set('Location', '/deck');
+      h.set('Location', base);
       h.set('Set-Cookie',
-        `${COOKIE}=${await makeToken(secret)}; Path=/deck; Max-Age=${TTL_S}; HttpOnly; Secure; SameSite=Lax`);
+        `${page.cookie}=${await makeToken(secret)}; Path=${base}; Max-Age=${TTL_S}; HttpOnly; Secure; SameSite=Lax`);
       return new Response(null, { status: 303, headers: h });
     }
 
-    // --- everything below needs a session ---
-    const ok = await validToken(readCookie(request, COOKIE), secret);
-    if (!ok) {
-      if (path === '/deck') return loginPage(null);
-      const h = new Headers(BASE_HEADERS);
-      h.set('Location', '/deck');
-      return new Response(null, { status: 303, headers: h });
-    }
+    // --- everything below needs a session for THIS page ---
+    const ok = await validToken(readCookie(request, page.cookie), secret);
+    if (!ok) return sub === '' ? loginPage(page, base, null) : redirect(base);
 
-    if (path === '/deck') {
-      return serveObject(env, 'index.html', 'text/html; charset=utf-8');
+    if (sub === '') return serveObject(env, page.key, 'text/html; charset=utf-8');
+    if (sub === '/pdf' && page.pdf) {
+      return serveObject(env, page.pdf, 'application/pdf', page.pdfName);
     }
-    if (path === '/deck/pdf') {
-      return serveObject(env, 'deck.pdf', 'application/pdf', 'Barpi_investor_deck.pdf');
-    }
-
-    const h = new Headers(BASE_HEADERS);
-    h.set('Location', '/deck');
-    return new Response(null, { status: 303, headers: h });
+    return redirect(base);
   },
 };
