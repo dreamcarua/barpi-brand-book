@@ -21,6 +21,12 @@ const PAGES = {
     title: 'Інвестиційна презентація · 2026',
     note: 'Матеріал призначений виключно для сторони, яка підписала NDA, і не підлягає передачі третім особам.',
   },
+  '/kb': {
+    key: 'kb.html', pdf: null, pdfName: null,
+    cookie: 'barpi_kb', secret: 'KB_PASSWORD',
+    title: 'База знань · 48 напрямів',
+    note: 'Робоча база знань компанії. Сторінка дозволяє редагування — пароль видається лише тим, кому це дозволено.',
+  },
   '/checklist': {
     key: 'checklist.html', pdf: null, pdfName: null,
     cookie: 'barpi_chk', secret: 'CHECKLIST_PASSWORD',
@@ -128,7 +134,7 @@ button:hover{background:#D3E7FA}
  <div class="card">
   <h1>Доступ за паролем</h1>
   ${msg}
-  <form method="POST" action="/deck">
+  <form method="POST" action="${path}">
    <label for="p">Пароль</label>
    <input id="p" name="password" type="password" autocomplete="current-password" autofocus required>
    <button type="submit">Відкрити</button>

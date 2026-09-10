@@ -6,6 +6,7 @@ Cloudflare Worker — закриті паролем сторінки Barpi.
 |---|---|---|---|
 | Інвестиційна презентація | https://brand.barpi.ua/deck | `DECK_PASSWORD` | покупець частки після NDA |
 | Відповіді на чек-лист SC Consulting, 48 пунктів | https://brand.barpi.ua/checklist | `CHECKLIST_PASSWORD` | консультанти з супроводу угоди |
+| База знань, 48 напрямів | https://brand.barpi.ua/kb | `KB_PASSWORD` | той, кому дозволено читати і правити базу |
 
 Паролі і сесії роздільні: пароль від однієї сторінки не відкриває іншу.
 Додати сторінку = один запис у `PAGES` в `src/index.js`, один секрет і один файл у R2.
@@ -23,10 +24,10 @@ CF Access на `/dashboard/*` не підходить: він працює за 
 
 | Метод | Шлях | Що робить |
 |---|---|---|
-| GET | `/deck`, `/checklist` | є сесія — віддає сторінку з R2; немає — форма пароля |
-| POST | `/deck`, `/checklist` | перевіряє пароль, ставить підписану cookie, редірект назад |
+| GET | `/deck`, `/checklist`, `/kb` | є сесія — віддає сторінку з R2; немає — форма пароля |
+| POST | `/deck`, `/checklist`, `/kb` | перевіряє пароль, ставить підписану cookie, редірект назад |
 | GET | `/deck/pdf` | PDF-дубль презентації, тільки з сесією |
-| GET | `/deck/exit`, `/checklist/exit` | стирає сесію цієї сторінки |
+| GET | `/deck/exit`, `/checklist/exit`, `/kb/exit` | стирає сесію цієї сторінки |
 
 ## Як влаштований захист
 
@@ -74,3 +75,22 @@ npx wrangler r2 object put barpi-deck/checklist.html --file=<нова>.html \
 ```bash
 npx wrangler deploy
 ```
+
+## `/kb` — база знань за паролем
+
+`brand.barpi.ua/dashboard/knowledge/` закрита Cloudflare Access за списком email, і пароль там неможливий
+за конструкцією. Тому та сама сторінка віддається копією через воркер на `/kb` з власним паролем —
+Access на цей шлях не поширюється, конфіг Access не змінювався.
+
+Сторінка самодостатня: один `index.html` на 57 КБ, зовнішні залежності лише з CDN. Дані бере з воркера
+`barpi-api` за заголовком `Origin: https://brand.barpi.ua`, тому на `/kb` працює так само, як на `/dashboard/`.
+
+**Копія в R2 — це знімок.** Після зміни `dashboard/knowledge/index.html` у репозиторії треба перезалити:
+
+```bash
+npx wrangler r2 object put barpi-deck/kb.html --file=dashboard/knowledge/index.html \
+  --content-type="text/html; charset=utf-8" --remote
+```
+
+**Сторінка дозволяє редагування**, а `barpi-api` перевіряє лише `Origin`, не особу. Тому пароль від `/kb`
+дає і читання, і правки — видавати його лише тим, кому правки дозволені.

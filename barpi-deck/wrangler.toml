@@ -21,7 +21,12 @@ zone_name = "barpi.ua"
 pattern = "brand.barpi.ua/checklist*"
 zone_name = "barpi.ua"
 
+[[routes]]
+pattern = "brand.barpi.ua/kb*"
+zone_name = "barpi.ua"
+
 # Секрети (npx wrangler secret put ...):
 #   DECK_PASSWORD       — пароль до презентації (інвестор)
 #   CHECKLIST_PASSWORD  — пароль до відповідей на чек-лист (консультант)
+#   KB_PASSWORD         — пароль до бази знань на /kb
 #   SESSION_SECRET  — випадковий hex 64, підписує cookie сесії

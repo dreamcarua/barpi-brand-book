@@ -13,6 +13,7 @@
 | Telegram bot Edge Function | /functions/v1/telegram-bot | deployed (active v1) |
 | Презентація для інвестора | https://brand.barpi.ua/deck | live, під паролем (worker `barpi-deck` + R2) |
 | Відповіді на чек-лист SC Consulting | https://brand.barpi.ua/checklist | live, окремий пароль (той самий worker) |
+| База знань за паролем | https://brand.barpi.ua/kb | live, окремий пароль (копія `/dashboard/knowledge/`) |
 
 ## ⚠️ Потребує ручної дії (UI-кліки)
 
