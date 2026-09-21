@@ -57,12 +57,28 @@ def itemprop(body, name):
     return html.unescape(m.group(1)).strip() if m else ""
 
 
+# Brand rule (barpi-memory/docs/traps.md, ads-playbook.md): no health/medical
+# claims, no "космічні технології", no "мікрохвильова" in B2C. Site copy still
+# has some of these, so sentences containing them are dropped from the feed.
+CLAIM_RE = re.compile(
+    r"імунітет|травлен|гостроту зору|суглоб|серцево|нервов|здоров|зубн|лікув|"
+    r"космічн|мікрохвильов|обмін речовин|мікрофлор|засвою|відновл",
+    re.I,
+)
+
+
+def clean_description(text):
+    parts = re.split(r"(?<=[.!?])\s+", text)
+    kept = [p for p in parts if p and not CLAIM_RE.search(p)]
+    return " ".join(kept).strip()
+
+
 def full_description(body):
     m = re.search(r'itemprop="description"[^>]*>(.*?)</(?:div|section)>', body, re.S)
     if not m:
         return ""
     text = re.sub(r"<[^>]+>", " ", m.group(1))
-    return re.sub(r"\s+", " ", html.unescape(text)).strip()
+    return clean_description(re.sub(r"\s+", " ", html.unescape(text)).strip())
 
 
 def product_urls():
@@ -94,7 +110,7 @@ def build_item(url, cmap):
     avail = itemprop(body, "availability")
     availability = "in stock" if avail.endswith("InStock") else "out of stock"
     title = meta(body, "og:title")
-    desc = full_description(body) or meta(body, "og:description") or title
+    desc = full_description(body) or clean_description(meta(body, "og:description")) or title
     image = meta(body, "og:image")
     if image and "/content/images/" in image:
         # take the largest rendition Horoshop offers
