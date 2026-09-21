@@ -1,0 +1,28 @@
+name: Build Meta catalog feed
+
+on:
+  schedule:
+    - cron: "0 3 * * *"   # 06:00 Kyiv, before Meta's scheduled fetch
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build feed from barpi.com.ua
+        run: python3 ads/feed/build_feed.py ads/feed/meta-catalog.xml
+      - name: Commit if changed
+        run: |
+          git config user.name "barpi-feed-bot"
+          git config user.email "bot@barpi.com.ua"
+          git add ads/feed/meta-catalog.xml
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "feed: refresh meta-catalog.xml ($(date -u +%Y-%m-%d))"
+          git push
