@@ -154,7 +154,9 @@ async function syncExpenseItems(env) {
 }
 
 // Generic transactional entity sync (demand, paymentin, paymentout, etc.)
-async function syncTransactionalEntity(env, entityName, path, tableName, extraColumns = {}, extraParams = {}) {
+async function syncTransactionalEntity(env, entityName, path, tableName, extraColumns = {}, extraParams = {}, opts = {}) {
+  // opts.pageSize: smaller pages for heavy entities; opts.compact(row): shrink the row before storing (27.09.2026, D1 32 MiB RPC limit)
+  const pageSize = opts.pageSize || PAGE_SIZE;
   let offset = 0, total = 0;
   // Get cursor for incremental sync
   const cursor = await env.DB.prepare(`SELECT last_moment FROM sync_state WHERE entity = ?`).bind(entityName).first();
@@ -163,7 +165,7 @@ async function syncTransactionalEntity(env, entityName, path, tableName, extraCo
   let lastMoment = cursor?.last_moment || null;
 
   while (true) {
-    const params = { limit: PAGE_SIZE, offset, order: 'moment,asc', ...extraParams };
+    const params = { limit: pageSize, offset, order: 'moment,asc', ...extraParams };
     if (sinceFilter) params.filter = sinceFilter;
     const data = await fetchMS(env, path, params);
     if (!data.rows || data.rows.length === 0) break;
@@ -174,7 +176,8 @@ async function syncTransactionalEntity(env, entityName, path, tableName, extraCo
       `INSERT OR REPLACE INTO ${tableName} (${cols.join(', ')}) VALUES (${placeholders.replace(/\?$/, `datetime('now')`)})`
     );
 
-    const batch = data.rows.map(row => {
+    const batch = data.rows.map(row0 => {
+      const row = opts.compact ? opts.compact(row0) : row0;
       const values = [
         row.id,
         row.name || '',
@@ -188,12 +191,28 @@ async function syncTransactionalEntity(env, entityName, path, tableName, extraCo
     });
     await env.DB.batch(batch);
     total += data.rows.length;
-    if (data.rows.length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
+    if (data.rows.length < pageSize) break;
+    offset += pageSize;
   }
 
   await setCursorState(env, entityName, tableName, lastMoment, total > 0);
   return total;
+}
+
+// 27.09.2026: expanded positions.assortment made a 100-document page exceed the D1 32 MiB RPC limit
+// after a 3-week gap. Only assortment.meta.href, quantity, price (+discount, vat) are ever read
+// (rebuildSalesSku), so store positions in that compact form, in both positions_json and raw_json.
+function compactDemand(row) {
+  if (!row || !row.positions) return row;
+  const rows = (row.positions.rows || []).map((p) => ({
+    id: p.id,
+    quantity: p.quantity,
+    price: p.price,
+    discount: p.discount,
+    vat: p.vat,
+    assortment: p.assortment && p.assortment.meta ? { meta: { href: p.assortment.meta.href, type: p.assortment.meta.type }, name: p.assortment.name, code: p.assortment.code } : undefined,
+  }));
+  return { ...row, positions: { meta: row.positions.meta, rows } };
 }
 
 async function syncDemand(env) {
@@ -202,7 +221,7 @@ async function syncDemand(env) {
     store_ms_id: r => metaId(r.store?.meta),
     organization_ms_id: r => metaId(r.organization?.meta),
     positions_json: r => r.positions ? JSON.stringify(r.positions) : null,
-  }, { expand: 'positions.assortment' });
+  }, { expand: 'positions.assortment' }, { pageSize: 25, compact: compactDemand });
 }
 
 async function syncPayments(env) {
@@ -651,7 +670,7 @@ export default {
       const state = await env.DB.prepare(`SELECT entity, last_synced_at, rows_synced, last_error FROM sync_state ORDER BY entity`).all();
       return new Response(JSON.stringify({
         worker: 'barpi-sync',
-        version: '1.3-error-visible',
+        version: '1.4-demand-compact',
         status: 'alive',
         d1: 'barpi-bible',
         cron: '0 * * * * (hourly)',
