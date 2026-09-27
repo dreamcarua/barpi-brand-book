@@ -68,14 +68,18 @@
     // treat calculator: 10% of daily energy (RER = 70*kg^0.75; dog x1.6, cat x1.2)
     root.querySelectorAll(".bp-calc").forEach(function (c) {
       var pet = "dog", seg = c.querySelector(".bp-seg"), w = c.querySelector("input[type=range]"), wv = c.querySelector("[data-wv]"),
-          sel = c.querySelector("select"), out = c.querySelector("[data-out]"), pk = c.querySelector("[data-pack]"), kc = c.querySelector("[data-kc]"), bar = c.querySelector(".bp-bar i");
+          sel = c.querySelector("select"), out = c.querySelector("[data-out]"), pk = c.querySelector("p[data-pack]"), kc = c.querySelector("[data-kc]"), bar = c.querySelector(".bp-bar i");
       function calc() {
         var kg = parseFloat(w.value), kcal100 = parseFloat(sel.value), o = sel.options[sel.selectedIndex];
         var mer = 70 * Math.pow(kg, 0.75) * (pet === "dog" ? 1.6 : 1.2), treat = mer * 0.10, g = treat / kcal100 * 100;
         wv.textContent = kg + " кг";
         out.textContent = (g < 10 ? g.toFixed(1).replace(".", ",") : Math.round(g)) + " г";
         kc.textContent = Math.round(treat) + " ккал з " + Math.round(mer);
-        var packs = 20 / g; pk.textContent = packs >= 1 ? "Пачки 20 г вистачить приблизно на " + Math.round(packs) + " дн." : "Пачка 20 г менша за денний максимум, давайте частинами протягом дня.";
+        var ps = parseFloat(o.getAttribute("data-pack") || "20"), days = Math.round(ps / g);
+        function dn(n) { var a = n % 10, b = n % 100; return (a === 1 && b !== 11) ? "день" : (a >= 2 && a <= 4 && (b < 12 || b > 14)) ? "дні" : "днів"; }
+        pk.textContent = days >= 1 ? "Маленької пачки " + ps + " г вистачить щонайменше на " + days + " " + dn(days) + "." : "Денний максимум більший за пачку " + ps + " г. Це верхня межа, а не рекомендована порція.";
+        var fm = c.querySelector("[data-freqmsg]"), fr = o.getAttribute("data-freq");
+        if (fm) fm.textContent = fr ? "Цей смак: " + fr + " рази на тиждень. В інші дні обирайте легші смаки." : "Чергуйте з іншими смаками протягом тижня.";
         bar.style.width = Math.min(100, g / 1.2) + "%";
         (o.getAttribute("data-cat") === "no" && pet === "cat") ? c.setAttribute("data-warn", "1") : c.removeAttribute("data-warn");
         var wn = c.querySelector("[data-warnmsg]"); if (wn) wn.hidden = !c.hasAttribute("data-warn");
@@ -83,7 +87,7 @@
       seg.addEventListener("click", function (ev) {
         var b = ev.target.closest("button"); if (!b) return; pet = b.getAttribute("data-pet");
         seg.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
-        if (pet === "cat") { w.max = 12; if (+w.value > 12) w.value = 4; } else { w.max = 60; }
+        if (pet === "cat") { w.max = 12; if (+w.value > 8) w.value = 4; } else { w.max = 60; }
         calc();
       });
       w.addEventListener("input", calc); sel.addEventListener("change", calc); calc();
@@ -98,6 +102,32 @@
         b.textContent = v.classList.contains("is-open") ? "Сховати перегляд" : "Переглянути онлайн";
       });
     });
+
+
+    // FAQ search + categories
+    var qa = root.querySelector("[data-faqsearch]") ? root.querySelector(root.querySelector("[data-faqsearch]").getAttribute("data-faqsearch")) : null;
+    if (qa) {
+      var inp = root.querySelector("[data-faqsearch]"), cats = root.querySelector("[data-faqcats]"), cat = "all", empty = qa.querySelector("[data-faqempty]");
+      function norm(s) { return (s || "").toLowerCase().replace(/[’']/g, "'"); }
+      function apply() {
+        var q = norm(inp.value.trim()), shown = 0;
+        qa.querySelectorAll(".bp-qgroup").forEach(function (g) {
+          var gv = 0, okCat = cat === "all" || g.getAttribute("data-cat") === cat;
+          g.querySelectorAll("details").forEach(function (d) {
+            var hit = okCat && (!q || norm(d.textContent).indexOf(q) >= 0);
+            d.hidden = !hit; if (hit) { gv++; if (q) d.open = true; }
+          });
+          g.hidden = gv === 0; shown += gv;
+        });
+        if (empty) empty.hidden = shown > 0;
+      }
+      inp.addEventListener("input", apply);
+      if (cats) cats.addEventListener("click", function (ev) {
+        var b = ev.target.closest("button"); if (!b) return; cat = b.getAttribute("data-f");
+        cats.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+        apply();
+      });
+    }
 
     // FAQPage JSON-LD from .bp-faq (SEO / AI answers)
     var faq = root.querySelectorAll(".bp-faq details");
