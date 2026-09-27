@@ -590,6 +590,8 @@ async function runFullSync(env, opts = {}) {
         : await fn(env);
     } catch (e) {
       log.errors[name] = e.message || String(e);
+      // 27.09.2026: record the failure so it is visible in sync_state / GET / (before: silent, token was dead 06–27.09 unnoticed)
+      if (entity) { try { await env.DB.prepare(`UPDATE sync_state SET last_error = ?, updated_at = datetime('now') WHERE entity = ?`).bind(String(log.errors[name]).slice(0, 500), entity).run(); } catch (_) {} }
     }
   }
   log.finished = new Date().toISOString();
@@ -649,13 +651,14 @@ export default {
       const state = await env.DB.prepare(`SELECT entity, last_synced_at, rows_synced, last_error FROM sync_state ORDER BY entity`).all();
       return new Response(JSON.stringify({
         worker: 'barpi-sync',
-        version: '1.2-site-orders',
+        version: '1.3-error-visible',
         status: 'alive',
         d1: 'barpi-bible',
         cron: '0 * * * * (hourly)',
         sales_sku: 'incremental (full rebuild daily at 03:00 UTC or ?full=1)',
         min_interval_min: MIN_INTERVAL_MIN,
         sync_state: state.results || [],
+        stale: (state.results || []).filter((r) => r.entity !== 'sales_sku' && r.last_synced_at && (Date.now() - Date.parse(String(r.last_synced_at).replace(' ', 'T') + 'Z')) > 36 * 3600e3).map((r) => r.entity),
       }, null, 2), { headers: { 'Content-Type': 'application/json' } });
     }
 
