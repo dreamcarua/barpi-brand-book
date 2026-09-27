@@ -4,7 +4,7 @@
   ready(function () {
     var root = document.querySelector(".bp");
     if (!root) return;
-    if (root.querySelector(".bp-hero h1")) { var mh = document.querySelector(".main-h"); if (mh && !root.contains(mh)) mh.remove(); }
+    if (root.querySelector(".bp-hero h1")) { var mh = document.querySelector(".main-h"); if (mh && !root.contains(mh)) mh.remove(); [].forEach.call(document.querySelectorAll("h1"), function (h) { if (!root.contains(h)) h.remove(); }); }
     var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // reveal on scroll
