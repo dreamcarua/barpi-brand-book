@@ -1,9 +1,22 @@
-/* Barpi content pages v1 (27.09.2026) */
+/* Barpi content pages v5 (28.09.2026): details, partners, about, faq, home */
 (function () {
   function ready(fn) { if (document.readyState !== "loading") fn(); else document.addEventListener("DOMContentLoaded", fn); }
   ready(function () {
     var root = document.querySelector(".bp");
     if (!root) return;
+    // home page: move server-rendered slots into place (content stays in HTML for SEO)
+    if (root.classList.contains("bp-home")) {
+      var S = {}; ["top", "cats", "main"].forEach(function (n) { S[n] = root.querySelector('[data-slot="' + n + '"]'); }); var slot = function (n) { return S[n]; };
+      var after = function (el, ref) { if (el && ref && ref.parentNode) ref.parentNode.insertBefore(el, ref.nextSibling); };
+      var banner = document.querySelector(".banners-group"), benefits = document.querySelector("section.benefits"), promo = document.querySelector("section.promo") || document.querySelector("section.storefront");
+      var h1 = document.querySelector(".frontInfo-content > h1, .frontInfo h1, .about__wrap > h1"), h1slot = root.querySelector(".bp-h1-slot");
+      if (h1 && h1slot) { h1.removeAttribute("class"); h1slot.appendChild(h1); }
+      if (banner) after(slot("top"), banner); else if (benefits) benefits.parentNode.insertBefore(slot("top"), benefits);
+      after(slot("cats"), benefits || slot("top"));
+      after(slot("main"), promo || slot("cats"));
+      document.documentElement.classList.add("bp-home-on");
+      root = document.body;
+    }
     if (root.querySelector(".bp-hero h1")) { var mh = document.querySelector(".main-h"); if (mh && !root.contains(mh)) mh.remove(); [].forEach.call(document.querySelectorAll("h1"), function (h) { if (!root.contains(h)) h.remove(); }); }
     var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
