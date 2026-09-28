@@ -225,3 +225,7 @@ body:has(.bp-hero h1) h1:not(.bp h1){display:none}
 @media (max-width:1024px){.bp .bp-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.bp .bp-links{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){.bp .bp-hero--home{grid-template-columns:1fr}.bp .bp-hero--home .bp-hero-img{aspect-ratio:4/3;order:0}.bp .bp-gal--equip{grid-template-columns:1fr 1fr}.bp .bp-gal--equip .bp-gal-wide{grid-column:1/-1}.bp .bp-dose{grid-template-columns:1fr}.bp .bp-ring{width:180px;height:180px}.bp .bp-ring>div{width:124px;height:124px}}
 @media (max-width:520px){.bp .bp-links{grid-template-columns:1fr}.bp .bp-tiles{gap:10px}.bp .bp-tile{border-radius:18px}.bp .bp-tile span{left:12px;right:12px;bottom:12px}.bp .bp-tile small{font-size:12px}}
+.bp .bp-gal--one{grid-template-columns:1fr}
+.bp .bp-gal--one figure{aspect-ratio:auto;height:clamp(240px,42vw,540px);position:relative}
+.bp .bp-gal--two{grid-template-columns:1.6fr 1fr}
+@media (max-width:760px){.bp .bp-gal--two{grid-template-columns:1fr}.bp .bp-gal--two figure{height:260px}}
