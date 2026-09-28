@@ -682,6 +682,46 @@ async function createBundle(env, body) {
   return { id: j.id, name: j.name, code: j.code };
 }
 
+
+// ---------- Horoshop order (by product codes) → MoySklad customerorder (28.09.2026) ----------
+// Called by barpi-order-mail (Email Worker) via service binding. Defaults = current manual practice:
+// org ФОП Аксьонов, agent «Замовлення Сайт "Barpi"», store = main store. Idempotent by name (= Horoshop order number).
+const SITE_DEFAULTS = {
+  organization: '3502ff01-bdd3-11ef-0a80-143d00041e3a',
+  agent: '692978bd-cc60-11ef-0a80-01a800502201',
+  store: '8a1ab25d-bd6a-11ef-0a80-018b00004748',
+};
+async function resolveCode(env, code) {
+  const r = await env.DB.prepare(`SELECT ms_id FROM moysklad_products WHERE json_extract(raw_json,'$.code') = ? AND ms_archived = 0 LIMIT 1`).bind(String(code)).first();
+  if (r) return { type: 'product', id: r.ms_id };
+  const j = await fetchMS(env, '/entity/bundle', { filter: 'code=' + code, limit: 1 });
+  if (j.rows && j.rows[0]) return { type: 'bundle', id: j.rows[0].id };
+  const j2 = await fetchMS(env, '/entity/product', { filter: 'code=' + code, limit: 1 });
+  if (j2.rows && j2.rows[0]) return { type: 'product', id: j2.rows[0].id };
+  return null;
+}
+async function createOrderByCode(env, body) {
+  const name = String(body.name || '').trim();
+  if (!name) throw new Error('name (order number) required');
+  const exists = await fetchMS(env, '/entity/customerorder', { filter: 'name=' + name, limit: 1 });
+  if (exists.rows && exists.rows[0]) return { id: exists.rows[0].id, name, duplicate: true };
+  const positions = [], missing = [];
+  for (const p of body.positions || []) {
+    const r = await resolveCode(env, p.code);
+    if (!r) { missing.push(p.code); continue; }
+    positions.push({ quantity: Number(p.quantity) || 1, price: Math.round(Number(p.price_kop) || 0), assortment: { meta: { href: `${env.MS_BASE_URL}/entity/${r.type}/${r.id}`, type: r.type, mediaType: 'application/json' } } });
+  }
+  if (missing.length) throw new Error('codes not found in MoySklad: ' + missing.join(', '));
+  if (!positions.length) throw new Error('no positions');
+  const m = (type, id) => ({ meta: { href: `${env.MS_BASE_URL}/entity/${type}/${id}`, type, mediaType: 'application/json' } });
+  const payload = { name, organization: m('organization', SITE_DEFAULTS.organization), agent: m('counterparty', SITE_DEFAULTS.agent), store: m('store', SITE_DEFAULTS.store), description: String(body.description || '').slice(0, 4000), positions };
+  if (body.dryrun) return { dryrun: true, positions: positions.length };
+  const r = await fetch(`${env.MS_BASE_URL}/entity/customerorder`, { method: 'POST', headers: MS_HEADERS(env.MOYSKLAD_TOKEN), body: JSON.stringify(payload) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((j.errors && j.errors[0] && j.errors[0].error) || `MS HTTP ${r.status}`);
+  return { id: j.id, name: j.name, sum: j.sum / 100 };
+}
+
 export default {
   // Cron Trigger — щогодини. Повний ребілд sales_sku раз на добу о 03:00 UTC.
   async scheduled(event, env, ctx) {
@@ -706,6 +746,14 @@ export default {
       }
     }
 
+    // POST /order-by-code — Horoshop order → MoySklad customerorder (key: ORDER_API_KEY)
+    if (req.method === 'POST' && url.pathname === '/order-by-code') {
+      const key = req.headers.get('X-Order-Key');
+      if (!env.ORDER_API_KEY || key !== env.ORDER_API_KEY) return new Response('Forbidden', { status: 403 });
+      try { return new Response(JSON.stringify({ ok: true, ...(await createOrderByCode(env, await req.json())) }), { headers: { 'Content-Type': 'application/json' } }); }
+      catch (e) { return new Response(JSON.stringify({ ok: false, error: e.message || String(e) }), { status: 502, headers: { 'Content-Type': 'application/json' } }); }
+    }
+
     // GET /bundles, POST /bundle — sets in MoySklad (key: ORDER_API_KEY)
     if (url.pathname === '/bundles' || url.pathname === '/bundle') {
       const key = req.headers.get('X-Order-Key');
@@ -722,7 +770,7 @@ export default {
       const state = await env.DB.prepare(`SELECT entity, last_synced_at, rows_synced, last_error FROM sync_state ORDER BY entity`).all();
       return new Response(JSON.stringify({
         worker: 'barpi-sync',
-        version: '1.5-bundles',
+        version: '1.6-order-by-code',
         status: 'alive',
         d1: 'barpi-bible',
         cron: '0 * * * * (hourly)',

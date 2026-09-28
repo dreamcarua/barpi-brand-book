@@ -1,0 +1,22 @@
+name = "barpi-order-mail"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+account_id = "ab63a85bdfbf5894c28efe7076acbd82"
+
+# Email Worker: Horoshop order notifications for office@barpi.com.ua
+# 1) always forwards the email to FORWARD_TO (same as the old routing rule)
+# 2) if it is a new-order notification: saves raw .eml to R2, parses, and creates
+#    a customerorder in MoySklad via barpi-sync (only when the parsed total matches the email total)
+# Secrets: ORDER_API_KEY, TG_TOKEN, TG_CHAT
+
+[vars]
+FORWARD_TO = "office@barpi.ua"
+MODE = "live"
+
+[[services]]
+binding = "SYNC"
+service = "barpi-sync"
+
+[[r2_buckets]]
+binding = "RAW"
+bucket_name = "barpi-backups"
