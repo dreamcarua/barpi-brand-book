@@ -91,8 +91,8 @@ BB.SIDEBAR_HTML = `
   </div>
   <div class="sidebar-foot">
     <a href="https://barpi.com.ua" target="_blank" rel="noopener noreferrer" style="display:block;margin-bottom:8px;font-weight:600">barpi.com.ua →</a>
-    <span data-lang="uk">© ТОВ «ПЕТ КОРП» · <a href="mailto:office@barpi.com.ua">office@barpi.com.ua</a></span>
-    <span data-lang="en">© Pet Corp LLC · <a href="mailto:office@barpi.com.ua">office@barpi.com.ua</a></span>
+    <span data-lang="uk">© ТОВ «ПЕТ КОРП» · <a href="mailto:office@barpi.ua">office@barpi.ua</a></span>
+    <span data-lang="en">© Pet Corp LLC · <a href="mailto:office@barpi.ua">office@barpi.ua</a></span>
   </div>
 </nav>
 `;
