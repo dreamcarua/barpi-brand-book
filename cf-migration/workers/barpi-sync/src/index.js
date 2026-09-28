@@ -641,6 +641,47 @@ async function createCustomerOrder(env, body) {
   return { id: j.id, name: j.name };
 }
 
+
+// ---------- Bundles (sets) → MoySklad (28.09.2026) ----------
+// GET  /bundles  — list bundles {id,name,code,article,price}
+// POST /bundle   — create bundle { name, code, article, price_kop, components:[{code, quantity}] } (codes = MS product codes)
+// Both require X-Order-Key = ORDER_API_KEY. Writes to MS only on explicit owner request.
+async function listBundles(env) {
+  const out = []; let offset = 0;
+  for (;;) {
+    const j = await fetchMS(env, '/entity/bundle', { limit: 100, offset });
+    for (const b of j.rows || []) out.push({ id: b.id, name: b.name, code: b.code, article: b.article, archived: b.archived, price: b.salePrices && b.salePrices[0] ? b.salePrices[0].value / 100 : null });
+    if (!j.rows || j.rows.length < 100) break; offset += 100;
+  }
+  return out;
+}
+async function createBundle(env, body) {
+  const comps = body.components || [];
+  if (!body.name || !comps.length) throw new Error('name and components required');
+  const rows = [];
+  for (const c of comps) {
+    const r = await env.DB.prepare(`SELECT ms_id, raw_json FROM moysklad_products WHERE json_extract(raw_json,'$.code') = ? AND ms_archived = 0 LIMIT 1`).bind(String(c.code)).first();
+    if (!r) throw new Error('product code not found: ' + c.code);
+    rows.push({ id: r.ms_id, raw: JSON.parse(r.raw_json), qty: Number(c.quantity) || 1 });
+  }
+  const pt = rows[0].raw.salePrices && rows[0].raw.salePrices[0] && rows[0].raw.salePrices[0].priceType;
+  const cur = rows[0].raw.salePrices && rows[0].raw.salePrices[0] && rows[0].raw.salePrices[0].currency;
+  const payload = {
+    name: String(body.name).slice(0, 255),
+    code: body.code || undefined,
+    article: body.article || undefined,
+    description: body.description || undefined,
+    salePrices: pt ? [{ value: Math.round(Number(body.price_kop) || 0), priceType: pt, currency: cur }] : undefined,
+    components: rows.map((r) => ({ quantity: r.qty, assortment: { meta: { href: `${env.MS_BASE_URL}/entity/product/${r.id}`, type: 'product', mediaType: 'application/json' } } })),
+  };
+  if (!payload.salePrices) delete payload.salePrices;
+  if (payload.salePrices && !cur) delete payload.salePrices[0].currency;
+  const res = await fetch(`${env.MS_BASE_URL}/entity/bundle`, { method: 'POST', headers: MS_HEADERS(env.MOYSKLAD_TOKEN), body: JSON.stringify(payload) });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((j.errors && j.errors[0] && j.errors[0].error) || `MS HTTP ${res.status}`);
+  return { id: j.id, name: j.name, code: j.code };
+}
+
 export default {
   // Cron Trigger — щогодини. Повний ребілд sales_sku раз на добу о 03:00 UTC.
   async scheduled(event, env, ctx) {
@@ -665,12 +706,23 @@ export default {
       }
     }
 
+    // GET /bundles, POST /bundle — sets in MoySklad (key: ORDER_API_KEY)
+    if (url.pathname === '/bundles' || url.pathname === '/bundle') {
+      const key = req.headers.get('X-Order-Key');
+      if (!env.ORDER_API_KEY || key !== env.ORDER_API_KEY) return new Response('Forbidden', { status: 403 });
+      const J = (o, st = 200) => new Response(JSON.stringify(o), { status: st, headers: { 'Content-Type': 'application/json' } });
+      try {
+        if (req.method === 'GET' && url.pathname === '/bundles') return J({ ok: true, bundles: await listBundles(env) });
+        if (req.method === 'POST' && url.pathname === '/bundle') return J({ ok: true, ...(await createBundle(env, await req.json())) });
+      } catch (e) { return J({ ok: false, error: e.message || String(e) }, 502); }
+    }
+
     // GET / — status + last sync state
     if (req.method === 'GET' && url.pathname === '/') {
       const state = await env.DB.prepare(`SELECT entity, last_synced_at, rows_synced, last_error FROM sync_state ORDER BY entity`).all();
       return new Response(JSON.stringify({
         worker: 'barpi-sync',
-        version: '1.4-demand-compact',
+        version: '1.5-bundles',
         status: 'alive',
         d1: 'barpi-bible',
         cron: '0 * * * * (hourly)',
