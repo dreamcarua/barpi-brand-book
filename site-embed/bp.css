@@ -229,3 +229,6 @@ body:has(.bp-hero h1) h1:not(.bp h1){display:none}
 .bp .bp-gal--one figure{aspect-ratio:auto;height:clamp(240px,42vw,540px);position:relative}
 .bp .bp-gal--two{grid-template-columns:1.6fr 1fr}
 @media (max-width:760px){.bp .bp-gal--two{grid-template-columns:1fr}.bp .bp-gal--two figure{height:260px}}
+/* v8 01.10.2026 CLS guard (PSI mobile CLS 0.705): bp.js переносить hero/категорії з низу сторінки наверх після DOMContentLoaded, і весь контент під банером стрибав. Ховаємо (без зміни розмітки) секції під банером до html.bp-home-on; запасний показ через 2.5 с, якщо bp.js не завантажився. Відкат: видалити ці 2 рядки. */
+@keyframes bpReveal{to{visibility:visible}}
+html:not(.bp-home-on) body.homepage main.main>*:not(.banners-group){visibility:hidden;animation:bpReveal 0s 2.5s forwards}
