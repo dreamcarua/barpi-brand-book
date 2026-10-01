@@ -1,4 +1,4 @@
-/* Barpi content pages v5 (28.09.2026): details, partners, about, faq, home */
+/* Barpi content pages v5.1 (01.10.2026): details, partners, about, faq, home */
 (function () {
   function ready(fn) { if (document.readyState !== "loading") fn(); else document.addEventListener("DOMContentLoaded", fn); }
   ready(function () {
@@ -11,9 +11,13 @@
       var banner = document.querySelector(".banners-group"), benefits = document.querySelector("section.benefits"), promo = document.querySelector("section.promo") || document.querySelector("section.storefront");
       var h1 = document.querySelector(".frontInfo-content > h1, .frontInfo h1, .about__wrap > h1"), h1slot = root.querySelector(".bp-h1-slot");
       if (h1 && h1slot) { h1.removeAttribute("class"); h1slot.appendChild(h1); }
-      if (banner) after(slot("top"), banner); else if (benefits) benefits.parentNode.insertBefore(slot("top"), benefits);
-      after(slot("cats"), benefits || slot("top"));
-      after(slot("main"), promo || slot("cats"));
+      // v8.1 (01.10.2026): mobile theme — do NOT move slots above products (CLS 0.705 / LCP 5.6 s in PSI). Products first, brand block stays in "about" below.
+      var mobileTheme = !!(window.GLOBAL && GLOBAL.theme === "horoshop_mobile");
+      if (!mobileTheme) {
+        if (banner) after(slot("top"), banner); else if (benefits) benefits.parentNode.insertBefore(slot("top"), benefits);
+        after(slot("cats"), benefits || slot("top"));
+        after(slot("main"), promo || slot("cats"));
+      }
       document.documentElement.classList.add("bp-home-on");
       root = document.body;
     }
