@@ -1,0 +1,92 @@
+<script>
+/* Barpi · ad-director: UTM to order (owner decision 13.10.2026).
+   Installed in Horoshop: Маркетинг → Маркетингові сервіси → «Barpi UTM → замовлення», inside <head>.
+   1) Any page opened with utm_* or fbclid: remember the touch (last touch 30 days, first touch kept).
+   2) Thank-you page: catch the purchase (GA4 dataLayer, fbq Purchase, or the order number on the page)
+      and send order number + value + remembered UTM to brand.barpi.ua/t/order. No name, phone or email is sent. */
+(function () {
+  var EP = 'https://brand.barpi.ua/t/order', DAY = 864e5, K_LAST = 'bp_ad_touch', K_FIRST = 'bp_ad_first', K_SENT = 'bp_ad_sent';
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function put(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  try {
+    var q = new URLSearchParams(location.search), t = {}, any = false;
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'].forEach(function (n) {
+      var v = q.get(n); if (v) { t[n] = v.slice(0, 500); any = true; }
+    });
+    if (any) {
+      t.touch_at = new Date().toISOString(); t.landing_url = location.href.split('#')[0].slice(0, 1000);
+      t.referrer = (document.referrer || '').slice(0, 1000);
+      put(K_LAST, t);
+      var f = get(K_FIRST); if (!f || Date.now() - Date.parse(f.touch_at) > 30 * DAY) put(K_FIRST, t);
+    }
+  } catch (e) {}
+
+  function send(order, value, currency, items, src) {
+    order = String(order || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 40);
+    if (!order) return;
+    var sent = get(K_SENT) || []; if (sent.indexOf(order) >= 0) return;
+    var last = get(K_LAST); if (last && Date.now() - Date.parse(last.touch_at) > 30 * DAY) last = null;
+    var body = {
+      order_no: order, value: Number(value) || null, currency: currency || 'UAH', items: items || null, src: src,
+      utm: last ? { utm_source: last.utm_source, utm_medium: last.utm_medium, utm_campaign: last.utm_campaign, utm_content: last.utm_content, utm_term: last.utm_term } : {},
+      fbclid: last && last.fbclid, touch_at: last && last.touch_at, landing_url: last && last.landing_url, referrer: last && last.referrer,
+      first_touch: get(K_FIRST), page: location.pathname
+    };
+    var s = JSON.stringify(body), ok = false;
+    try { ok = navigator.sendBeacon && navigator.sendBeacon(EP, new Blob([s], { type: 'text/plain' })); } catch (e) {}
+    if (!ok) { try { fetch(EP, { method: 'POST', body: s, keepalive: true, mode: 'cors', headers: { 'content-type': 'text/plain' } }); } catch (e) {} }
+    sent.push(order); put(K_SENT, sent.slice(-50));
+  }
+
+  // GA4 / gtag: purchase arrives through dataLayer as ['event','purchase',{transaction_id,value,...}] or {event:'purchase',ecommerce:{...}}
+  function inspect(x) {
+    try {
+      if (!x) return;
+      var a = (typeof x.length === 'number' && typeof x !== 'string') ? Array.prototype.slice.call(x) : null;
+      if (a && a[0] === 'event' && a[1] === 'purchase' && a[2]) {
+        return send(a[2].transaction_id, a[2].value, a[2].currency, (a[2].items || []).map(function (i) { return { id: i.item_id || i.id, q: i.quantity, p: i.price }; }), 'gtag');
+      }
+      if (x.event === 'purchase' && x.ecommerce) {
+        var e = x.ecommerce.purchase ? x.ecommerce.purchase.actionField || {} : x.ecommerce;
+        return send(e.transaction_id || e.id, e.value || e.revenue, e.currency, null, 'dataLayer');
+      }
+    } catch (err) {}
+  }
+  // gtag.js replaces dataLayer.push when it loads, so the queue is also scanned by index for 30 s
+  window.dataLayer = window.dataLayer || [];
+  var seen = 0;
+  function scan() { var dl = window.dataLayer || []; for (; seen < dl.length; seen++) inspect(dl[seen]); }
+  function wrap() {
+    var dl = window.dataLayer; if (!dl || (dl.push && dl.push.__bp)) return;
+    var push = dl.push;
+    var w = function () { var r = push.apply(this, arguments); scan(); for (var i = 0; i < arguments.length; i++) inspect(arguments[i]); return r; };
+    w.__bp = true; dl.push = w;
+  }
+  scan(); wrap();
+  var n = 0, sv = setInterval(function () { scan(); wrap(); if (++n > 60) clearInterval(sv); }, 500);
+
+  // Meta pixel: fbq('track','Purchase',{value,currency},{eventID}) — eventID often carries the order number
+  var tries = 0, iv = setInterval(function () {
+    if (window.fbq && !window.fbq.__bp) {
+      var orig = window.fbq;
+      var w = function () {
+        try { if (arguments[0] === 'track' && arguments[1] === 'Purchase') { var o = arguments[3] || {}; pendingFb = { id: o.eventID, v: (arguments[2] || {}).value, c: (arguments[2] || {}).currency }; } } catch (e) {}
+        return orig.apply(this, arguments);
+      };
+      for (var k in orig) { try { w[k] = orig[k]; } catch (e) {} }
+      w.__bp = true; window.fbq = w; clearInterval(iv);
+    }
+    if (++tries > 50) clearInterval(iv);
+  }, 200);
+  var pendingFb = null;
+
+  // Fallback on the thank-you page: number from the page text, value from the Meta Purchase if seen
+  function fromPage() {
+    if (!/checkout|order|thank|success|zamovl/i.test(location.pathname + location.search)) return;
+    var m = (document.body && document.body.innerText || '').match(/(?:Замовлення|Заказ|Order)\s*(?:№|#|No\.?)\s*(\d{2,10})/i);
+    var id = m ? m[1] : (pendingFb && pendingFb.id && /^\d{2,10}$/.test(String(pendingFb.id)) ? pendingFb.id : null);
+    if (id) send(id, pendingFb && pendingFb.v, pendingFb && pendingFb.c, null, m ? 'page' : 'fbq');
+  }
+  window.addEventListener('load', function () { setTimeout(fromPage, 2500); });
+})();
+</script>

@@ -57,13 +57,14 @@ async function order(req, env) {
   const u = b.utm || {};
   await env.DB.prepare(
     `INSERT OR IGNORE INTO ad_orders (order_no, placed_at, value, currency, items, utm_source, utm_medium, utm_campaign, utm_content, utm_term,
-      fbclid, touch_at, landing_url, referrer, first_touch, ua, raw)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      fbclid, touch_at, landing_url, referrer, first_touch, ua, raw, day_kyiv)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(
     no, nowIso(), val, s(b.currency, 8) || 'UAH', s(JSON.stringify(b.items || null), 4000),
     s(u.utm_source), s(u.utm_medium), s(u.utm_campaign), s(u.utm_content, 500), s(u.utm_term),
     s(b.fbclid, 500), s(b.touch_at, 40), s(b.landing_url, 1000), s(b.referrer, 1000),
-    s(JSON.stringify(b.first_touch || null), 2000), s(req.headers.get('User-Agent'), 300), s(text, 8000)
+    s(JSON.stringify(b.first_touch || null), 2000), s(req.headers.get('User-Agent'), 300), s(text, 8000),
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(new Date())
   ).run();
   return new Response(null, { status: 204, headers: cors });
 }
