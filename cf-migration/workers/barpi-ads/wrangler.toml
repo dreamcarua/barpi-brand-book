@@ -1,0 +1,22 @@
+name = "barpi-ads"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+account_id = "ab63a85bdfbf5894c28efe7076acbd82"
+workers_dev = false
+
+# ad-director data plane for Barpi (owner decision 13.10.2026).
+# /t/*                    public: order beacon from barpi.com.ua, watchdog verdict
+# /dashboard/api/ads/*    behind Cloudflare Access (same policy as /dashboard/*); JWT is verified in code
+routes = [
+  { pattern = "brand.barpi.ua/t/*", zone_name = "barpi.ua" },
+  { pattern = "brand.barpi.ua/dashboard/api/ads/*", zone_name = "barpi.ua" },
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "barpi-bible"
+database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
+
+[vars]
+ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
+# ACCESS_AUD = "<aud tag of the Access app e2567fcf-...>"  # optional extra check

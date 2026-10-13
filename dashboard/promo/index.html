@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Акції · Promo · Barpi</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--y:#001154;--y-soft:rgba(0,17,84,.1);--g:#39B44A;--g-soft:rgba(57,180,74,.13);--r:#E84040;--r-soft:rgba(232,64,64,.1);--or:#F59E0B;--or-soft:rgba(245,158,11,.14);--d:#1A1A1A;--bg:#FAF7F7;--card:#fff;--muted:#777;--line:#EEE}
+*{box-sizing:border-box}
+body{background:var(--bg);font-family:Rubik,-apple-system,sans-serif;color:var(--d);margin:0;line-height:1.5}
+html[lang=uk] [data-lang=en],html[lang=en] [data-lang=uk]{display:none!important}
+.top{background:var(--y);color:#fff;padding:18px 16px}
+.top .in{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top h1{margin:0;font-size:18px;font-weight:800}
+.top .sub{font-size:11px;opacity:.65;text-transform:uppercase;letter-spacing:.06em}
+.top .sp{flex:1}
+.ls button{border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font:600 12px Rubik,sans-serif;padding:5px 10px;border-radius:7px;cursor:pointer}
+.ls button.on{background:#fff;color:var(--y)}
+.top a{color:#fff;opacity:.8;font-size:12px}
+main{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
+h2{margin:0 0 12px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+.fld label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+.fld input,.fld textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font:400 14px Rubik,sans-serif;color:var(--d);background:#fff}
+.fld textarea{min-height:64px;resize:vertical}
+.fld .hint{font-size:11px;color:var(--muted);margin-top:4px}
+.full{grid-column:1/-1}
+.btn{border:0;background:var(--y);color:#fff;font:700 13px Rubik,sans-serif;padding:10px 18px;border-radius:9px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--y);border:1px solid var(--y-soft)}
+.btn.red{background:transparent;color:var(--r);border:1px solid var(--r-soft)}
+.btn.sm{padding:6px 10px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.msg{font-size:13px}.msg.err{color:var(--r)}.msg.ok{color:#1f7a2c}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #F4F4F0;vertical-align:top}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.t-live{background:var(--g-soft);color:#1f7a2c}.t-plan{background:var(--y-soft);color:var(--y)}.t-past{background:#F1F1F1;color:#888}.t-cancel{background:var(--r-soft);color:var(--r)}
+.small{font-size:12px;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:700px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:12px}
+.kpi .l{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.kpi .v{font-size:16px;font-weight:800;margin-top:4px}
+.kpi.bad .v{color:var(--r)}.kpi.ok .v{color:#1f7a2c}
+.empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <div><div class="sub">Barpi · ad-director</div>
+    <h1><span data-lang="uk">Календар акцій для реклами</span><span data-lang="en">Promo calendar for ads</span></h1></div>
+  <div class="sp"></div>
+  <a href="/dashboard/"><span data-lang="uk">← Дашборд</span><span data-lang="en">← Dashboard</span></a>
+  <div class="ls"><button data-set="uk">UK</button> <button data-set="en">EN</button></div>
+</div></header>
+<main>
+  <section class="card">
+    <h2><span data-lang="uk">Стан системи</span><span data-lang="en">System status</span></h2>
+    <div class="kpis" id="status"><div class="empty">…</div></div>
+  </section>
+
+  <section class="card">
+    <h2 id="formTitle"><span data-lang="uk">Нова акція</span><span data-lang="en">New promo</span></h2>
+    <p class="small"><span data-lang="uk">Система вмикає рекламу акції лише у вікні «початок → кінець» і бере механіку дослівно. Час київський.</span><span data-lang="en">The system runs promo ads only inside the start → end window and quotes the mechanic verbatim. Times are Kyiv time.</span></p>
+    <form id="f" class="grid" autocomplete="off">
+      <div class="fld full"><label><span data-lang="uk">Назва *</span><span data-lang="en">Title *</span></label><input name="title" maxlength="120" required></div>
+      <div class="fld full"><label><span data-lang="uk">Механіка: що отримує покупець *</span><span data-lang="en">Mechanic: what the buyer gets *</span></label>
+        <textarea name="mechanic" maxlength="500" required></textarea>
+        <div class="hint"><span data-lang="uk">Дослівно, як має бути в рекламі. Без медичних тверджень.</span><span data-lang="en">Verbatim as it should appear in ads. No health claims.</span></div></div>
+      <div class="fld"><label><span data-lang="uk">Промокод</span><span data-lang="en">Promo code</span></label><input name="promo_code" maxlength="40"></div>
+      <div class="fld"><label><span data-lang="uk">Посадкова сторінка</span><span data-lang="en">Landing page</span></label><input name="landing_url" maxlength="500" placeholder="https://barpi.com.ua/..."></div>
+      <div class="fld"><label><span data-lang="uk">Початок (Київ) *</span><span data-lang="en">Start (Kyiv) *</span></label><input type="datetime-local" name="starts" required></div>
+      <div class="fld"><label><span data-lang="uk">Кінець (Київ) *</span><span data-lang="en">End (Kyiv) *</span></label><input type="datetime-local" name="ends" required></div>
+      <div class="fld full"><label><span data-lang="uk">Текст для клієнта (необов'язково)</span><span data-lang="en">Customer text (optional)</span></label><textarea name="client_text" maxlength="1000"></textarea></div>
+      <div class="fld full"><label><span data-lang="uk">Нотатка для системи</span><span data-lang="en">Note for the system</span></label><textarea name="note" maxlength="1000"></textarea></div>
+    </form>
+    <div class="row">
+      <button class="btn" id="save"><span data-lang="uk">Зберегти</span><span data-lang="en">Save</span></button>
+      <button class="btn ghost" id="reset" type="button"><span data-lang="uk">Очистити</span><span data-lang="en">Clear</span></button>
+      <span class="msg" id="msg"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span data-lang="uk">Акції</span><span data-lang="en">Promos</span></h2>
+    <div class="tw"><table><thead><tr>
+      <th><span data-lang="uk">Стан</span><span data-lang="en">State</span></th>
+      <th><span data-lang="uk">Акція</span><span data-lang="en">Promo</span></th>
+      <th><span data-lang="uk">Вікно (Київ)</span><span data-lang="en">Window (Kyiv)</span></th>
+      <th><span data-lang="uk">Код</span><span data-lang="en">Code</span></th><th></th>
+    </tr></thead><tbody id="events"><tr><td colspan="5" class="empty">…</td></tr></tbody></table></div>
+  </section>
+
+  <section class="card">
+    <h2><span data-lang="uk">Замовлення з сайту за 30 днів (з UTM)</span><span data-lang="en">Site orders, last 30 days (with UTM)</span></h2>
+    <div class="tw"><table><thead><tr>
+      <th><span data-lang="uk">Час (Київ)</span><span data-lang="en">Time (Kyiv)</span></th><th>№</th>
+      <th class="num"><span data-lang="uk">Сума</span><span data-lang="en">Value</span></th>
+      <th>utm_medium</th><th>utm_campaign</th><th>utm_content</th>
+    </tr></thead><tbody id="orders"><tr><td colspan="6" class="empty">…</td></tr></tbody></table></div>
+  </section>
+
+  <section class="card">
+    <h2><span data-lang="uk">Журнал дій системи</span><span data-lang="en">System action journal</span></h2>
+    <div class="tw"><table><thead><tr>
+      <th><span data-lang="uk">Час (Київ)</span><span data-lang="en">Time (Kyiv)</span></th>
+      <th><span data-lang="uk">Дія</span><span data-lang="en">Action</span></th>
+      <th><span data-lang="uk">Статус</span><span data-lang="en">Status</span></th>
+      <th><span data-lang="uk">Об'єкт</span><span data-lang="en">Entity</span></th>
+      <th><span data-lang="uk">Причина</span><span data-lang="en">Reason</span></th>
+    </tr></thead><tbody id="journal"><tr><td colspan="5" class="empty">…</td></tr></tbody></table></div>
+  </section>
+</main>
+<script>
+(function(){
+const API='/dashboard/api/ads/';
+const TZ='Europe/Kyiv';
+let lang='uk', editing=null;
+try{lang=localStorage.getItem('bb-promo-lang')||'uk'}catch(e){}
+function setLang(l){lang=l;document.documentElement.lang=l;document.querySelectorAll('.ls button').forEach(b=>b.classList.toggle('on',b.dataset.set===l));try{localStorage.setItem('bb-promo-lang',l)}catch(e){}render()}
+document.querySelectorAll('.ls button').forEach(b=>b.onclick=()=>setLang(b.dataset.set));
+const T=(uk,en)=>lang==='en'?en:uk;
+// Kyiv local <-> UTC ISO
+function tzOffset(ts){const p=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).formatToParts(new Date(ts)).reduce((a,x)=>(a[x.type]=x.value,a),{});return Date.UTC(+p.year,p.month-1,+p.day,+p.hour,+p.minute,+p.second)-ts}
+function kyivToUtc(local){const [d,t]=local.split('T');const [Y,M,D]=d.split('-').map(Number);const [h,m]=t.split(':').map(Number);const guess=Date.UTC(Y,M-1,D,h,m);let u=guess-tzOffset(guess);u=guess-tzOffset(u);return new Date(u).toISOString().replace(/\.\d{3}Z$/,'Z')}
+function utcToKyivInput(iso){const ts=Date.parse(iso)+tzOffset(Date.parse(iso));return new Date(ts).toISOString().slice(0,16)}
+function fmt(iso){if(!iso)return '';const d=new Date(iso);const p=new Intl.DateTimeFormat('uk-UA',{timeZone:TZ,day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d).reduce((a,x)=>(a[x.type]=x.value,a),{});return `${p.day}.${p.month}.${p.year} ${p.hour}:${p.minute}`}
+async function api(path,opt){const r=await fetch(API+path,Object.assign({credentials:'same-origin',headers:{'content-type':'application/json'}},opt||{}));let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j}
+function el(tag,attrs,...kids){const e=document.createElement(tag);for(const k in (attrs||{})){if(k==='class')e.className=attrs[k];else if(k.startsWith('on'))e[k]=attrs[k];else e.setAttribute(k,attrs[k])}kids.flat().forEach(c=>e.append(c instanceof Node?c:document.createTextNode(c==null?'':String(c))));return e}
+let data={events:[],orders:[],rows:[],watch:null};
+async function load(){
+  const res=await Promise.allSettled([api('events'),api('orders?days=30'),api('journal?limit=40'),api('watch')]);
+  if(res[0].status==='fulfilled')data.events=res[0].value.events;
+  if(res[1].status==='fulfilled')data.orders=res[1].value.orders;
+  if(res[2].status==='fulfilled')data.rows=res[2].value.rows;
+  if(res[3].status==='fulfilled')data.watch=res[3].value;
+  const bad=res.find(r=>r.status==='rejected');
+  if(bad)msg(T('Помилка завантаження: ','Load error: ')+bad.reason.message,true);
+  render();
+}
+function msg(t,err){const m=document.getElementById('msg');m.textContent=t;m.className='msg '+(err?'err':'ok')}
+function state(e){const n=Date.now();if(e.status==='cancelled')return['t-cancel',T('скасовано','cancelled')];if(Date.parse(e.ends_at)<=n)return['t-past',T('минула','past')];if(Date.parse(e.starts_at)<=n)return['t-live',T('іде зараз','live')];return['t-plan',T('заплановано','planned')]}
+function render(){
+  const w=data.watch, st=document.getElementById('status'); st.textContent='';
+  if(w){
+    const names={'express-check':T('Експрес (3 год)','Express (3 h)'),'daily-diagnostic':T('Щоденна діагностика','Daily diagnosis'),'event-stop':T('Стоп акцій','Promo stop')};
+    for(const k of Object.keys(names)){const c=w.checks[k]||{};const v=c.state?T('ще не запущено','not started'):(c.late?T('запізнюється ','late ')+c.age_h+T(' год',' h'):fmt(c.last));
+      st.append(el('div',{class:'kpi '+(c.late?'bad':(c.last?'ok':''))},el('div',{class:'l'},names[k]),el('div',{class:'v'},v)))}
+    const u=w.checks['unfinished-writes']||{count:0};
+    st.append(el('div',{class:'kpi '+(u.count?'bad':'ok')},el('div',{class:'l'},T('Незакриті записи','Unfinished writes')),el('div',{class:'v'},u.count)));
+  }
+  const tb=document.getElementById('events'); tb.textContent='';
+  if(!data.events.length)tb.append(el('tr',{},el('td',{colspan:5,class:'empty'},T('Акцій ще немає','No promos yet'))));
+  for(const e of data.events){const [c,l]=state(e);
+    tb.append(el('tr',{},
+      el('td',{},el('span',{class:'tag '+c},l)),
+      el('td',{},el('b',{},e.title),el('div',{class:'small'},e.mechanic||''),e.landing_url?el('div',{class:'small'},e.landing_url):''),
+      el('td',{},fmt(e.starts_at),el('br'),'→ '+fmt(e.ends_at)),
+      el('td',{},e.promo_code||''),
+      el('td',{},e.status==='cancelled'?'':el('button',{class:'btn ghost sm',onclick:()=>edit(e)},T('Змінити','Edit')),' ',
+        e.status==='cancelled'||Date.parse(e.ends_at)<=Date.now()?'':el('button',{class:'btn red sm',onclick:()=>cancel(e)},T('Скасувати','Cancel')))))}
+  const ob=document.getElementById('orders'); ob.textContent='';
+  if(!data.orders.length)ob.append(el('tr',{},el('td',{colspan:6,class:'empty'},T('Ще немає замовлень з міткою: скрипт на сайті ще не встановлено або замовлень не було','No tagged orders yet: the site script is not installed yet or there were no orders'))));
+  for(const o of data.orders)ob.append(el('tr',{},el('td',{},fmt(o.placed_at)),el('td',{},o.order_no),el('td',{class:'num'},o.value!=null?o.value.toLocaleString('uk-UA')+' ₴':''),el('td',{},o.utm_medium||'—'),el('td',{},o.utm_campaign||''),el('td',{},o.utm_content||'')));
+  const jb=document.getElementById('journal'); jb.textContent='';
+  if(!data.rows.length)jb.append(el('tr',{},el('td',{colspan:5,class:'empty'},T('Записів ще немає','No rows yet'))));
+  for(const r of data.rows)jb.append(el('tr',{},el('td',{},fmt(r.at)),el('td',{},r.action),el('td',{},r.status),el('td',{},r.entity_name||r.entity_id||''),el('td',{class:'small'},r.reason||'')));
+}
+const f=document.getElementById('f');
+function clearForm(){f.reset();editing=null;document.getElementById('formTitle').innerHTML='<span data-lang="uk">Нова акція</span><span data-lang="en">New promo</span>'}
+function edit(e){editing=e.id;f.elements.title.value=e.title||'';f.elements.mechanic.value=e.mechanic||'';f.elements.promo_code.value=e.promo_code||'';f.elements.landing_url.value=e.landing_url||'';
+  f.elements.starts.value=utcToKyivInput(e.starts_at);f.elements.ends.value=utcToKyivInput(e.ends_at);f.elements.client_text.value=e.client_text||'';f.elements.note.value=e.note||'';
+  document.getElementById('formTitle').textContent=T('Зміна акції: ','Editing: ')+e.title;window.scrollTo({top:f.offsetTop-120,behavior:'smooth'})}
+async function cancel(e){if(!confirm(T('Скасувати акцію «'+e.title+'»? Реклама з нею буде вимкнена системою.','Cancel promo "'+e.title+'"? Its ads will be switched off by the system.')))return;
+  try{await api('events/'+e.id,{method:'PATCH',body:JSON.stringify({status:'cancelled'})});msg(T('Скасовано','Cancelled'));load()}catch(err){msg(err.message,true)}}
+document.getElementById('reset').onclick=()=>{clearForm();msg('')};
+document.getElementById('save').onclick=async()=>{
+  if(!f.reportValidity())return;
+  const body={title:f.elements.title.value.trim(),mechanic:f.elements.mechanic.value.trim(),promo_code:f.elements.promo_code.value.trim(),landing_url:f.elements.landing_url.value.trim(),
+    client_text:f.elements.client_text.value.trim(),note:f.elements.note.value.trim(),starts_at:kyivToUtc(f.elements.starts.value),ends_at:kyivToUtc(f.elements.ends.value)};
+  if(Date.parse(body.ends_at)<=Date.parse(body.starts_at)){msg(T('Кінець має бути пізніше за початок','End must be after start'),true);return}
+  if(body.landing_url&&!/^https:\/\/(www\.)?barpi\.com\.ua\//.test(body.landing_url)){msg(T('Посадкова має бути на barpi.com.ua','Landing must be on barpi.com.ua'),true);return}
+  const b=document.getElementById('save');b.disabled=true;
+  try{if(editing)await api('events/'+editing,{method:'PATCH',body:JSON.stringify(body)});else await api('events',{method:'POST',body:JSON.stringify(body)});
+    msg(T('Збережено','Saved'));clearForm();load()}catch(err){msg(err.message,true)}finally{b.disabled=false}};
+setLang(lang);load();
+})();
+</script>
+</body>
+</html>
