@@ -20,3 +20,8 @@ database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
 [vars]
 ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
 # ACCESS_AUD = "<aud tag of the Access app e2567fcf-...>"  # optional extra check
+
+# Watchdog cron (owner decision 14.10.2026): evaluates checks and sends Telegram alerts itself.
+# Secrets TG_TOKEN and TG_CHAT are set from the memory-kit secrets by a one-off Action.
+[triggers]
+crons = ["*/30 * * * *"]

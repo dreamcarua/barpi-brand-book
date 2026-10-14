@@ -1,6 +1,6 @@
 // barpi-ads: data plane of ad-director for Barpi (owner decision 13.10.2026).
 //   POST /t/order                 public beacon from barpi.com.ua thank-you page -> ad_orders
-//   GET  /t/watch                 public watchdog verdict (no business data) for the memory-kit Action
+//   GET  /t/watch                 public watchdog verdict (no business data); cron */30 sends alerts itself
 //   /dashboard/api/ads/*          promo calendar, journal and orders for brand.barpi.ua/dashboard/promo/
 //                                 (behind Cloudflare Access; the worker also verifies the Access JWT)
 // D1: barpi-bible, tables ad_journal, ad_events, ad_orders (migrations/0001_ad_director.sql).
@@ -34,6 +34,9 @@ export default {
     } catch (e) {
       return json({ error: 'internal', detail: String(e && e.message || e).slice(0, 200) }, 500);
     }
+  },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(cronTick(env));
   },
 };
 
@@ -69,17 +72,35 @@ async function order(req, env) {
   return new Response(null, { status: 204, headers: cors });
 }
 
-// ---------- watchdog verdict (system/ADDING_A_PROJECT.md -> Watching the system) ----------
-// A check starts only after its first run row exists. An alert is raised in the hour the
-// limit is crossed and then every 6 hours while it lasts, so an hourly poller needs no state.
+// ---------- watchdog (system/ADDING_A_PROJECT.md -> Watching the system) ----------
+// Two independent schedulers (owner decision 14.10.2026, "зроби надійно"):
+//  1. This worker's own Cron Trigger (every 30 min) evaluates the checks and sends the Telegram
+//     alert itself. State in D1 ad_watch_state: an alert goes out when the set of problems changes,
+//     again every 6 h while it lasts, and once more when everything is back to normal.
+//  2. The memory-kit Action only checks that (1) is alive (heartbeat fresh, Telegram configured).
+// A check starts only after its first run row exists.
 const CHECKS = [
   { key: 'express-check', limit_h: 4 },      // express every 3 h + 1 h
   { key: 'daily-diagnostic', limit_h: 26 },
   { key: 'event-stop', limit_h: 26 },
 ];
-async function watch(env) {
+const MIRROR_LIMIT_H = 30;                   // mirror Meta -> D1 runs daily at 06:35 Kyiv
+const REPEAT_H = 6;
+const HEARTBEAT_LIMIT_MIN = 75;              // cron every 30 min; deadman alerts after 75 min
+
+async function getState(env, k) {
+  const r = await env.DB.prepare('SELECT v, at FROM ad_watch_state WHERE k=?').bind(k).first();
+  return r || null;
+}
+async function setState(env, k, v) {
+  await env.DB.prepare(
+    'INSERT INTO ad_watch_state (k, v, at) VALUES (?,?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, at=excluded.at'
+  ).bind(k, v, nowIso()).run();
+}
+
+async function evaluate(env) {
   const now = Date.now();
-  const alerts = [];
+  const problems = [];   // { key, text } — key is stable while the problem lasts
   const checks = {};
   const rows = await env.DB.prepare(
     `SELECT CASE WHEN reason LIKE 'express-check%' THEN 'express-check'
@@ -91,21 +112,76 @@ async function watch(env) {
   for (const c of CHECKS) {
     if (!last[c.key]) { checks[c.key] = { state: 'not started' }; continue; }
     const age_h = (now - Date.parse(last[c.key])) / H;
-    const late = age_h - c.limit_h;
-    checks[c.key] = { last: last[c.key], age_h: +age_h.toFixed(2), limit_h: c.limit_h, late: late > 0 };
-    if (late > 0 && (late < 1 || (late % 6) < 1)) alerts.push(`${c.key}: last run ${age_h.toFixed(1)} h ago (limit ${c.limit_h} h)`);
+    const late = age_h > c.limit_h;
+    checks[c.key] = { last: last[c.key], age_h: +age_h.toFixed(2), limit_h: c.limit_h, late };
+    if (late) problems.push({ key: `late:${c.key}`, text: `${c.key}: останній прогін ${age_h.toFixed(1)} год тому (межа ${c.limit_h} год)` });
   }
+  const mir = await env.DB.prepare('SELECT MAX(updated_at) AS last FROM ad_daily').first();
+  if (mir && mir.last) {
+    const age_h = (now - Date.parse(mir.last)) / H;
+    checks['mirror'] = { last: mir.last, age_h: +age_h.toFixed(2), limit_h: MIRROR_LIMIT_H, late: age_h > MIRROR_LIMIT_H };
+    if (age_h > MIRROR_LIMIT_H) problems.push({ key: 'late:mirror', text: `mirror Meta → D1: дані ${age_h.toFixed(1)} год тому (межа ${MIRROR_LIMIT_H} год)` });
+  } else checks['mirror'] = { state: 'not started' };
   const stuck = await env.DB.prepare(
     `SELECT id, action, entity_id, at FROM ad_journal WHERE project=? AND status='approved' AND at < ? ORDER BY at LIMIT 20`
   ).bind(PROJECT, new Date(now - H).toISOString().replace(/\.\d{3}Z$/, 'Z')).all();
   const st = stuck.results || [];
   checks['unfinished-writes'] = { count: st.length };
-  for (const r of st) {
-    const age_h = (now - Date.parse(r.at)) / H - 1;
-    if (age_h < 1 || (age_h % 6) < 1) alerts.push(`journal row ${r.id} (${r.action} ${r.entity_id || ''}) approved since ${r.at}, never closed`);
+  for (const r of st) problems.push({ key: `stuck:${r.id}`, text: `журнал, рядок ${r.id} (${r.action} ${r.entity_id || ''}): approved з ${r.at}, не закрито` });
+  return { problems, checks };
+}
+
+// Public verdict for the deadman Action and for people. No business data.
+async function watch(env) {
+  const { problems, checks } = await evaluate(env);
+  const hb = await getState(env, 'cron_heartbeat');
+  const hb_age_min = hb ? (Date.now() - Date.parse(hb.at)) / 60000 : null;
+  const cron = {
+    last: hb ? hb.at : null,
+    age_min: hb_age_min === null ? null : +hb_age_min.toFixed(1),
+    limit_min: HEARTBEAT_LIMIT_MIN,
+    alive: hb_age_min !== null && hb_age_min <= HEARTBEAT_LIMIT_MIN,
+    telegram: hb ? hb.v : 'unknown',
+  };
+  return {
+    project: PROJECT, at: nowIso(), ok: problems.length === 0,
+    problems: problems.map(p => p.text),
+    alerts: [],          // alerts are sent by the worker cron itself since 14.10.2026
+    cron, checks,
+  };
+}
+
+async function tg(env, text) {
+  if (!env.TG_TOKEN || !env.TG_CHAT) return false;
+  const r = await fetch(`https://api.telegram.org/bot${env.TG_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ chat_id: env.TG_CHAT, text, disable_web_page_preview: true }),
+  });
+  if (!r.ok) return false;
+  const j = await r.json().catch(() => ({}));
+  return !!j.ok;
+}
+
+async function cronTick(env) {
+  const tgState = env.TG_TOKEN && env.TG_CHAT ? 'configured' : 'missing';
+  const { problems } = await evaluate(env);
+  const keys = problems.map(p => p.key).sort().join('|');
+  const prev = await getState(env, 'alert');
+  const prevKeys = prev ? prev.v : '';
+  const sinceH = prev ? (Date.now() - Date.parse(prev.at)) / H : Infinity;
+  let send = null;
+  if (keys && (keys !== prevKeys || sinceH >= REPEAT_H)) {
+    send = `⚠️ Barpi реклама, сторож:\n• ${problems.map(p => p.text).join('\n• ')}\nhttps://brand.barpi.ua/t/watch`;
+  } else if (!keys && prevKeys) {
+    send = '✅ Barpi реклама, сторож: усе знову в нормі.';
   }
-  checks['actual-spend'] = { state: 'not watched: spend is not mirrored into the store yet' };
-  return { project: PROJECT, at: nowIso(), ok: alerts.length === 0, alerts, checks };
+  let sent = null;
+  if (send) {
+    sent = await tg(env, send);
+    if (sent) await setState(env, 'alert', keys);   // not sent: retried on the next tick
+  }
+  await setState(env, 'cron_heartbeat', sent === false ? 'send-failed' : tgState);
 }
 
 // ---------- Cloudflare Access: verify the JWT the edge adds after the Access check ----------
