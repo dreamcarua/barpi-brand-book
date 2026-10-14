@@ -1,6 +1,6 @@
 {
-  "exported_at": "2026-06-09T09:08:26.704097Z",
-  "note": "Snapshot of CF Access policy for brand.barpi.ua/dashboard/* — for audit trail. To restore: replay via API. Source of truth = CF Dashboard UI.",
+  "exported_at": "2026-10-14T09:51:15Z",
+  "note": "Snapshot of CF Access policy for brand.barpi.ua/dashboard/* — for audit trail. To restore: replay via API. Source of truth = CF Dashboard UI. 14.10.2026: barpimarketing@gmail.com added (owner request, promo calendar for the team).",
   "team_domain": "uabarpi.cloudflareaccess.com",
   "account_id": "ab63a85bdfbf5894c28efe7076acbd82",
   "app": {
@@ -18,11 +18,36 @@
       "decision": "allow",
       "precedence": 1,
       "include": [
-        { "email": { "email": "vg@abrisart.com" } },
-        { "email": { "email": "office@barpi.com.ua" } },
-        { "email": { "email": "aksonov@barpi.com.ua" } },
-        { "email": { "email": "vg@sneco.ua" } },
-        { "email": { "email": "fg@abrisart.com" } }
+        {
+          "email": {
+            "email": "vg@abrisart.com"
+          }
+        },
+        {
+          "email": {
+            "email": "office@barpi.com.ua"
+          }
+        },
+        {
+          "email": {
+            "email": "aksonov@barpi.com.ua"
+          }
+        },
+        {
+          "email": {
+            "email": "vg@sneco.ua"
+          }
+        },
+        {
+          "email": {
+            "email": "fg@abrisart.com"
+          }
+        },
+        {
+          "email": {
+            "email": "barpimarketing@gmail.com"
+          }
+        }
       ],
       "exclude": [],
       "require": []
@@ -30,6 +55,7 @@
   ],
   "allowlist_summary": [
     "aksonov@barpi.com.ua",
+    "barpimarketing@gmail.com",
     "fg@abrisart.com",
     "office@barpi.com.ua",
     "vg@abrisart.com",
