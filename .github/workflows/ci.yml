@@ -28,7 +28,7 @@ jobs:
       - name: Lychee link check
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --no-progress --exclude-mail --exclude 'barpi-api.vg-ab6.workers.dev' --exclude 'barpi-sync.vg-ab6.workers.dev' './**/*.html'
+          args: --no-progress --exclude 'barpi-api.vg-ab6.workers.dev' --exclude 'barpi-sync.vg-ab6.workers.dev' './**/*.html'
         continue-on-error: true
   worker-syntax:
     runs-on: ubuntu-latest

@@ -2,6 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /dashboard/
 Disallow: /auth-callback/
-Disallow: /kormotech/
 
 Sitemap: https://brand.barpi.ua/sitemap.xml
