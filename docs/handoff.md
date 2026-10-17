@@ -1,19 +1,20 @@
 # Handoff — стан посеред задачі
 
-Оновлено: 17.10.2026 11:45 CEST
+Оновлено: 17.10.2026 11:40 CEST
 
 ## Задача дослівно
-«вже і у снеко і у Абриса є розділи з вакансіями, які повʼязані зі сторінками-дашбордами. Зробимо аналог для Барпі? https://abrisart.com/en/careers https://sneco.ua/kariera/ повтори повныстю функцыонал, зроби красиво і зручно, задай питання якщо треба» — Вадим, 17.10.2026
-Відповіді Вадима: адреса barpi.com.ua/kariera/; лише UA; вакансія «менеджер з продажу» нейтрально; роботодавець ТОВ; Мукачево + гібрид + віддалено, умови як у snEco; сповіщення Олександр, Вадим, office@; фото колективу є; дашборд — точна копія.
+«…повтори повністю функціонал [кар'єри snEco і Abris] … зроби красиво і зручно» — Вадим, 17.10.2026. Прев'ю показано, Вадим: «1. запускай 2. в чат наш Barpi хай бот пише! 3. не треба».
 
-## Зроблено (гілка `careers`)
-- Воркер `cf-migration/workers/barpi-hr` (копія Abris `lib/hr.js` + `lib/careers.js`), Access JWT у `src/access.js`, міграції 0001 (схема) і 0002 (вакансія), 8 тестів зелені.
-- Дашборд `dashboard/careers/index.html` (копія Abris `brand/hr.html`, стиль Barpi), картка в `dashboard/index.html`.
-- Сторінка `site-embed/pages/careers.html` + `site-embed/careers.js` + блок стилів у `bp.css`.
-- Локально перевірено: wrangler dev + Playwright 1440 і 390, відгук з резюме доходить у воронку, лист і TG формуються.
+## Зроблено
+- R2 `barpi-hr-files` створено; D1 barpi-bible: міграції 0001 і 0002 застосовано (через Cloudflare MCP), вакансія id 1 опублікована.
+- Воркер `barpi-hr` задеплоєно (wrangler OAuth на mac-home), маршрути brand.barpi.ua/dashboard/api/hr/* і /hr-api/*, ACCESS_AUD закріплено. Секрети: TG_TOKEN (@barpiua_bot), HR_TG_CHATS (поки особистий чат Вадима), HR_ADMIN_EMAILS, HR_PAYROLL_EMAILS.
+- Гілку careers злито в main: brand.barpi.ua/dashboard/careers/ і site-embed/careers.js + bp.css живі.
+- Наскрізний тест з Origin barpi.com.ua: кандидат id 1 «ТЕСТ Claude (видалити)» з резюме в D1/R2. ВИДАЛИТИ після перевірки доставки.
 
-## Не зроблено (чекає «так» Вадима на прев'ю)
-1. R2 `barpi-hr-files`; 2. D1 міграції 0001, 0002 на barpi-bible; 3. `wrangler deploy` barpi-hr + секрети TG_TOKEN, HR_TG_CHATS, HR_ADMIN_EMAILS; 4. Email Routing: перевірити, що office@barpi.ua — підтверджена адреса; 5. Horoshop: сторінка /kariera/ (поле контенту = careers.html), лоадер: додати "/kariera/" у P і careers.js, V=9; пункт меню; 6. злити гілку.
+## Не зроблено
+1. Horoshop: сторінка /kariera/ (вміст = site-embed/pages/careers.html), лоадер у «Маркетингові сервіси»: додати "/kariera/" у P і підвантаження careers.js, V=9; пункт меню «Кар'єра». Mac на момент запису недоступний.
+2. Групу «Barpi» в Telegram: id чату невідомий (TG_CHAT_ID_BARPI у memory-kit порожній, getUpdates бота порожній). Потрібно: бот @barpiua_bot у групі + будь-яке повідомлення з @barpiua_bot, тоді getUpdates → chat id → `wrangler secret put HR_TG_CHATS` (особистий чат Вадима + група).
+3. Деплой правки «слід доставки в hr_audit_log (action notify)» — закомічено, не задеплоєно.
 
 ## Наступна одна дія
-Показати Вадиму прев'ю і отримати «так» на запуск.
+Коли Mac на звʼязку: деплой barpi-hr, перевірити notify у hr_audit_log, створити сторінку в Horoshop.

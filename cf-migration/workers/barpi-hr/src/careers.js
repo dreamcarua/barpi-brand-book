@@ -350,6 +350,12 @@ async function careersApply(request, env, ctx, deps) {
   const notify = notifyHr(env, deps, {
     kind, id: rowId, vacancyTitle: vac ? (vac.public_title || vac.title) : null,
     fullName, email, phone, linkedin, message: messageRaw, hasCv: !!cv,
+  }).then(async (out) => {
+    // Слід доставки в журналі: без нього збій листа чи Telegram не видно (send_email мовчить у логах)
+    try {
+      await env.DB.prepare('INSERT INTO hr_audit_log (entity, entity_id, action, diff, actor_email, at) VALUES (?,?,?,?,?,?)')
+        .bind(kind, rowId, 'notify', JSON.stringify(out || {}), 'website', nowSec()).run();
+    } catch (e) { /* журнал не має ламати відгук */ }
   }).catch((e) => console.error('[careers/apply] notify failed:', e.message));
   if (ctx?.waitUntil) ctx.waitUntil(notify); else await notify;
 
@@ -436,7 +442,7 @@ export async function notifyHr(env, deps, a) {
     try {
       await env.HR_MAIL.send(new deps.EmailMessage(from, to, buildHrMailRaw(a, esc, from, to)));
       out.email = true;
-    } catch (e) { console.error('[careers/notify] email failed:', e.message); }
+    } catch (e) { out.email_error = String(e && e.message || e).slice(0, 200); console.error('[careers/notify] email failed:', e.message); }
   }
   return out;
 }
