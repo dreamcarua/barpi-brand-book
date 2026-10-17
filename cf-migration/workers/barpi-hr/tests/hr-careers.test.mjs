@@ -104,6 +104,11 @@ test('POST apply: кандидат у воронку з резюме, загал
   assert.equal(e.FILES_BUCKET.m.size, 1);
   assert.deepEqual(calls, ['111', '222']);
   assert.equal(sent.length, 1); assert.equal(sent[0].t, 'office@barpi.ua');
+  // кілька адрес: кожній окремий лист, збій однієї не зупиняє інші
+  const got = [];
+  const out2 = await notifyHr({ HR_MAIL: { send: async (m) => { if (m.t === 'bad@x.y') throw new Error('not verified'); got.push(m.t); } }, HR_MAIL_FROM: 'a@barpi.com.ua', HR_NOTIFY_EMAIL: 'office@barpi.ua, bad@x.y ,vg@abrisart.com' },
+    { EmailMessage: deps.EmailMessage }, { fullName: 'A' });
+  assert.deepEqual(got, ['office@barpi.ua', 'vg@abrisart.com']); assert.equal(out2.email_failed.length, 1);
 
   r = await handlePublicCareers(applyReq(ok({ email: 'pool@example.com' })), e, ctx(), deps);
   assert.equal(r.status, 200);
@@ -124,7 +129,7 @@ test('сповіщення: один канал падає, другий одн�
   const sent = [];
   const out = await notifyHr({ TG_TOKEN: 'T', HR_TG_CHATS: '1', HR_MAIL: { send: async (m) => sent.push(m) }, HR_MAIL_FROM: 'a@barpi.com.ua', HR_NOTIFY_EMAIL: 'office@barpi.ua' },
     { fetch: async () => { throw new Error('network'); }, EmailMessage: class { constructor(f, t, raw) { this.raw = raw; } } }, { fullName: 'A', hasCv: false });
-  assert.deepEqual(out, { telegram: 0, email: true });
+  assert.equal(out.telegram, 0); assert.equal(out.email, true); assert.deepEqual(out.email_sent, ['office@barpi.ua']);
   const esc = (s) => String(s);
   assert.ok(buildHrTelegramText({ fullName: 'A' }, esc).includes('barpi.com.ua'));
   const raw = buildHrMailRaw({ fullName: 'A', vacancyTitle: 'B' }, esc, 'a@barpi.com.ua', 'office@barpi.ua');

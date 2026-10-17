@@ -436,13 +436,19 @@ export async function notifyHr(env, deps, a) {
       if (r && r.ok) out.telegram++; else console.error('[careers/notify] telegram HTTP', r && r.status);
     } catch (e) { console.error('[careers/notify] telegram failed:', e.message); }
   }
-  const to = String(env.HR_NOTIFY_EMAIL || '').trim();
+  // Лист усім, хто має доступ до дашборда (рішення Вадима 17.10.2026). HR_NOTIFY_EMAIL — через кому.
+  // Email Routing надсилає лише на ПІДТВЕРДЖЕНІ адреси: непідтверджена дає помилку, решта йде.
+  const tos = String(env.HR_NOTIFY_EMAIL || '').split(',').map((x) => x.trim()).filter(Boolean);
   const from = String(env.HR_MAIL_FROM || '').trim();
-  if (env.HR_MAIL && to && from && deps.EmailMessage) {
-    try {
-      await env.HR_MAIL.send(new deps.EmailMessage(from, to, buildHrMailRaw(a, esc, from, to)));
-      out.email = true;
-    } catch (e) { out.email_error = String(e && e.message || e).slice(0, 200); console.error('[careers/notify] email failed:', e.message); }
+  if (env.HR_MAIL && tos.length && from && deps.EmailMessage) {
+    out.email_sent = []; out.email_failed = [];
+    for (const to of tos) {
+      try {
+        await env.HR_MAIL.send(new deps.EmailMessage(from, to, buildHrMailRaw(a, esc, from, to)));
+        out.email_sent.push(to);
+      } catch (e) { out.email_failed.push(to + ': ' + String(e && e.message || e).slice(0, 120)); console.error('[careers/notify] email failed:', to, e.message); }
+    }
+    out.email = out.email_sent.length > 0;
   }
   return out;
 }
