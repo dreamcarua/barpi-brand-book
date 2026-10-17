@@ -1,0 +1,14 @@
+<!-- Копія лоадера site-embed з поля Horoshop «Налаштування → Загальні → Скрипти → script_in_head»
+     (adminLegacy/utils/site_settings.php). Джерело правди — поле в адмінці; цей файл оновлювати після кожної зміни там.
+     17.10.2026: додано /kariera/ і підвантаження careers.js, V 8 → 9. -->
+<script>
+(function () {
+  var P = ["/", "/details/", "/staty-partnerom/", "/pro-nas/", "/pytannia-vidpovidi/", "/kariera/"];
+  if (P.indexOf(location.pathname) < 0) return;
+  var V = "9", B = "https://brand.barpi.ua/site-embed/";
+  var bpAsync = location.pathname === "/" && window.GLOBAL && GLOBAL.theme === "horoshop_mobile"; /* 01.10.2026: on mobile home bp blocks are below products, CSS need not block first paint */
+  if (bpAsync) { var bl = document.createElement("link"); bl.rel = "stylesheet"; bl.href = B + "bp.css?v=" + V; document.head.appendChild(bl); } else document.write('<link rel="stylesheet" href="' + B + "bp.css?v=" + V + '">');
+  var s = document.createElement("script"); s.src = B + "bp.js?v=" + V; s.defer = true; document.head.appendChild(s);
+  if (location.pathname === "/kariera/") { var cj = document.createElement("script"); cj.src = B + "careers.js?v=" + V; cj.defer = true; document.head.appendChild(cj); } /* 17.10.2026: careers page, site-embed/careers.js */
+})();
+</script>

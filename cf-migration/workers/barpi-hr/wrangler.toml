@@ -37,7 +37,7 @@ ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
 ACCESS_AUD = "894a00188dfb611f1e958108e9e49e9bab86d8f1b0afee56d6c0106710182a63"
 HR_MAIL_FROM = "careers@barpi.com.ua"
 # усі з доступом до дашборда; office@barpi.ua покриває office@ і aksonov@barpi.com.ua (пошта домену йде туди)
-HR_NOTIFY_EMAIL = "office@barpi.ua,vg@abrisart.com"
+HR_NOTIFY_EMAIL = "office@barpi.ua,vg@abrisart.com,fg@abrisart.com"
 # Секрети (wrangler secret put, значень у репо немає — репо публічне):
 #   TG_TOKEN            бот @barpiua_bot
 #   HR_TG_CHATS         chat_id через кому; рішення Вадима 17.10.2026: лише його особистий чат
