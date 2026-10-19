@@ -1,6 +1,6 @@
 {
-  "exported_at": "2026-10-14T09:51:15Z",
-  "note": "Snapshot of CF Access policy for brand.barpi.ua/dashboard/* — for audit trail. To restore: replay via API. Source of truth = CF Dashboard UI. 14.10.2026: barpimarketing@gmail.com added (owner request, promo calendar for the team).",
+  "exported_at": "2026-10-19T15:40:00Z",
+  "note": "Snapshot of CF Access policy for brand.barpi.ua/dashboard/* — for audit trail. To restore: replay via API. Source of truth = CF Dashboard UI. 14.10.2026: barpimarketing@gmail.com added (owner request, promo calendar for the team). 19.10.2026: hr@sneco.ua added (owner request, Marharyta, hiring dashboard /dashboard/careers/).",
   "team_domain": "uabarpi.cloudflareaccess.com",
   "account_id": "ab63a85bdfbf5894c28efe7076acbd82",
   "app": {
@@ -47,6 +47,11 @@
           "email": {
             "email": "barpimarketing@gmail.com"
           }
+        },
+        {
+          "email": {
+            "email": "hr@sneco.ua"
+          }
         }
       ],
       "exclude": [],
@@ -57,6 +62,7 @@
     "aksonov@barpi.com.ua",
     "barpimarketing@gmail.com",
     "fg@abrisart.com",
+    "hr@sneco.ua",
     "office@barpi.com.ua",
     "vg@abrisart.com",
     "vg@sneco.ua"
