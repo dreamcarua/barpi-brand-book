@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Маркетинговий календар · Marketing calendar · Barpi</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css?v=1">
+</head>
+<body>
+<header class="top">
+  <div class="in">
+    <a class="back" href="/dashboard/" aria-label="Dashboards">←</a>
+    <div>
+      <div class="sub"><span data-lang="uk">Barpi · дашборди</span><span data-lang="en">Barpi · dashboards</span></div>
+      <h1><span data-lang="uk">Маркетинговий календар</span><span data-lang="en">Marketing calendar</span></h1>
+    </div>
+    <div class="sp"></div>
+    <div class="fresh" id="fresh"></div>
+    <button class="btn light" id="btnNew"><span data-lang="uk">+ Активність</span><span data-lang="en">+ Activity</span></button>
+    <div class="ls"><button data-set="uk" class="on">UK</button><button data-set="en">EN</button></div>
+  </div>
+  <nav class="tabs in" id="tabs">
+    <button data-tab="overview" class="on"><span data-lang="uk">Огляд</span><span data-lang="en">Overview</span></button>
+    <button data-tab="calendar"><span data-lang="uk">Календар</span><span data-lang="en">Calendar</span></button>
+    <button data-tab="list"><span data-lang="uk">База і місяці</span><span data-lang="en">Base &amp; months</span></button>
+    <button data-tab="partners"><span data-lang="uk">Партнери</span><span data-lang="en">Partners</span></button>
+    <button data-tab="calc"><span data-lang="uk">Калькулятор промо</span><span data-lang="en">Promo calculator</span></button>
+    <button data-tab="results"><span data-lang="uk">Ефективність промо</span><span data-lang="en">Promo results</span></button>
+    <button data-tab="budget"><span data-lang="uk">Бюджет</span><span data-lang="en">Budget</span></button>
+    <button data-tab="year"><span data-lang="uk">Рік</span><span data-lang="en">Year</span></button>
+    <button data-tab="settings"><span data-lang="uk">Налаштування</span><span data-lang="en">Settings</span></button>
+  </nav>
+</header>
+
+<div class="filters in" id="filters"></div>
+<main class="in" id="main"><div class="loading"><span data-lang="uk">Завантаження…</span><span data-lang="en">Loading…</span></div></main>
+
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-bg" data-close></div>
+  <div class="drawer-panel" role="dialog" aria-modal="true"><div id="drawerBody"></div></div>
+</aside>
+<div class="toast" id="toast" role="status"></div>
+<script type="module" src="app.js?v=1"></script>
+</body>
+</html>
