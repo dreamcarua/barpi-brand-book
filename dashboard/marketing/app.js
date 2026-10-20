@@ -1,7 +1,7 @@
 // Barpi · маркетинговий календар і калькулятор промо (рішення Вадима 20.10.2026).
 // Дані: воркер barpi-mkt (/dashboard/api/mkt/*, за Cloudflare Access). Формули: ./lib/econ.js, ./lib/rules.js — ті самі, що у воркері.
-import * as E from './lib/econ.js?v=3';
-import * as R from './lib/rules.js?v=3';
+import * as E from './lib/econ.js?v=4';
+import * as R from './lib/rules.js?v=4';
 
 const API = '/dashboard/api/mkt/';
 const $ = (s, el = document) => el.querySelector(s);
@@ -477,6 +477,7 @@ const FLAG_TXT = {
   no_baseline: () => T('до акції продажів не було — приріст не рахується', 'no sales before the promo — uplift not computed'),
   cost_unknown: () => T('знижки в накладних немає, а компенсація / наша знижка / витрати не внесені — прибуток акції завищений, внесіть умови', 'no invoice discount and no compensation / our discount / costs entered — profit is overstated, enter the terms'),
   promo_heavy: () => T('партнер ≥40 % часу під акціями: «чисті» дні — це провали між акціями, тому висновок за консервативним run-rate (темп 90 днів разом з акціями)', 'partner is on promo ≥40 % of the time: "clean" days are dips between promos, so the verdict uses the conservative run-rate (90-day pace incl. promos)'),
+  shared_effect: () => T('у цей період у партнера була ще одна акція — ефект спільний і в сумі рахується один раз', 'another promo of this partner ran at the same time — the effect is shared and counted once in totals'),
   runrate_baseline: () => T('baseline = run-rate 90 днів', 'baseline = 90-day run-rate'),
   invoice_disc_not_seen: () => T('знижки зі специфікації немає в накладних МойСклад — рахуємо її як компенсацію поза накладною', 'the spec discount is not in MoySklad invoices — counted as off-invoice compensation'),
 };

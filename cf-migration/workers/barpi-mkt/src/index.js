@@ -225,6 +225,10 @@ async function analyseActivity(env, a, ctx) {
   const res = E.analysePromo({ rows, prods: ctx.prods, start: a.start_date, end: a.end_date, today, st,
     promoCost: +a.cost_fact || +a.budget_plan || 0, exclude, plannedDisc: (+a.supplier_discount_pct || 0) / 100, compPct: (+a.comp_pct || 0) / 100,
     mixed: cp.length > 1, priceType: R.PRICE_TYPES.includes(a.activity_type) });
+  // кілька акцій партнера в один період (набір + знижка) ділять один ефект: рахуємо його один раз
+  const shared = ctx.acts.filter((x) => x.id !== a.id && x.partner_id === a.partner_id && R.PRICE_TYPES.includes(x.activity_type)
+    && !['cancelled', 'idea'].includes(x.status) && x.start_date <= a.end_date && x.end_date >= a.start_date).map((x) => x.id);
+  if (shared.length) { res.shared_with = shared; res.flags.push('shared_effect'); }
   res.activity_id = a.id; res.partner_id = a.partner_id; res.partner = p.name; res.title = a.title;
   res.start_date = a.start_date; res.end_date = a.end_date; res.discount_pct = a.discount_pct; res.supplier_discount_pct = a.supplier_discount_pct;
   res.kpi_plan = a.kpi_plan; res.kpi_name = a.kpi_name;
@@ -274,7 +278,9 @@ async function insights(env) {
     const rec = E.recommendNext(list.filter((x) => x.verdict), cur, ctx.st);
     const share = E.promoShare(ctx.acts.filter((a) => a.partner_id === +pid && R.PRICE_TYPES.includes(a.activity_type) && a.status !== 'cancelled'), today, 90);
     if (share * 100 >= E.num(ctx.st, 'promo_share_warn', 50)) rec.tips.unshift({ code: 'promo_is_norm', level: 'bad', share });
-    const done = list.filter((x) => x.verdict);
+    // спільний ефект кількох одночасних акцій рахуємо один раз (за першою з них)
+    const counted = new Set();
+    const done = list.filter((x) => x.verdict && !(x.shared_with || []).some((id) => counted.has(id)) && counted.add(x.activity_id));
     out.push({
       partner_id: +pid, partner: p.name, n: list.length, current: cur, rec,
       success: done.filter((x) => x.verdict === 'success').length, partial: done.filter((x) => x.verdict === 'partial').length,
