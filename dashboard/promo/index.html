@@ -69,25 +69,9 @@ td{padding:9px 10px;border-bottom:1px solid #F4F4F0;vertical-align:top}
   </section>
 
   <section class="card">
-    <h2 id="formTitle"><span data-lang="uk">Нова акція</span><span data-lang="en">New promo</span></h2>
-    <p class="small"><span data-lang="uk">Система вмикає рекламу акції лише у вікні «початок → кінець» і бере механіку дослівно. Час київський.</span><span data-lang="en">The system runs promo ads only inside the start → end window and quotes the mechanic verbatim. Times are Kyiv time.</span></p>
-    <form id="f" class="grid" autocomplete="off">
-      <div class="fld full"><label><span data-lang="uk">Назва *</span><span data-lang="en">Title *</span></label><input name="title" maxlength="120" required></div>
-      <div class="fld full"><label><span data-lang="uk">Механіка: що отримує покупець *</span><span data-lang="en">Mechanic: what the buyer gets *</span></label>
-        <textarea name="mechanic" maxlength="500" required></textarea>
-        <div class="hint"><span data-lang="uk">Дослівно, як має бути в рекламі. Без медичних тверджень.</span><span data-lang="en">Verbatim as it should appear in ads. No health claims.</span></div></div>
-      <div class="fld"><label><span data-lang="uk">Промокод</span><span data-lang="en">Promo code</span></label><input name="promo_code" maxlength="40"></div>
-      <div class="fld"><label><span data-lang="uk">Посадкова сторінка</span><span data-lang="en">Landing page</span></label><input name="landing_url" maxlength="500" placeholder="https://barpi.com.ua/..."></div>
-      <div class="fld"><label><span data-lang="uk">Початок (Київ) *</span><span data-lang="en">Start (Kyiv) *</span></label><input type="datetime-local" name="starts" required></div>
-      <div class="fld"><label><span data-lang="uk">Кінець (Київ) *</span><span data-lang="en">End (Kyiv) *</span></label><input type="datetime-local" name="ends" required></div>
-      <div class="fld full"><label><span data-lang="uk">Текст для клієнта (необов'язково)</span><span data-lang="en">Customer text (optional)</span></label><textarea name="client_text" maxlength="1000"></textarea></div>
-      <div class="fld full"><label><span data-lang="uk">Нотатка для системи</span><span data-lang="en">Note for the system</span></label><textarea name="note" maxlength="1000"></textarea></div>
-    </form>
-    <div class="row">
-      <button class="btn" id="save"><span data-lang="uk">Зберегти</span><span data-lang="en">Save</span></button>
-      <button class="btn ghost" id="reset" type="button"><span data-lang="uk">Очистити</span><span data-lang="en">Clear</span></button>
-      <span class="msg" id="msg"></span>
-    </div>
+    <h2><span data-lang="uk">Де вносити акції сайту</span><span data-lang="en">Where to add site promos</span></h2>
+    <p><span data-lang="uk">З 20.10.2026 акції Barpi.ua вносяться лише в <a href="/dashboard/marketing/">маркетинговий календар</a> (напрям E-commerce, партнер або канал Barpi.ua, ціновий тип: знижка, промокод, набір, 1+1, подарунок, Black Friday). Календар сам передає їх сюди: вікно, механіку дослівно, промокод і лендинг. Скасування або перенесення в календарі одразу змінює вікно реклами.</span><span data-lang="en">Since 20.10.2026 Barpi.ua promos are entered only in the <a href="/dashboard/marketing/">marketing calendar</a> (E-commerce direction, Barpi.ua partner or channel, a price type). The calendar passes them here: window, verbatim mechanic, promo code and landing. Cancelling or moving them in the calendar changes the ad window at once.</span></p>
+    <a class="btn" href="/dashboard/marketing/"><span data-lang="uk">Відкрити маркетинговий календар</span><span data-lang="en">Open the marketing calendar</span></a>
   </section>
 
   <section class="card">
@@ -147,7 +131,7 @@ async function load(){
   if(bad)msg(T('Помилка завантаження: ','Load error: ')+bad.reason.message,true);
   render();
 }
-function msg(t,err){const m=document.getElementById('msg');m.textContent=t;m.className='msg '+(err?'err':'ok')}
+function msg(t,err){const m=document.getElementById('msg');if(!m){if(err)console.error(t);return}m.textContent=t;m.className='msg '+(err?'err':'ok')}
 function state(e){const n=Date.now();if(e.status==='cancelled')return['t-cancel',T('скасовано','cancelled')];if(Date.parse(e.ends_at)<=n)return['t-past',T('минула','past')];if(Date.parse(e.starts_at)<=n)return['t-live',T('іде зараз','live')];return['t-plan',T('заплановано','planned')]}
 function render(){
   const w=data.watch, st=document.getElementById('status'); st.textContent='';
@@ -166,8 +150,7 @@ function render(){
       el('td',{},el('b',{},e.title),el('div',{class:'small'},e.mechanic||''),e.landing_url?el('div',{class:'small'},e.landing_url):''),
       el('td',{},fmt(e.starts_at),el('br'),'→ '+fmt(e.ends_at)),
       el('td',{},e.promo_code||''),
-      el('td',{},e.status==='cancelled'?'':el('button',{class:'btn ghost sm',onclick:()=>edit(e)},T('Змінити','Edit')),' ',
-        e.status==='cancelled'||Date.parse(e.ends_at)<=Date.now()?'':el('button',{class:'btn red sm',onclick:()=>cancel(e)},T('Скасувати','Cancel')))))}
+      el('td',{},el('a',{class:'btn ghost sm',href:'/dashboard/marketing/'+(e.note&&/#(\d+)/.test(e.note)?'#act='+e.note.match(/#(\d+)/)[1]:'')},T('У календарі','In calendar')))))}
   const ob=document.getElementById('orders'); ob.textContent='';
   if(!data.orders.length)ob.append(el('tr',{},el('td',{colspan:6,class:'empty'},T('Ще немає замовлень з міткою: скрипт на сайті ще не встановлено або замовлень не було','No tagged orders yet: the site script is not installed yet or there were no orders'))));
   for(const o of data.orders)ob.append(el('tr',{},el('td',{},fmt(o.placed_at)),el('td',{},o.order_no),el('td',{class:'num'},o.value!=null?o.value.toLocaleString('uk-UA')+' ₴':''),el('td',{},o.utm_medium||'—'),el('td',{},o.utm_campaign||''),el('td',{},o.utm_content||'')));
@@ -175,23 +158,6 @@ function render(){
   if(!data.rows.length)jb.append(el('tr',{},el('td',{colspan:5,class:'empty'},T('Записів ще немає','No rows yet'))));
   for(const r of data.rows)jb.append(el('tr',{},el('td',{},fmt(r.at)),el('td',{},r.action),el('td',{},r.status),el('td',{},r.entity_name||r.entity_id||''),el('td',{class:'small'},r.reason||'')));
 }
-const f=document.getElementById('f');
-function clearForm(){f.reset();editing=null;document.getElementById('formTitle').innerHTML='<span data-lang="uk">Нова акція</span><span data-lang="en">New promo</span>'}
-function edit(e){editing=e.id;f.elements.title.value=e.title||'';f.elements.mechanic.value=e.mechanic||'';f.elements.promo_code.value=e.promo_code||'';f.elements.landing_url.value=e.landing_url||'';
-  f.elements.starts.value=utcToKyivInput(e.starts_at);f.elements.ends.value=utcToKyivInput(e.ends_at);f.elements.client_text.value=e.client_text||'';f.elements.note.value=e.note||'';
-  document.getElementById('formTitle').textContent=T('Зміна акції: ','Editing: ')+e.title;window.scrollTo({top:f.offsetTop-120,behavior:'smooth'})}
-async function cancel(e){if(!confirm(T('Скасувати акцію «'+e.title+'»? Реклама з нею буде вимкнена системою.','Cancel promo "'+e.title+'"? Its ads will be switched off by the system.')))return;
-  try{await api('events/'+e.id,{method:'PATCH',body:JSON.stringify({status:'cancelled'})});msg(T('Скасовано','Cancelled'));load()}catch(err){msg(err.message,true)}}
-document.getElementById('reset').onclick=()=>{clearForm();msg('')};
-document.getElementById('save').onclick=async()=>{
-  if(!f.reportValidity())return;
-  const body={title:f.elements.title.value.trim(),mechanic:f.elements.mechanic.value.trim(),promo_code:f.elements.promo_code.value.trim(),landing_url:f.elements.landing_url.value.trim(),
-    client_text:f.elements.client_text.value.trim(),note:f.elements.note.value.trim(),starts_at:kyivToUtc(f.elements.starts.value),ends_at:kyivToUtc(f.elements.ends.value)};
-  if(Date.parse(body.ends_at)<=Date.parse(body.starts_at)){msg(T('Кінець має бути пізніше за початок','End must be after start'),true);return}
-  if(body.landing_url&&!/^https:\/\/(www\.)?barpi\.com\.ua\//.test(body.landing_url)){msg(T('Посадкова має бути на barpi.com.ua','Landing must be on barpi.com.ua'),true);return}
-  const b=document.getElementById('save');b.disabled=true;
-  try{if(editing)await api('events/'+editing,{method:'PATCH',body:JSON.stringify(body)});else await api('events',{method:'POST',body:JSON.stringify(body)});
-    msg(T('Збережено','Saved'));clearForm();load()}catch(err){msg(err.message,true)}finally{b.disabled=false}};
 setLang(lang);load();
 })();
 </script>

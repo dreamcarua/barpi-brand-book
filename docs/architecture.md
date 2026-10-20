@@ -11,6 +11,8 @@
 | Контрагенти, PII (ПІБ, телефон, email) | МойСклад | D1 (`moysklad_counterparties`) | видалення за GDPR — у двох місцях, `RUNBOOK.md` §9 |
 | Собівартість і виробництво | МойСклад (`processing`, `supply`) | D1 | `materials_sum_uah` неповний — брати в'ю `v_sku_cost` |
 | Ідеї, партнерський пайплайн, події, База знань, алерти | D1 (`brand_ideas`, `partner_pipeline`, `events`, `kb_*`, `alerts`) | — | цих сутностей у МойСклад немає, синк їх не чіпає |
+| Маркетингові активності, партнери→контрагенти, бюджет, розрахунки промо, аналіз акцій | D1 `mkt_*` (воркер `barpi-mkt`) | — | `mkt_analysis` — кеш, перераховується кнопкою і cron о 03:00 Київ |
+| Акції сайту для ad-director | `mkt_activities` (з 20.10.2026) | `ad_events` вручну | `ad_events` з id `mkt-*` перезаписує `barpi-mkt` при кожній зміні активності і щогодини |
 | Вкладення Бази знань | R2 `barpi-kb-files` | — | у D1 лише метадані `kb_files`; видалення м'яке, об'єкт у R2 лишається |
 | Список доступів до `/dashboard/*` | Cloudflare Access (UI) | `cf-access-policy.json` | JSON — знімок для аудиту, не конфіг |
 | Контент Brand Bible | цей репо (`<розділ>/index.html`) | — | пуш у `main` → GitHub Pages за ~30 с |
@@ -35,6 +37,8 @@
 |---|---|---|---|
 | Синхронізація МойСклад → D1 | Cron Trigger воркера `barpi-sync`, `0 * * * *` | `POST /sync?key=…` вручну (`&only=`, `&all=1`, `&full=1`) | cron; ручний — для розслідування |
 | Повний ребілд `sales_sku` | той самий cron, гілка «година = 03 UTC» | `?full=1` | cron |
+| Дайджест маркетингового календаря (Telegram + лист) | Cron воркера `barpi-mkt` `0 * * * *`, спрацьовує о `digest_hour_kyiv` (за замовчуванням 9), дедуп у `mkt_notify` | кнопка «Надіслати дайджест зараз» (`POST /dashboard/api/mkt/digest`) | cron |
+| Перерахунок ефекту акцій | той самий cron, година 03 Київ (лише незакриті) | кнопка «Перерахувати всі акції» | cron |
 | Тижневий бекап D1 + регенерація алертів | Cron Trigger воркера `barpi-api`, `0 4 * * SUN` | `POST /alerts/run`, `GET /export?all=1` (адмін-ключ) | cron |
 | Публікація сайту | push у `main` → GitHub Pages | — | єдиний |
 | Рендер og-image | push `og.svg` → `og-image.yml` | `workflow_dispatch` | push |

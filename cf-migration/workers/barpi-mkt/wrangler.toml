@@ -1,0 +1,41 @@
+name = "barpi-mkt"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+account_id = "ab63a85bdfbf5894c28efe7076acbd82"
+workers_dev = false
+
+# Маркетинговий календар і калькулятор промо Barpi (рішення Вадима 20.10.2026).
+#   /dashboard/api/mkt/*   за Cloudflare Access (та сама політика, що й /dashboard/*); JWT перевіряється в коді
+#   /mkt-ics/<token>.ics   ICS-підписка (Google/Apple Calendar); токен — секрет ICS_TOKEN
+# Формули: dashboard/marketing/lib/econ.js і rules.js — спільні для воркера і сторінки.
+routes = [
+  { pattern = "brand.barpi.ua/dashboard/api/mkt/*", zone_name = "barpi.ua" },
+  { pattern = "brand.barpi.ua/mkt-ics/*", zone_name = "barpi.ua" },
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "barpi-bible"
+database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
+
+# Лист-дайджест: Cloudflare Email Routing, отримувачі — лише ПІДТВЕРДЖЕНІ адреси Email Routing
+[[send_email]]
+name = "MKT_MAIL"
+
+# Щогодини: дайджест о digest_hour_kyiv (налаштування), дзеркало ad_events, о 03:00 Київ — перерахунок аналізу акцій
+[triggers]
+crons = ["0 * * * *"]
+
+[vars]
+ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
+# AUD застосунку Access «Barpi Brand Bible Dashboards» (/dashboard/*)
+ACCESS_AUD = "894a00188dfb611f1e958108e9e49e9bab86d8f1b0afee56d6c0106710182a63"
+MKT_MAIL_FROM = "calendar@barpi.com.ua"
+# лист-дайджест: усім із доступом до дашборда, чиї адреси підтверджені в Email Routing
+MKT_NOTIFY_EMAIL = "office@barpi.ua,vg@abrisart.com"
+# команда для списку «Відповідальний» (доповнюється адресами з уже внесених активностей)
+MKT_TEAM = "vg@abrisart.com,office@barpi.com.ua,aksonov@barpi.com.ua,barpimarketing@gmail.com,alona@barpi.ua,maryana@barpi.ua"
+# Секрети (wrangler secret put; значень у репо немає — репо публічне):
+#   TG_TOKEN       бот @barpiua_bot
+#   MKT_TG_CHATS   chat_id через кому (дайджест)
+#   ICS_TOKEN      випадковий рядок 32+ символів для ICS-посилання
