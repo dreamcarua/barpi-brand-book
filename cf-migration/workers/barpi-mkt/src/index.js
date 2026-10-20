@@ -203,7 +203,13 @@ async function partnerAnalytics(env, partnerId, from, to) {
   skus.sort((a, b) => b.revenue - a.revenue);
   const months = Object.values(byMonth).sort((a, b) => a.ym.localeCompare(b.ym)).map((m) => ({ ...m, gp: m.revenue - m.cogs, margin: m.revenue ? (m.revenue - m.cogs) / m.revenue : null }));
   const nMonths = Math.max(1, E.daysIncl(from, to) / 30.44);
-  const last = await first(env, `SELECT MAX(moment) m FROM sales_sku WHERE agent_ms_id IN (${cp.map(() => '?').join(',') || "''"})`, ...cp);
+  let lastSale = null;
+  for (let i = 0; i < cp.length; i += 80) { // D1: не більше 100 параметрів у запиті
+    const ch = cp.slice(i, i + 80);
+    const x = await first(env, `SELECT MAX(moment) m FROM sales_sku WHERE agent_ms_id IN (${ch.map(() => '?').join(',')})`, ...ch);
+    if (x && x.m && (!lastSale || x.m > lastSale)) lastSale = x.m;
+  }
+  const last = { m: lastSale };
   return {
     partner: { id: p.id, name: p.name, ptype: p.ptype, counterparties: cp.length }, from, to,
     kpi: { units, revenue: rev, cogs, gp: gpTot, margin: rev ? gpTot / rev : null, returns: ret, ship_days: docs.size, active_skus: skus.filter((s) => s.units > 0).length,
@@ -229,8 +235,12 @@ async function analyseActivity(env, a, ctx) {
   let compActual = null;
   const vat = 1 + E.num(st, 'vat_rate', 20) / 100;
   if (cp.length) {
-    const pays = await all(env, `SELECT substr(moment,1,10) d, sum_uah s, COALESCE(json_extract(raw_json,'$.paymentPurpose'),'') || ' ' || COALESCE(json_extract(raw_json,'$.description'),'') t
-        FROM moysklad_payments_out WHERE agent_ms_id IN (${cp.map(() => '?').join(',')}) AND moment >= ? AND moment < ?`, ...cp, a.end_date, E.addDays(a.end_date, 76));
+    const pays = [];
+    for (let i = 0; i < cp.length; i += 80) { // D1: не більше 100 параметрів у запиті
+      const ch = cp.slice(i, i + 80);
+      pays.push(...await all(env, `SELECT substr(moment,1,10) d, sum_uah s, COALESCE(json_extract(raw_json,'$.paymentPurpose'),'') || ' ' || COALESCE(json_extract(raw_json,'$.description'),'') t
+        FROM moysklad_payments_out WHERE agent_ms_id IN (${ch.map(() => '?').join(',')}) AND moment >= ? AND moment < ?`, ...ch, a.end_date, E.addDays(a.end_date, 76)));
+    }
     const mine = pays.filter((x) => /компенсац[^\n]*(знижк|промо)|посткомпенсац/i.test(x.t) && !/ретро/i.test(x.t)).filter((x) => {
       const lastBefore = ctx.acts.filter((y) => y.partner_id === a.partner_id && R.PRICE_TYPES.includes(y.activity_type) && y.status !== 'cancelled' && y.end_date <= x.d)
         .sort((u, v) => v.end_date.localeCompare(u.end_date))[0];
