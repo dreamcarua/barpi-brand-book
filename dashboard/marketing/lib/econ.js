@@ -166,9 +166,26 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
     });
   }
   skus.sort((a, b) => b.win_q - a.win_q);
-  const rateQ = B.q / bLen, rateNet = B.net / bLen, rateGp = baseGp / bLen;
+  // Два baseline. «Чистий» (дні без інших акцій) — верхня межа ефекту. «Run-rate» — середній темп за 90 днів
+  // до вікна разом з іншими акціями — нижня межа. Якщо партнер ≥40 % часу під акціями, «чисті» дні — це провали
+  // між акціями, і висновок робимо за консервативним run-rate.
+  const look = 120;
+  let busyDays = 0;
+  for (let i = 1; i <= look; i++) { const d = addDays(winFrom, -i); if (ex.some((x) => d >= x.start && d <= x.end)) busyDays++; }
+  const heavy = busyDays / look >= 0.4;
+  const rrFrom = addDays(winFrom, -90);
+  const RR = aggregate(rows, rrFrom, baseTo);
+  let rrGp = 0;
+  for (const [pid, x] of Object.entries(RR.by)) { const p = prods[pid]; if (p && isFinished(p)) rrGp += x.net - x.q * unitCost(p, mid(rrFrom, baseTo), st); }
+  const finQ = (A) => Object.entries(A.by).reduce((sum, [pid, x]) => sum + (prods[pid] && isFinished(prods[pid]) ? x.q : 0), 0);
+  const rr = { q: finQ(RR) / 90, gp: rrGp / 90 };
+  const clean = { q: B.q / bLen, net: B.net / bLen, gp: baseGp / bLen };
+  const useRR = heavy && rr.q > 0;
+  const rateQ = useRR ? rr.q : clean.q, rateNet = useRR ? (RR.net / 90) : clean.net, rateGp = useRR ? rr.gp : clean.gp;
   const expWinQ = rateQ * winDays, expPostQ = rateQ * postDays;
   const upliftUnits = expWinQ > 0 ? W.q / expWinQ - 1 : null;
+  const upliftClean = clean.q * winDays > 0 ? W.q / (clean.q * winDays) - 1 : null;
+  const upliftRR = rr.q * winDays > 0 ? W.q / (rr.q * winDays) - 1 : null;
   const upliftRev = rateNet * winDays > 0 ? W.net / (rateNet * winDays) - 1 : null;
   const incQwin = W.q - expWinQ;
   const dipQ = postDays ? Math.max(0, expPostQ - P.q) : 0;
@@ -185,7 +202,7 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
   // знижка є в специфікації, але не видна в накладних МойСклад → її оформили окремо (коригування/компенсація): рахуємо як витрату
   const notSeen = (+plannedDisc || 0) > 0 && invoiceOk && (realizedDisc === null || realizedDisc < (+plannedDisc) * 0.4);
   const compCost = Math.max(0, +compPct || 0) * W.net + (notSeen ? (+plannedDisc) * W.net : 0);
-  const contribution = B.q > 0 ? (postDays ? incGpNet : incGpWin) - cost - compCost : null;
+  const contribution = B.q > 0 || useRR ? (postDays ? incGpNet : incGpWin) - cost - compCost : null;
   const fundDisc = invoiceOk && realizedDisc >= 0.02 ? realizedDisc : ((+plannedDisc || 0) + (+compPct || 0)) || null;
   const invest = Math.max(0, invoiceOk ? discInv : 0) + cost + compCost;
   const roi = invest > 0 && contribution !== null ? contribution / invest : null;
@@ -193,25 +210,27 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
   if (bDays.size < daysIncl(baseFrom, baseTo)) flags.push('baseline_cleaned');
   if (specCross) flags.push('spec_change');
   if (mixed) flags.push('mixed_prices');
+  if (heavy) flags.push('promo_heavy');
+  if (useRR) flags.push('runrate_baseline');
   if (compCost > 0) flags.push('comp_estimated');
   if (notSeen) flags.push('invoice_disc_not_seen');
-  if (B.q <= 0) flags.push('no_baseline');
+  if (B.q <= 0 && !useRR) flags.push('no_baseline');
   const costUnknown = priceType && !(invoiceOk && realizedDisc >= 0.02) && !(+compPct > 0) && !(+plannedDisc > 0) && cost <= 0;
   if (costUnknown) flags.push('cost_unknown');
   if (!postComplete && end < today) flags.push('post_incomplete');
   if (end >= today) flags.push('running');
   if (nextStart && nextStart < postEnd) flags.push('post_cut_by_next');
   let verdict = null;
-  if (started && end < today && B.q > 0 && contribution !== null) {
+  if (started && end < today && contribution !== null) {
     if (costUnknown) verdict = 'unknown';
     else verdict = contribution > 0 ? 'success' : upliftUnits !== null && upliftUnits > 0.1 ? 'partial' : 'fail';
   }
   return {
     windows: { baseFrom, baseTo, winFrom, winTo, postFrom, postTo: postDays ? postTo : null, postComplete },
-    base: { q: B.q, net: r2(B.net), gp: r2(baseGp), days: bDays.size, shipDays: B.shipDays, rateQ: r2(rateQ) },
+    base: { q: B.q, net: r2(B.net), gp: r2(baseGp), days: bDays.size, shipDays: B.shipDays, rateQ: r2(rateQ), rateNet: r2(rateNet), rateGp: r2(rateGp), kind: useRR ? 'runrate' : 'clean' },
     win: { q: W.q, net: r2(W.net), gp: r2(winGp), days: winDays, expQ: r2(expWinQ) },
     post: { q: P.q, net: r2(P.net), gp: r2(postGp), days: postDays, expQ: r2(expPostQ) },
-    upliftUnits, upliftRev, pullForward, realizedDisc,
+    upliftUnits, upliftRev, pullForward, realizedDisc, upliftClean, upliftRR, promoShareBefore: busyDays / look,
     incGpWin: r2(incGpWin), incGpNet: r2(incGpNet), promoCost: cost, compCost: r2(compCost), contribution: contribution === null ? null : r2(contribution),
     discountInvestment: r2(Math.max(0, invoiceOk ? discInv : 0) + compCost), roi, verdict, flags, skus, fundDisc, invoiceOk,
     response: upliftUnits !== null && fundDisc && fundDisc >= 0.03 && !costUnknown ? upliftUnits / fundDisc : null,

@@ -1,7 +1,7 @@
 // Barpi · маркетинговий календар і калькулятор промо (рішення Вадима 20.10.2026).
 // Дані: воркер barpi-mkt (/dashboard/api/mkt/*, за Cloudflare Access). Формули: ./lib/econ.js, ./lib/rules.js — ті самі, що у воркері.
-import * as E from './lib/econ.js?v=2';
-import * as R from './lib/rules.js?v=2';
+import * as E from './lib/econ.js';
+import * as R from './lib/rules.js';
 
 const API = '/dashboard/api/mkt/';
 const $ = (s, el = document) => el.querySelector(s);
