@@ -222,15 +222,9 @@ async function analyseActivity(env, a, ctx) {
   const rows = await salesRows(env, cp, from, to, st);
   const exclude = ctx.acts.filter((x) => x.id !== a.id && x.partner_id === a.partner_id && R.PRICE_TYPES.includes(x.activity_type) && x.status !== 'cancelled')
     .map((x) => ({ start: x.start_date, end: x.end_date }));
-  // частка днів під іншими акціями партнера за 120 днів до вікна: якщо велика, «чистий» baseline — це провали між акціями
-  const lookFrom = E.addDays(a.start_date, -(preload + 120)), lookTo = E.addDays(a.start_date, -preload - 1);
-  const busy = new Set();
-  exclude.forEach((x) => { let d = E.maxDate(x.start, lookFrom); const to = E.minDate(x.end, lookTo); let g = 0; while (d <= to && g++ < 400) { busy.add(d); d = E.addDays(d, 1); } });
   const res = E.analysePromo({ rows, prods: ctx.prods, start: a.start_date, end: a.end_date, today, st,
     promoCost: +a.cost_fact || +a.budget_plan || 0, exclude, plannedDisc: (+a.supplier_discount_pct || 0) / 100, compPct: (+a.comp_pct || 0) / 100,
     mixed: cp.length > 1, priceType: R.PRICE_TYPES.includes(a.activity_type) });
-  res.promo_share_before = busy.size / 120;
-  if (res.promo_share_before >= 0.4) res.flags.push('promo_heavy');
   res.activity_id = a.id; res.partner_id = a.partner_id; res.partner = p.name; res.title = a.title;
   res.start_date = a.start_date; res.end_date = a.end_date; res.discount_pct = a.discount_pct; res.supplier_discount_pct = a.supplier_discount_pct;
   res.kpi_plan = a.kpi_plan; res.kpi_name = a.kpi_name;

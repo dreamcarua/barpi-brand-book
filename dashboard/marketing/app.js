@@ -1,7 +1,7 @@
 // Barpi · маркетинговий календар і калькулятор промо (рішення Вадима 20.10.2026).
 // Дані: воркер barpi-mkt (/dashboard/api/mkt/*, за Cloudflare Access). Формули: ./lib/econ.js, ./lib/rules.js — ті самі, що у воркері.
-import * as E from './lib/econ.js';
-import * as R from './lib/rules.js';
+import * as E from './lib/econ.js?v=3';
+import * as R from './lib/rules.js?v=3';
 
 const API = '/dashboard/api/mkt/';
 const $ = (s, el = document) => el.querySelector(s);
@@ -476,7 +476,9 @@ const FLAG_TXT = {
   comp_estimated: () => T('компенсацію пораховано від виручки sell-in у вікні (наближення до sell-out)', 'compensation estimated on window sell-in revenue (proxy for sell-out)'),
   no_baseline: () => T('до акції продажів не було — приріст не рахується', 'no sales before the promo — uplift not computed'),
   cost_unknown: () => T('знижки в накладних немає, а компенсація / наша знижка / витрати не внесені — прибуток акції завищений, внесіть умови', 'no invoice discount and no compensation / our discount / costs entered — profit is overstated, enter the terms'),
-  promo_heavy: () => T('партнер більшу частину часу під акціями — baseline це провали між акціями, приріст завищений', 'partner is on promo most of the time — baseline is the dips between promos, uplift overstated'),
+  promo_heavy: () => T('партнер ≥40 % часу під акціями: «чисті» дні — це провали між акціями, тому висновок за консервативним run-rate (темп 90 днів разом з акціями)', 'partner is on promo ≥40 % of the time: "clean" days are dips between promos, so the verdict uses the conservative run-rate (90-day pace incl. promos)'),
+  runrate_baseline: () => T('baseline = run-rate 90 днів', 'baseline = 90-day run-rate'),
+  invoice_disc_not_seen: () => T('знижки зі специфікації немає в накладних МойСклад — рахуємо її як компенсацію поза накладною', 'the spec discount is not in MoySklad invoices — counted as off-invoice compensation'),
 };
 function tipHtml(t) {
   const n = (x) => fmtN(x * 100);
@@ -499,7 +501,7 @@ function analysisHtml(an, calc) {
   if (an.skipped) return `<div class="muted small">${an.skipped === 'no_counterparty' ? T('Партнер не привʼязаний до контрагента МойСклад — привʼяжіть у Налаштуваннях → Партнери.', 'Partner is not linked to a MoySklad counterparty — link it in Settings → Partners.') : T('Для подій і PR ефект у продажах не рахується.', 'Sales effect is not computed for events and PR.')}</div>`;
   const w = an.windows, b = an.base, win = an.win;
   const days = win.days || 0;
-  const base = { units: b.rateQ * days, revenue: b.days ? (b.net / b.days) * days : 0, gp: b.days ? (b.gp / b.days) * days : 0 };
+  const base = { units: b.rateQ * days, revenue: (b.rateNet ?? (b.days ? b.net / b.days : 0)) * days, gp: (b.rateGp ?? (b.days ? b.gp / b.days : 0)) * days };
   base.margin = base.revenue ? base.gp / base.revenue : null; base.contribution = base.gp;
   const fact = { units: win.q, revenue: win.net, gp: win.gp, margin: win.net ? win.gp / win.net : null, contribution: win.gp - (an.promoCost || 0) };
   const cr = calc && calc.result ? (typeof calc.result === 'string' ? JSON.parse(calc.result) : calc.result) : null;
@@ -508,9 +510,9 @@ function analysisHtml(an, calc) {
     <td class="n">${k === 'margin' ? (fact[k] !== null && base[k] !== null ? fmtN((fact[k] - base[k]) * 100, 1) + ' п.п.' : '—') : base[k] ? pct(fact[k] / base[k] - 1, 0, true) : '—'}</td>
     <td class="n">${fc && fc[k] ? (k === 'margin' ? fmtN((fact[k] - fc[k]) * 100, 1) + ' п.п.' : pct(fact[k] / fc[k] - 1, 0, true)) : '—'}</td></tr>`;
   return `
-    <div class="row" style="margin-bottom:10px">${verdictTag(an.verdict)}<span class="small muted">${T('вікно', 'window')} ${esc(range(w.winFrom, w.winTo))} (${T('з закупкою наперед', 'incl. pre-load')}) · baseline ${b.days} ${T('дн.', 'd')} ${T('до', 'before')} ${esc(dm(w.baseTo))}${w.postTo ? ` · ${T('після', 'after')} ${esc(range(w.postFrom, w.postTo))}` : ''}</span></div>
+    <div class="row" style="margin-bottom:10px">${verdictTag(an.verdict)}<span class="small muted">${T('вікно', 'window')} ${esc(range(w.winFrom, w.winTo))} (${T('з закупкою наперед', 'incl. pre-load')}) · baseline ${b.kind === 'runrate' ? T('run-rate 90 дн. (з акціями)', 'run-rate 90 d (incl. promos)') : `${b.days} ${T('чистих дн.', 'clean d')}`} ${T('до', 'before')} ${esc(dm(w.baseTo))}${w.postTo ? ` · ${T('після', 'after')} ${esc(range(w.postFrom, w.postTo))}` : ''}</span></div>
     <div class="kpis" style="margin-bottom:12px">
-      <div class="kpi"><div class="l">${T('Приріст пачок', 'Units uplift')}</div><div class="v ${an.upliftUnits > 0 ? '' : ''}">${pct(an.upliftUnits, 0, true)}</div></div>
+      <div class="kpi"><div class="l">${T('Приріст пачок', 'Units uplift')}</div><div class="v">${pct(an.upliftUnits, 0, true)}</div>${an.upliftClean !== undefined ? `<div class="s">${T('діапазон', 'range')}: ${pct(an.upliftRR, 0, true)} … ${pct(an.upliftClean, 0, true)}</div>` : ''}</div>
       <div class="kpi"><div class="l">${T('Наше фінансування знижки', 'Our discount funding')}</div><div class="v">${pct(an.fundDisc, 1)}</div><div class="s">${T('у накладних', 'in invoices')}: ${pct(an.realizedDisc, 1)}${an.invoiceOk ? '' : ' (' + T('не показово', 'not reliable') + ')'}${an.compCost ? ' · ' + T('компенсація', 'compensation') + ' ' + uah(an.compCost) : ''}</div></div>
       <div class="kpi"><div class="l">${T('Закупка наперед', 'Forward buying')}</div><div class="v">${pct(an.pullForward)}</div><div class="s">${T('частка приросту, що «зʼїв» провал після', 'share of uplift eaten by post dip')}</div></div>
       <div class="kpi ${an.contribution === null ? '' : an.contribution > 0 ? 'good' : 'bad'}"><div class="l">${T('Інкрементальний прибуток', 'Incremental profit')}</div><div class="v">${uah(an.contribution)}</div><div class="s">${T('з урахуванням провалу після і витрат', 'net of post dip and costs')}</div></div>
