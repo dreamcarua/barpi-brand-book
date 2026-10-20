@@ -1,7 +1,7 @@
 // Barpi · маркетинговий календар і калькулятор промо (рішення Вадима 20.10.2026).
 // Дані: воркер barpi-mkt (/dashboard/api/mkt/*, за Cloudflare Access). Формули: ./lib/econ.js, ./lib/rules.js — ті самі, що у воркері.
-import * as E from './lib/econ.js?v=4';
-import * as R from './lib/rules.js?v=4';
+import * as E from './lib/econ.js?v=5';
+import * as R from './lib/rules.js?v=5';
 
 const API = '/dashboard/api/mkt/';
 const $ = (s, el = document) => el.querySelector(s);
@@ -10,7 +10,7 @@ let lang = 'uk';
 try { lang = localStorage.getItem('bb-mkt-lang') || 'uk'; } catch (e) { /* приватний режим */ }
 const T = (uk, en) => (lang === 'en' && en !== undefined ? en : uk);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const fmtN = (x, d = 0) => (x === null || x === undefined || !Number.isFinite(+x) ? '—' : (+x).toLocaleString('uk-UA', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/ /g, ' '));
+const fmtN = (x, d = 0) => (x === null || x === undefined || !Number.isFinite(+x) ? '—' : (Math.abs(+x) < 0.5 * 10 ** -d ? 0 : +x).toLocaleString('uk-UA', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/ /g, ' '));
 const uah = (x, d = 0) => (x === null || x === undefined || !Number.isFinite(+x) ? '—' : fmtN(x, d) + ' ₴');
 const pct = (x, d = 0, sign = false) => (x === null || x === undefined || !Number.isFinite(+x) ? '—' : (sign && x > 0 ? '+' : '') + fmtN(x * 100, d) + ' %');
 const dm = (s) => (s ? s.slice(8, 10) + '.' + s.slice(5, 7) : '');
@@ -617,7 +617,7 @@ async function renderResults() {
   const done = all.filter((x) => x.verdict);
   $('#main').innerHTML = `
     <div class="card"><h2>${T('Як рахується', 'How it is computed')}<span class="sp"></span><button class="btn ghost sm" id="reRun">${T('Перерахувати всі акції', 'Recompute all promos')}</button></h2>
-      <div class="small muted">${T('Для кожної цінової акції партнера: sell-in з МойСклад у вікні «старт − закупка наперед … кінець» проти чистого baseline (без днів інших акцій), мінус провал продажів після акції (закупка наперед), мінус витрати. Собівартість — канон v4. Знижку беремо фактичну — з цін відвантаження, а не з файлу промо.', 'For each partner price promo: MoySklad sell-in in the window "start − pre-load … end" vs a clean baseline (other promos removed), minus the post-promo dip (forward buying), minus costs. Cost — canon v4. The discount is the realised one from shipment prices, not the promo file.')}</div></div>
+      <div class="small muted">${T('Для кожної цінової акції партнера: sell-in з МойСклад у вікні «старт − закупка наперед … кінець» проти baseline, мінус провал після акції (закупка наперед), мінус наша компенсація і витрати. Baseline: «чисті» дні без інших акцій партнера; якщо партнер ≥40 % часу під акціями — консервативний run-rate за 90 днів разом з акціями (діапазон показано в деталях акції). Знижка в накладних — з фактичних цін відвантаження; компенсація поза накладною — зі специфікації промо, від виручки sell-in у вікні. Собівартість — канон v4 (620 ₴/кг × вага + пакування). Це оцінка sell-in: продажі на полиці партнера (sell-out) видно лише, якщо внести його звіт.', 'For each partner price promo: MoySklad sell-in in the window "start − pre-load … end" vs baseline, minus the post-promo dip (forward buying), minus our compensation and costs. Baseline: clean days without other partner promos; if the partner is on promo ≥40 % of the time — a conservative 90-day run-rate incl. promos (range shown in promo details). Invoice discount — from actual shipment prices; off-invoice compensation — from the promo spec, on window sell-in revenue. Cost — canon v4. This is a sell-in estimate: shelf sales (sell-out) are visible only if the partner report is entered.')}</div></div>
     <div class="kpis" style="margin-bottom:16px">
       <div class="kpi"><div class="l">${T('Проаналізовано акцій', 'Promos analysed')}</div><div class="v">${done.length}</div></div>
       <div class="kpi good"><div class="l">${T('Успішні', 'Successful')}</div><div class="v">${done.filter((x) => x.verdict === 'success').length}</div></div>
@@ -818,7 +818,8 @@ function calcBody(c, r, shown) {
   </tbody></table></div><div class="tiny muted" style="margin-top:6px">${T('Прогноз Δ прибутку — за відгуком партнера на знижку з історії його акцій (або обережним припущенням, якщо історії немає).', 'Forecast Δ profit — from the partner\'s historical response to discounts (or a cautious assumption without history).')}</div></div>
   <div class="card"><h2>${T('Сценарії росту продажів', 'Sales growth scenarios')} · −${fmtN(r.effSd * 100, 1)} %<span class="sp"></span><span class="small" style="text-transform:none;letter-spacing:0">custom <input class="mini" id="cCustG" type="number" step="5" value="${esc(c.customG)}"> %</span></h2>
     <div class="tw"><table><thead><tr><th>Sales growth</th><th class="n">Units</th><th class="n">Revenue</th><th class="n">COGS</th><th class="n">Gross profit</th><th class="n">Margin</th><th class="n">Promo costs</th><th class="n">Contribution</th><th class="n">Incr. revenue</th><th class="n">Δ Profit</th></tr></thead><tbody>
-    ${uniq.map((g) => { const s = E.scenario(r.lines, g, r.costs); const isBe = be.ok && Math.abs(g - Math.round(be.growth * 10000) / 10000) < 1e-9; return `<tr class="${isBe ? 'hl' : ''}"><td>${g === 0 ? 'Baseline' : pct(g, 0, true)}${isBe ? ' · <b>break-even</b>' : ''}</td><td class="n">${fmtN(s.units)}</td><td class="n">${uah(s.revenue)}</td><td class="n">${uah(s.cogs)}</td><td class="n">${uah(s.gp)}</td><td class="n">${pct(s.margin, 1)}</td><td class="n">${uah(s.costs)}</td><td class="n">${uah(s.contribution)}</td><td class="n">${uah(s.incRevenue)}</td><td class="n" style="color:${s.incProfit >= -0.5 ? 'var(--good)' : 'var(--bad)'}">${uah(s.incProfit)}</td></tr>`; }).join('')}
+    <tr><td><b>${T('Без промо', 'No promo')}</b></td><td class="n">${fmtN(r.U)}</td><td class="n">${uah(r.Rv)}</td><td class="n">${uah(r.lines.reduce((a, l) => a + l.u * l.c, 0))}</td><td class="n">${uah(be.baseContribution)}</td><td class="n">${pct(r.Rv ? (be.baseContribution || 0) / r.Rv : null, 1)}</td><td class="n">—</td><td class="n">${uah(be.baseContribution)}</td><td class="n">—</td><td class="n">—</td></tr>
+    ${uniq.map((g) => { const s = E.scenario(r.lines, g, r.costs); const isBe = be.ok && Math.abs(g - Math.round(be.growth * 10000) / 10000) < 1e-9; return `<tr class="${isBe ? 'hl' : ''}"><td>${g === 0 ? T('+0 % (обсяг як без промо)', '+0 % (no-promo volume)') : pct(g, 0, true)}${isBe ? ' · <b>break-even</b>' : ''}</td><td class="n">${fmtN(s.units)}</td><td class="n">${uah(s.revenue)}</td><td class="n">${uah(s.cogs)}</td><td class="n">${uah(s.gp)}</td><td class="n">${pct(s.margin, 1)}</td><td class="n">${uah(s.costs)}</td><td class="n">${uah(s.contribution)}</td><td class="n">${uah(s.incRevenue)}</td><td class="n" style="color:${s.incProfit >= -0.5 ? 'var(--good)' : 'var(--bad)'}">${uah(s.incProfit)}</td></tr>`; }).join('')}
     </tbody></table></div>
     ${svgChart(r.lines, r.costs, be, r.lift)}
   </div>

@@ -204,7 +204,9 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
   const compCost = Math.max(0, +compPct || 0) * W.net + (notSeen ? (+plannedDisc) * W.net : 0);
   const contribution = B.q > 0 || useRR ? (postDays ? incGpNet : incGpWin) - cost - compCost : null;
   const fundDisc = invoiceOk && realizedDisc >= 0.02 ? realizedDisc : ((+plannedDisc || 0) + (+compPct || 0)) || null;
-  const invest = Math.max(0, invoiceOk ? discInv : 0) + cost + compCost;
+  // знижка в накладних, яку не видно напряму (зміна специфікації, змішані прайси): інвестиція = план × виручка за повною ціною
+  const plannedInv = !invoiceOk && !notSeen && (+plannedDisc || 0) > 0 && plannedDisc < 1 ? (plannedDisc / (1 - plannedDisc)) * W.net : 0;
+  const invest = Math.max(0, invoiceOk ? discInv : 0) + plannedInv + cost + compCost;
   const roi = invest > 0 && contribution !== null ? contribution / invest : null;
   if (B.shipDays < 4 || bDays.size < bN * 0.6) flags.push('thin_baseline');
   if (bDays.size < daysIncl(baseFrom, baseTo)) flags.push('baseline_cleaned');
@@ -232,7 +234,7 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
     post: { q: P.q, net: r2(P.net), gp: r2(postGp), days: postDays, expQ: r2(expPostQ) },
     upliftUnits, upliftRev, pullForward, realizedDisc, upliftClean, upliftRR, promoShareBefore: busyDays / look,
     incGpWin: r2(incGpWin), incGpNet: r2(incGpNet), promoCost: cost, compCost: r2(compCost), contribution: contribution === null ? null : r2(contribution),
-    discountInvestment: r2(Math.max(0, invoiceOk ? discInv : 0) + compCost), roi, verdict, flags, skus, fundDisc, invoiceOk,
+    discountInvestment: r2(Math.max(0, invoiceOk ? discInv : 0) + plannedInv + compCost), roi, verdict, flags, skus, fundDisc, invoiceOk,
     response: upliftUnits !== null && fundDisc && fundDisc >= 0.03 && !costUnknown ? upliftUnits / fundDisc : null,
   };
 }

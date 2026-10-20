@@ -115,3 +115,13 @@ test('компенсація поза накладною віднімаєтьс�
   assert.notEqual(r1.verdict, 'unknown');
   assert.ok(Math.abs(r1.fundDisc - 0.15) < 1e-9);
 });
+
+test('дзеркало ad_events: кількість ? дорівнює кількості параметрів', async () => {
+  const { mirrorAdEvent } = await import('./mirror-shim.mjs');
+  const calls = [];
+  const env = { DB: { prepare: (sql) => ({ bind: (...a) => { calls.push({ sql, n: a.length }); return { run: async () => ({}) }; } }) } };
+  const a = { id: 5, title: 'Тест', direction: 'ecom', channel: 'Barpi.ua', activity_type: 'Промокод', status: 'planned', start_date: '2026-12-01', end_date: '2026-12-03', partner_id: 1 };
+  await mirrorAdEvent(env, a, [{ id: 1, ptype: 'own' }], 'x');
+  assert.ok(calls.length >= 1);
+  for (const c of calls) assert.equal((c.sql.match(/\?/g) || []).length, c.n, c.sql.slice(0, 60));
+});

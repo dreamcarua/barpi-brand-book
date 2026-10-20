@@ -152,7 +152,7 @@ function kyivMidnightUtc(day) {
   return new Date(guess.getTime() - off(guess)).toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 // Дзеркало акцій Barpi.ua в ad_events: ad-director вмикає рекламу акції лише у її вікні
-async function mirrorAdEvent(env, a, partners, who) {
+export async function mirrorAdEvent(env, a, partners, who) {
   const own = partners.find((p) => p.ptype === 'own');
   const isSite = a.direction === 'ecom' && (a.channel === 'Barpi.ua' || (own && a.partner_id === own.id));
   const isPromo = R.PRICE_TYPES.includes(a.activity_type);
@@ -167,7 +167,7 @@ async function mirrorAdEvent(env, a, partners, who) {
       ON CONFLICT(id) DO UPDATE SET title=excluded.title, mechanic=excluded.mechanic, promo_code=excluded.promo_code,
         landing_url=excluded.landing_url, starts_at=excluded.starts_at, ends_at=excluded.ends_at, status=excluded.status,
         note=excluded.note, updated_by=excluded.updated_by, updated_at=excluded.updated_at`,
-  a.title.slice(0, 120), mech.slice(0, 500), a.promo_code, a.landing_url, kyivMidnightUtc(a.start_date), kyivMidnightUtc(E.addDays(a.end_date, 1)),
+  id, a.title.slice(0, 120), mech.slice(0, 500), a.promo_code, a.landing_url, kyivMidnightUtc(a.start_date), kyivMidnightUtc(E.addDays(a.end_date, 1)),
   status, `з маркетингового календаря, активність #${a.id}`, who || 'barpi-mkt');
   if (!a.ad_event_id) await run(env, 'UPDATE mkt_activities SET ad_event_id=? WHERE id=?', id, a.id);
   return id;
