@@ -123,6 +123,19 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
   const started = winFrom <= today;
   const winDays = started ? daysIncl(winFrom, winTo) : 0;
   const postDays = postFrom <= today && postFrom <= postTo ? daysIncl(postFrom, postTo) : 0;
+  const refPrice = {};
+  {
+    const acc = {};
+    const lastDays = [...bDays].sort().reverse();
+    const byDay = {};
+    rows.forEach((r) => { if (bDays.has(r.d)) (byDay[r.d] || (byDay[r.d] = [])).push(r); });
+    for (const d of lastDays) for (const r of byDay[d] || []) {
+      const x = acc[r.pid] || (acc[r.pid] = { q: 0, net: 0, days: 0 });
+      if (x.q >= 3 && x.days >= 1) continue;
+      x.q += +r.q || 0; x.net += +r.net || 0; x.days++;
+    }
+    for (const [k, x] of Object.entries(acc)) if (x.q > 0) refPrice[k] = x.net / x.q;
+  }
   const B = aggregate(rows, null, null, bDays), W = aggregate(rows, winFrom, winTo), P = aggregate(rows, postFrom, postTo);
   const mid = (a, b) => addDays(a, Math.floor(daysIncl(a, b) / 2));
   const skus = [];
@@ -133,7 +146,9 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
     if (!p || !isFinished(p)) continue;
     const b = B.by[pid] || { q: 0, net: 0 }, w = W.by[pid] || { q: 0, net: 0 }, po = P.by[pid] || { q: 0, net: 0 };
     const cB = unitCost(p, mid(baseFrom, baseTo), st), cW = unitCost(p, mid(winFrom, end), st), cP = unitCost(p, postFrom, st);
-    const bp = b.q > 0 ? b.net / b.q : null, wp = w.q > 0 ? w.net / w.q : null;
+    // опорна ціна — останні відвантаження перед вікном (ціни змінювались протягом року), а не середнє за весь baseline
+    const rp = refPrice[pid];
+    const bp = rp || (b.q > 0 ? b.net / b.q : null), wp = w.q > 0 ? w.net / w.q : null;
     const g = { b: b.net - b.q * cB, w: w.net - w.q * cW, p: po.net - po.q * cP };
     baseGp += g.b; winGp += g.w; postGp += g.p;
     let disc = null;
@@ -167,7 +182,9 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
   const realizedDisc = discQ > 0 ? discW / discQ : null;
   // фактична знижка з накладних надійна лише без зміни специфікації і без змішаних прайсів
   const invoiceOk = realizedDisc !== null && !specCross && !mixed;
-  const compCost = Math.max(0, +compPct || 0) * W.net;
+  // знижка є в специфікації, але не видна в накладних МойСклад → її оформили окремо (коригування/компенсація): рахуємо як витрату
+  const notSeen = (+plannedDisc || 0) > 0 && invoiceOk && (realizedDisc === null || realizedDisc < (+plannedDisc) * 0.4);
+  const compCost = Math.max(0, +compPct || 0) * W.net + (notSeen ? (+plannedDisc) * W.net : 0);
   const contribution = B.q > 0 ? (postDays ? incGpNet : incGpWin) - cost - compCost : null;
   const fundDisc = invoiceOk && realizedDisc >= 0.02 ? realizedDisc : ((+plannedDisc || 0) + (+compPct || 0)) || null;
   const invest = Math.max(0, invoiceOk ? discInv : 0) + cost + compCost;
@@ -177,6 +194,7 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
   if (specCross) flags.push('spec_change');
   if (mixed) flags.push('mixed_prices');
   if (compCost > 0) flags.push('comp_estimated');
+  if (notSeen) flags.push('invoice_disc_not_seen');
   if (B.q <= 0) flags.push('no_baseline');
   const costUnknown = priceType && !(invoiceOk && realizedDisc >= 0.02) && !(+compPct > 0) && !(+plannedDisc > 0) && cost <= 0;
   if (costUnknown) flags.push('cost_unknown');
