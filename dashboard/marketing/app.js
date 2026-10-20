@@ -1,7 +1,7 @@
 // Barpi · маркетинговий календар і калькулятор промо (рішення Вадима 20.10.2026).
 // Дані: воркер barpi-mkt (/dashboard/api/mkt/*, за Cloudflare Access). Формули: ./lib/econ.js, ./lib/rules.js — ті самі, що у воркері.
-import * as E from './lib/econ.js?v=5';
-import * as R from './lib/rules.js?v=5';
+import * as E from './lib/econ.js?v=6';
+import * as R from './lib/rules.js?v=6';
 
 const API = '/dashboard/api/mkt/';
 const $ = (s, el = document) => el.querySelector(s);
@@ -34,7 +34,7 @@ const L_PTYPE = { network: ['мережа', 'chain'], online: ['онлайн', '
 const CHANNELS = { [T('Партнерські', 'Partner')]: ['Сайт партнера', 'Instagram партнера', 'Facebook партнера', 'Email партнера', 'Push партнера', 'Офлайн-магазин', 'Полиця / POS', 'Офлайн+онлайн'],
   Barpi: ['Barpi.ua', 'Meta Ads', 'Google Ads', 'Email / CRM', 'Instagram Barpi (підтримка кампанії)'], Offline: ['Festival', 'Event', 'Exhibition', 'Інше'] };
 const RESULTS = { success: ['Успішне', 'Successful'], partial: ['Частково успішне', 'Partly successful'], fail: ['Неефективне', 'Ineffective'] };
-const VERDICTS = { ...RESULTS, unknown: ['Вартість невідома', 'Cost unknown'] };
+const VERDICTS = { ...RESULTS, unknown: ['Не оцінено', 'Not assessable'] };
 const DECISIONS = { repeat: ['Повторити', 'Repeat'], repeat_changed: ['Повторити зі змінами', 'Repeat with changes'], change_discount: ['Змінити знижку', 'Change discount'],
   change_sku: ['Змінити SKU', 'Change SKUs'], change_mechanic: ['Змінити механіку', 'Change mechanic'], change_support: ['Змінити маркетингову підтримку', 'Change marketing support'],
   stop: ['Не повторювати', 'Do not repeat'], test: ['Потрібен додатковий тест', 'Needs another test'] };
@@ -623,8 +623,8 @@ async function renderResults() {
       <div class="kpi good"><div class="l">${T('Успішні', 'Successful')}</div><div class="v">${done.filter((x) => x.verdict === 'success').length}</div></div>
       <div class="kpi warn"><div class="l">${T('Частково', 'Partly')}</div><div class="v">${done.filter((x) => x.verdict === 'partial').length}</div></div>
       <div class="kpi bad"><div class="l">${T('Неефективні', 'Ineffective')}</div><div class="v">${done.filter((x) => x.verdict === 'fail').length}</div></div>
-      <div class="kpi"><div class="l">${T('Вартість невідома', 'Cost unknown')}</div><div class="v">${done.filter((x) => x.verdict === 'unknown').length}</div><div class="s">${T('внесіть компенсацію', 'enter compensation')}</div></div>
-      <div class="kpi"><div class="l">${T('Сумарний інкрем. прибуток', 'Total incremental profit')}</div><div class="v">${uah(done.filter((x) => x.verdict !== 'unknown').reduce((s, x) => s + (x.contribution || 0), 0))}</div><div class="s">${T('лише акції з відомою вартістю', 'only promos with known cost')}</div></div>
+      <div class="kpi"><div class="l">${T('Не оцінено', 'Not assessable')}</div><div class="v">${done.filter((x) => x.verdict === 'unknown').length}</div><div class="s">${T('немає умов або зміна специфікації', 'no terms or spec change')}</div></div>
+      <div class="kpi"><div class="l">${T('Сумарний інкрем. прибуток', 'Total incremental profit')}</div><div class="v">${uah(done.filter((x) => x.verdict !== 'unknown').reduce((s, x) => s + (x.contribution || 0), 0))}</div><div class="s">${T('лише оцінені акції', 'assessed promos only')}</div></div>
     </div>
     ${r.partners.filter((p) => p.n).map((p) => `
       <div class="card"><h2>${esc(p.partner)} <span class="tag">${p.n}</span><span class="sp"></span><span class="small muted" style="text-transform:none;letter-spacing:0">${T('сер. приріст', 'avg uplift')} ${pct(p.avg_uplift, 0, true)} · ${T('сер. знижка', 'avg discount')} ${pct(p.avg_disc, 1)} · ${T('сумарно', 'total')} ${uah(p.sum_contribution)} · ${T('під знижкою 90 дн.', 'on discount 90d')} ${pct(p.promo_share_90d)}</span></h2>

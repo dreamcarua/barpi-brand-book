@@ -224,7 +224,8 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
   if (nextStart && nextStart < postEnd) flags.push('post_cut_by_next');
   let verdict = null;
   if (started && end < today && contribution !== null) {
-    if (costUnknown) verdict = 'unknown';
+    // невідома вартість або зміна специфікації 14.09 у вікні (інша вага і ціна пачки) — порівняння некоректне
+    if (costUnknown || specCross) verdict = 'unknown';
     else verdict = contribution > 0 ? 'success' : upliftUnits !== null && upliftUnits > 0.1 ? 'partial' : 'fail';
   }
   return {
@@ -242,7 +243,7 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
 // ── Підказки на наступну акцію партнера ───────────────────────────────────────
 // hist: post-analysis минулих цінових акцій партнера; cur: {rateQ, price, gpu} за останні baseline_days.
 export function recommendNext(hist, cur, st) {
-  const unknown = hist.filter((h) => h && h.verdict === 'unknown').length;
+  const unknown = hist.filter((h) => h && (h.flags || []).includes('cost_unknown')).length;
   const ok = hist.filter((h) => h && h.verdict && h.verdict !== 'unknown' && !h.flags.includes('thin_baseline'));
   const k = median(ok.map((h) => h.response).filter((x) => x !== null && x > -5 && x < 30));
   const pf = median(ok.map((h) => h.pullForward).filter((x) => x !== null));
