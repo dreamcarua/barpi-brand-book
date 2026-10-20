@@ -1,7 +1,7 @@
 // Barpi · маркетинговий календар і калькулятор промо (рішення Вадима 20.10.2026).
 // Дані: воркер barpi-mkt (/dashboard/api/mkt/*, за Cloudflare Access). Формули: ./lib/econ.js, ./lib/rules.js — ті самі, що у воркері.
-import * as E from './lib/econ.js?v=6';
-import * as R from './lib/rules.js?v=6';
+import * as E from './lib/econ.js?v=7';
+import * as R from './lib/rules.js?v=7';
 
 const API = '/dashboard/api/mkt/';
 const $ = (s, el = document) => el.querySelector(s);
@@ -486,7 +486,8 @@ function tipHtml(t) {
   const txt = {
     no_history: () => T('Історії акцій цього партнера ще немає — прогноз на обережному припущенні: −10 % ціни дає +15 % пачок. Після першої акції система підставить реальний відгук.', 'No promo history for this partner yet — the forecast uses a cautious assumption: −10 % price gives +15 % packs. After the first promo the real response is used.'),
     best_depth: () => T(`Найвигідніша глибина знижки за історією партнера: <b>−${n(t.d)} %</b>, очікуваний приріст прибутку <b>${uah(t.inc)}</b> за 14 днів (з поправкою на закупку наперед).`, `Most profitable depth from partner history: <b>−${n(t.d)} %</b>, expected profit gain <b>${uah(t.inc)}</b> over 14 days (net of forward buying).`),
-    no_price_promo: () => T('За історією відгуку партнера жодна цінова знижка не окупається. Краще нецінова механіка: подарунок до покупки, набір, викладка/category placement, семплінг.', 'From this partner\'s response history no price discount pays back. Prefer non-price mechanics: gift with purchase, bundle, placement, sampling.'),
+    no_price_promo: () => (t.assumed ? T('Історії відгуку ще немає; за обережним припущенням (−10 % ціни → +15 % пачок) цінова знижка не окупається на маржі цього партнера. Почніть з нецінової механіки (подарунок, набір, семплінг) або з короткого тесту −5…7 %.', 'No response history yet; under a cautious assumption (−10 % price → +15 % packs) a price discount does not pay back on this partner\'s margin. Start with a non-price mechanic (gift, bundle, sampling) or a short −5…7 % test.')
+      : T('За історією відгуку партнера жодна цінова знижка не окупається. Краще нецінова механіка: подарунок до покупки, набір, викладка/category placement, семплінг.', 'From this partner\'s response history no price discount pays back. Prefer non-price mechanics: gift with purchase, bundle, placement, sampling.')),
     pull_forward: () => T(`<b>${n(t.pf)} %</b> додаткових пачок — закупка наперед: після акції відвантаження просідають. Обмежуйте обсяг відвантаження під акцію, коротшайте акцію або давайте знижку на sell-out (компенсацією за звітом), а не на відвантаження.`, `<b>${n(t.pf)} %</b> of extra packs are forward buying: shipments dip after the promo. Cap promo shipments, shorten the promo, or fund the discount on sell-out (compensation against report) instead of on shipments.`),
     volume_not_profit: () => T('Остання акція дала обсяг, але не прибуток — зменшіть знижку або звузьте асортимент до SKU-героїв.', 'The last promo brought volume but not profit — reduce the discount or narrow the range to hero SKUs.'),
     below_breakeven: () => T(`Остання акція: приріст <b>${pct(t.got, 0, true)}</b> при потрібних <b>${pct(t.need, 0, true)}</b> для знижки ${n(t.d)} % — знижка не окупилась.`, `Last promo: uplift <b>${pct(t.got, 0, true)}</b> vs <b>${pct(t.need, 0, true)}</b> needed for a ${n(t.d)} % discount — it did not pay back.`),

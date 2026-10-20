@@ -266,7 +266,7 @@ export function recommendNext(hist, cur, st) {
   if (unknown) out.tips.push({ code: 'enter_costs', level: 'warn', n: unknown });
   if (!ok.length) out.tips.push({ code: 'no_history', level: 'info' });
   if (out.best) out.tips.push({ code: 'best_depth', level: 'good', d: out.best.d, inc: out.best.inc });
-  else if (cur && cur.rateQ > 0) out.tips.push({ code: 'no_price_promo', level: 'warn' });
+  else if (cur && cur.rateQ > 0) out.tips.push({ code: 'no_price_promo', level: 'warn', assumed: k === null });
   if (pf !== null && pf >= 0.5) out.tips.push({ code: 'pull_forward', level: 'warn', pf });
   if (last && last.verdict === 'partial') out.tips.push({ code: 'volume_not_profit', level: 'warn' });
   const ld = last ? last.fundDisc : null;
