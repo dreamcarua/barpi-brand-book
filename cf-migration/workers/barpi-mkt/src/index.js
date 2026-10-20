@@ -166,7 +166,8 @@ export async function mirrorAdEvent(env, a, partners, who) {
       VALUES (?, 'barpi', 'promo', ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now'))
       ON CONFLICT(id) DO UPDATE SET title=excluded.title, mechanic=excluded.mechanic, promo_code=excluded.promo_code,
         landing_url=excluded.landing_url, starts_at=excluded.starts_at, ends_at=excluded.ends_at, status=excluded.status,
-        note=excluded.note, updated_by=excluded.updated_by, updated_at=excluded.updated_at`,
+        note=CASE WHEN ad_events.note IS NULL OR ad_events.note LIKE 'з маркетингового календаря%' THEN excluded.note ELSE ad_events.note END,
+        updated_by=excluded.updated_by, updated_at=excluded.updated_at`,
   id, a.title.slice(0, 120), mech.slice(0, 500), a.promo_code, a.landing_url, kyivMidnightUtc(a.start_date), kyivMidnightUtc(E.addDays(a.end_date, 1)),
   status, `з маркетингового календаря, активність #${a.id}`, who || 'barpi-mkt');
   if (!a.ad_event_id) await run(env, 'UPDATE mkt_activities SET ad_event_id=? WHERE id=?', id, a.id);
