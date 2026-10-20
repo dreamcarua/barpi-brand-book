@@ -106,7 +106,8 @@ export function cleanDays(endDay, n, exclude = [], maxBack = 182) {
 // Baseline = baseline_days днів перед вікном. Провал після = post_days днів після кінця.
 // plannedDisc — наша знижка в ціні відвантаження за планом (0..1); compPct — компенсація партнеру поза накладною (0..1),
 // рахується від виручки sell-in у вікні як наближення до sell-out; mixed — у партнера кілька контрагентів з різними прайсами.
-export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0, exclude = [], plannedDisc = 0, compPct = 0, mixed = false, priceType = true }) {
+// compActual — фактична компенсація з МойСклад (грн без ПДВ); якщо є, замінює оцінку compPct × виручка.
+export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0, exclude = [], plannedDisc = 0, compPct = 0, mixed = false, priceType = true, compActual = null }) {
   const preload = num(st, 'preload_days', 7), postN = num(st, 'post_days', 28), bN = num(st, 'baseline_days', 56);
   const winFrom = addDays(start, -preload);
   const winTo = minDate(end, today);
@@ -200,8 +201,9 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
   // фактична знижка з накладних надійна лише без зміни специфікації і без змішаних прайсів
   const invoiceOk = realizedDisc !== null && !specCross && !mixed;
   // знижка є в специфікації, але не видна в накладних МойСклад → її оформили окремо (коригування/компенсація): рахуємо як витрату
-  const notSeen = (+plannedDisc || 0) > 0 && invoiceOk && (realizedDisc === null || realizedDisc < (+plannedDisc) * 0.4);
-  const compCost = Math.max(0, +compPct || 0) * W.net + (notSeen ? (+plannedDisc) * W.net : 0);
+  const hasActual = compActual !== null && compActual !== undefined && +compActual > 0;
+  const notSeen = !hasActual && (+plannedDisc || 0) > 0 && invoiceOk && (realizedDisc === null || realizedDisc < (+plannedDisc) * 0.4);
+  const compCost = hasActual ? +compActual : Math.max(0, +compPct || 0) * W.net + (notSeen ? (+plannedDisc) * W.net : 0);
   const contribution = B.q > 0 || useRR ? (postDays ? incGpNet : incGpWin) - cost - compCost : null;
   const fundDisc = invoiceOk && realizedDisc >= 0.02 ? realizedDisc : ((+plannedDisc || 0) + (+compPct || 0)) || null;
   // знижка в накладних, яку не видно напряму (зміна специфікації, змішані прайси): інвестиція = план × виручка за повною ціною
@@ -214,10 +216,11 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
   if (mixed) flags.push('mixed_prices');
   if (heavy) flags.push('promo_heavy');
   if (useRR) flags.push('runrate_baseline');
-  if (compCost > 0) flags.push('comp_estimated');
+  if (hasActual) flags.push('comp_actual');
+  else if (compCost > 0) flags.push('comp_estimated');
   if (notSeen) flags.push('invoice_disc_not_seen');
   if (B.q <= 0 && !useRR) flags.push('no_baseline');
-  const costUnknown = priceType && !(invoiceOk && realizedDisc >= 0.02) && !(+compPct > 0) && !(+plannedDisc > 0) && cost <= 0;
+  const costUnknown = priceType && !hasActual && !(invoiceOk && realizedDisc >= 0.02) && !(+compPct > 0) && !(+plannedDisc > 0) && cost <= 0;
   if (costUnknown) flags.push('cost_unknown');
   if (!postComplete && end < today) flags.push('post_incomplete');
   if (end >= today) flags.push('running');

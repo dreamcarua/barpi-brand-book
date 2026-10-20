@@ -1,7 +1,7 @@
 // Barpi · маркетинговий календар і калькулятор промо (рішення Вадима 20.10.2026).
 // Дані: воркер barpi-mkt (/dashboard/api/mkt/*, за Cloudflare Access). Формули: ./lib/econ.js, ./lib/rules.js — ті самі, що у воркері.
-import * as E from './lib/econ.js?v=7';
-import * as R from './lib/rules.js?v=7';
+import * as E from './lib/econ.js?v=8';
+import * as R from './lib/rules.js?v=8';
 
 const API = '/dashboard/api/mkt/';
 const $ = (s, el = document) => el.querySelector(s);
@@ -473,6 +473,7 @@ const FLAG_TXT = {
   running: () => T('акція ще триває', 'promo still running'),
   post_cut_by_next: () => T('вікно «після» обрізане наступною акцією партнера', 'post window cut by the next partner promo'),
   mixed_prices: () => T('у партнера кілька контрагентів з різними прайсами — знижку з накладних не рахуємо', 'several counterparties with different price lists — invoice discount ignored'),
+  comp_actual: () => T('компенсацію взято фактичну — з платежу/взаємозаліку партнеру в МойСклад', 'actual compensation taken from the MoySklad payment/offset to the partner'),
   comp_estimated: () => T('компенсацію пораховано від виручки sell-in у вікні (наближення до sell-out)', 'compensation estimated on window sell-in revenue (proxy for sell-out)'),
   no_baseline: () => T('до акції продажів не було — приріст не рахується', 'no sales before the promo — uplift not computed'),
   cost_unknown: () => T('знижки в накладних немає, а компенсація / наша знижка / витрати не внесені — прибуток акції завищений, внесіть умови', 'no invoice discount and no compensation / our discount / costs entered — profit is overstated, enter the terms'),
@@ -1000,7 +1001,7 @@ async function renderSettings() {
   </div>
   <div class="card"><h2>🤝 ${T('Партнери і контрагенти МойСклад', 'Partners & MoySklad counterparties')}<span class="sp"></span><button class="btn ghost sm" id="pNew">+ ${T('Партнер', 'Partner')}</button></h2>
     <div class="tw"><table><thead><tr><th>${T('Партнер', 'Partner')}</th><th>${T('Тип', 'Type')}</th><th>${T('Контрагенти МойСклад', 'MoySklad counterparties')}</th><th>${T('Примітка', 'Note')}</th><th></th></tr></thead><tbody>
-    ${d.partners.map((p) => `<tr><td><b>${esc(p.name)}</b>${p.active ? '' : ' <span class="tag">off</span>'}</td><td>${esc(L(L_PTYPE, p.ptype))}</td><td class="small">${p.cp_rule === 'fop' ? T('усі ФОП, не закріплені за іншими', 'all sole traders not linked elsewhere') : (p.cp_ids || []).length ? `${(p.cp_ids || []).length} ${T('шт.', 'pcs')}` : `<span class="tag warn">${T('не привʼязано', 'not linked')}</span>`}</td><td class="small muted">${esc(p.note || '')}</td><td><button class="btn ghost sm" data-pedit="${p.id}">${T('Змінити', 'Edit')}</button></td></tr>`).join('')}
+    ${d.partners.map((p) => `<tr><td><b>${esc(p.name)}</b>${p.active ? '' : ' <span class="tag">off</span>'}</td><td>${esc(L(L_PTYPE, p.ptype))}</td><td class="small">${p.cp_rule === 'fop' ? T('усі ФОП, не закріплені за іншими', 'all sole traders not linked elsewhere') : (p.cp_ids || []).length ? `${(p.cp_ids || []).length} ${T('шт.', 'pcs')}` : `<span class="tag warn">${T('не привʼязано', 'not linked')}</span>`}</td><td class="small muted">${p.retro_pct ? `${T('ретро', 'retro')} ${fmtN(p.retro_pct, 1)} % · ` : ''}${esc(p.note || '')}</td><td><button class="btn ghost sm" data-pedit="${p.id}">${T('Змінити', 'Edit')}</button></td></tr>`).join('')}
     </tbody></table></div>
   </div>
   <div class="card"><h2>📖 ${T('Довідники', 'Dictionaries')}</h2><div class="grid g3">
@@ -1022,6 +1023,7 @@ async function editPartner(id) {
       ${fld(T('Назва', 'Name'), inp('name', p.name, 'text', 'required maxlength="120"'))}
       ${fld(T('Тип партнера', 'Partner type'), sel('ptype', p.ptype, Object.keys(L_PTYPE).map((k) => [k, L(L_PTYPE, k)])))}
       <div class="fld full checks"><label><input type="checkbox" name="fop" ${p.cp_rule === 'fop' ? 'checked' : ''}> ${T('усі ФОП, не закріплені за іншими партнерами (дрібний опт)', 'all sole traders not linked to other partners (wholesale)')}</label><label><input type="checkbox" name="active" ${p.active ? 'checked' : ''}> ${T('активний', 'active')}</label></div>
+      ${fld(T('Ретро-бонус партнеру, % від відвантажень', 'Partner retro bonus, % of shipments'), inp('retro_pct', p.retro_pct, 'number', 'min="0" max="50" step="0.1"'), '', T('взаємозалік за період; зменшує нашу виручку з кожної пачки в аналізі й калькуляторі', 'periodic offset; reduces our revenue per pack in analysis and calculator'))}
       ${fld(T('Примітка', 'Note'), inp('note', p.note), 'full')}
     </form>
     <div class="card" style="margin-top:14px"><h2>${T('Контрагенти МойСклад', 'MoySklad counterparties')} <span class="tag" id="cpN">${chosen.size}</span></h2>
@@ -1040,7 +1042,7 @@ async function editPartner(id) {
     const f = $('#pForm');
     if (!f.reportValidity()) return;
     const fd = new FormData(f);
-    const b = { name: fd.get('name'), ptype: fd.get('ptype'), note: fd.get('note'), cp_ids: [...chosen], cp_rule: fd.get('fop') ? 'fop' : null, active: !!fd.get('active') };
+    const b = { name: fd.get('name'), ptype: fd.get('ptype'), note: fd.get('note'), retro_pct: fd.get('retro_pct'), cp_ids: [...chosen], cp_rule: fd.get('fop') ? 'fop' : null, active: !!fd.get('active') };
     try { if (id) await api('partners/' + id, { method: 'PUT', body: b }); else await api('partners', { method: 'POST', body: b }); toast(T('Збережено', 'Saved')); closeDrawer(); await load(); render(); } catch (e) { toast(e.message, true); }
   };
 }

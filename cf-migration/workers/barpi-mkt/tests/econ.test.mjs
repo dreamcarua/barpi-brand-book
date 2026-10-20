@@ -125,3 +125,17 @@ test('дзеркало ad_events: кількість ? дорівнює кіль
   assert.ok(calls.length >= 1);
   for (const c of calls) assert.equal((c.sql.match(/\?/g) || []).length, c.n, c.sql.slice(0, 60));
 });
+
+test('фактична компенсація з МойСклад замінює оцінку', () => {
+  const pid = 'p1';
+  const prods = { [pid]: { ...small, sku: 'B-1' } };
+  const rows = [];
+  let d = '2026-01-01';
+  while (d <= '2026-03-31') { rows.push({ d, pid, q: 2, net: 100 }); d = E.addDays(d, 1); }
+  d = '2026-04-01';
+  while (d <= '2026-04-21') { rows.push({ d, pid, q: 4, net: 200 }); d = E.addDays(d, 1); }
+  const r = E.analysePromo({ rows, prods, start: '2026-04-08', end: '2026-04-21', today: '2026-06-30', st, compPct: 0.15, compActual: 500 });
+  assert.equal(r.compCost, 500);
+  assert.ok(r.flags.includes('comp_actual'));
+  assert.ok(!r.flags.includes('cost_unknown'));
+});

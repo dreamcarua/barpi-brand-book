@@ -61,7 +61,8 @@ async function partnerCpIds(env, partner, partners) {
   return [...ids];
 }
 // Денні рядки продажів (sell-in) по контрагентах: виручка без ПДВ
-async function salesRows(env, cpIds, from, to, st) {
+// retro — ретро-бонус партнера (частка від відвантажень, взаємозалік): зменшує нашу фактичну виручку з кожної пачки
+async function salesRows(env, cpIds, from, to, st, retro = 0) {
   if (!cpIds.length) return [];
   const vat = 1 + E.num(st, 'vat_rate', 20) / 100;
   const out = [];
@@ -71,7 +72,7 @@ async function salesRows(env, cpIds, from, to, st) {
       `SELECT substr(moment,1,10) d, product_ms_id pid, SUM(qty) q, SUM(sum_uah) gross, COUNT(DISTINCT demand_ms_id) docs
          FROM sales_sku WHERE agent_ms_id IN (${chunk.map(() => '?').join(',')}) AND moment >= ? AND moment < ?
         GROUP BY d, pid`, ...chunk, from, E.addDays(to, 1));
-    rows.forEach((r) => out.push({ d: r.d, pid: r.pid, q: +r.q || 0, net: (+r.gross || 0) / vat, docs: r.docs }));
+    rows.forEach((r) => out.push({ d: r.d, pid: r.pid, q: +r.q || 0, net: ((+r.gross || 0) / vat) * (1 - (+retro || 0)), docs: r.docs }));
   }
   return out;
 }
@@ -181,7 +182,7 @@ async function partnerAnalytics(env, partnerId, from, to) {
   const p = partners.find((x) => x.id === +partnerId);
   if (!p) return { error: 'partner' };
   const cp = await partnerCpIds(env, p, partners);
-  const [rows, prods, ret] = await Promise.all([salesRows(env, cp, from, to, st), products(env), returnsSum(env, cp, from, to, st)]);
+  const [rows, prods, ret] = await Promise.all([salesRows(env, cp, from, to, st, (+p.retro_pct || 0) / 100), products(env), returnsSum(env, cp, from, to, st)]);
   const bySku = {}, byMonth = {};
   let units = 0, rev = 0, cogs = 0;
   const docs = new Set();
@@ -220,10 +221,24 @@ async function analyseActivity(env, a, ctx) {
   if (!cp.length) return { activity_id: a.id, skipped: 'no_counterparty' };
   const preload = E.num(st, 'preload_days', 7), bN = E.num(st, 'baseline_days', 56), postN = E.num(st, 'post_days', 28);
   const from = E.addDays(a.start_date, -(preload + bN + 200)), to = E.minDate(E.addDays(a.end_date, postN), today);
-  const rows = await salesRows(env, cp, from, to, st);
+  const rows = await salesRows(env, cp, from, to, st, (+p.retro_pct || 0) / 100);
   const exclude = ctx.acts.filter((x) => x.id !== a.id && x.partner_id === a.partner_id && R.PRICE_TYPES.includes(x.activity_type) && x.status !== 'cancelled')
     .map((x) => ({ start: x.start_date, end: x.end_date }));
-  const res = E.analysePromo({ rows, prods: ctx.prods, start: a.start_date, end: a.end_date, today, st,
+  // фактична компенсація з МойСклад: вихідні платежі/взаємозаліки партнеру з призначенням «компенсація знижки / посткомпенсація промо»
+  // протягом 75 днів після акції, якщо ця акція — остання завершена перед платежем
+  let compActual = null;
+  const vat = 1 + E.num(st, 'vat_rate', 20) / 100;
+  if (cp.length) {
+    const pays = await all(env, `SELECT substr(moment,1,10) d, sum_uah s, COALESCE(json_extract(raw_json,'$.paymentPurpose'),'') || ' ' || COALESCE(json_extract(raw_json,'$.description'),'') t
+        FROM moysklad_payments_out WHERE agent_ms_id IN (${cp.map(() => '?').join(',')}) AND moment >= ? AND moment < ?`, ...cp, a.end_date, E.addDays(a.end_date, 76));
+    const mine = pays.filter((x) => /компенсац[^\n]*(знижк|промо)|посткомпенсац/i.test(x.t) && !/ретро/i.test(x.t)).filter((x) => {
+      const lastBefore = ctx.acts.filter((y) => y.partner_id === a.partner_id && R.PRICE_TYPES.includes(y.activity_type) && y.status !== 'cancelled' && y.end_date <= x.d)
+        .sort((u, v) => v.end_date.localeCompare(u.end_date))[0];
+      return lastBefore && lastBefore.id === a.id;
+    });
+    if (mine.length) compActual = mine.reduce((sum, x) => sum + (+x.s || 0), 0) / vat;
+  }
+  const res = E.analysePromo({ rows, prods: ctx.prods, start: a.start_date, end: a.end_date, today, st, compActual,
     promoCost: +a.cost_fact || +a.budget_plan || 0, exclude, plannedDisc: (+a.supplier_discount_pct || 0) / 100, compPct: (+a.comp_pct || 0) / 100,
     mixed: cp.length > 1, priceType: R.PRICE_TYPES.includes(a.activity_type) });
   // кілька акцій партнера в один період (набір + знижка) ділять один ефект: рахуємо його один раз
@@ -301,7 +316,7 @@ const avg = (a) => { const v = a.filter((x) => x !== null && x !== undefined && 
 // Поточний темп партнера: пачок/день, середня ціна без ПДВ, валовий прибуток з пачки
 async function currentRates(env, p, ctx, from, to) {
   const cp = await partnerCpIds(env, p, ctx.partners);
-  const rows = await salesRows(env, cp, from, to, ctx.st);
+  const rows = await salesRows(env, cp, from, to, ctx.st, (+p.retro_pct || 0) / 100);
   let q = 0, net = 0, cost = 0;
   rows.forEach((r) => { const pr = ctx.prods[r.pid]; if (!pr || !E.isFinished(pr)) return; q += r.q; net += r.net; cost += E.unitCost(pr, r.d, ctx.st) * r.q; });
   const days = E.daysIncl(from, to);
@@ -334,7 +349,7 @@ async function calcBase(env, q) {
   let [bf, bt] = baselineWindow(method, start, end, q.get('bfrom'), q.get('bto'));
   if (bt >= today) bt = E.addDays(today, -1);
   const cp = await partnerCpIds(env, p, partners);
-  const [rows, prods] = await Promise.all([salesRows(env, cp, bf, bt, st), products(env)]);
+  const [rows, prods] = await Promise.all([salesRows(env, cp, bf, bt, st, (+p.retro_pct || 0) / 100), products(env)]);
   const bDays = Math.max(1, E.daysIncl(bf, bt)), pDays = E.daysIncl(start, end);
   const k = pDays / bDays;
   const agg = {};
@@ -344,7 +359,7 @@ async function calcBase(env, q) {
   for (const pr of Object.values(prods)) {
     if (!E.isFinished(pr) || pr.archived && !agg[pr.pid]) continue;
     const a = agg[pr.pid] || { q: 0, net: 0 };
-    const price = a.q > 0 ? a.net / a.q : (pr.price_opt ? pr.price_opt / vat : 0);
+    const price = a.q > 0 ? a.net / a.q : (pr.price_opt ? (pr.price_opt / vat) * (1 - (+p.retro_pct || 0) / 100) : 0);
     const cost = E.unitCost(pr, start, st);
     lines.push({ pid: pr.pid, sku: pr.sku, name: pr.name, kind: E.skuKind(pr), base_units_period: a.q, base_revenue_period: a.net,
       u: a.q * k, p: price, c: cost, stock: pr.stock, price_source: a.q > 0 ? 'fact' : 'price_list', revenue: a.net });
@@ -392,7 +407,7 @@ async function mail(env, tos, subject, html) {
   return { sent, failed };
 }
 // Щоденний дайджест о digest_hour_kyiv: Telegram + лист; персональний лист відповідальному лише про його активності
-async function digest(env, force = false) {
+async function digest(env, force = false, channels = 'all') {
   const st = await settings(env);
   const today = E.kyivToday();
   if (!force && E.kyivHour() !== E.num(st, 'digest_hour_kyiv', 9)) return { skipped: 'hour' };
@@ -408,6 +423,7 @@ async function digest(env, force = false) {
   const out = { tg: 0, mail: null, items: att.length };
   if (text) {
     out.tg = await tg(env, text);
+    if (channels === 'tg') return out;
     const html = '<div style="font-family:Arial,sans-serif;color:#001154;font-size:14px;line-height:1.6">' +
       text.split('\n').map((l) => (l.startsWith('http') ? `<p><a href="${l}" style="display:inline-block;background:#001154;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Відкрити календар</a></p>` : l || '<br>')).join('<br>') + '</div>';
     const owners = [...new Set(att.filter((x) => x.level !== 'info' || x.code === 't1_tomorrow').map((x) => x.owner).filter(Boolean))];
@@ -493,8 +509,8 @@ async function api(req, env, path, url, who) {
   if (path === 'partners' && m === 'POST') {
     const b = await body(req); if (!b || !str(b.name, 120)) return J({ error: 'name' }, 400);
     try {
-      const r = await run(env, 'INSERT INTO mkt_partners (name, ptype, cp_ids, cp_rule, note, active) VALUES (?,?,?,?,?,1)',
-        str(b.name, 120), str(b.ptype, 30) || 'other', JSON.stringify(Array.isArray(b.cp_ids) ? b.cp_ids.slice(0, 50) : []), b.cp_rule === 'fop' ? 'fop' : null, str(b.note, 500));
+      const r = await run(env, 'INSERT INTO mkt_partners (name, ptype, cp_ids, cp_rule, note, active, retro_pct) VALUES (?,?,?,?,?,1,?)',
+        str(b.name, 120), str(b.ptype, 30) || 'other', JSON.stringify(Array.isArray(b.cp_ids) ? b.cp_ids.slice(0, 50) : []), b.cp_rule === 'fop' ? 'fop' : null, str(b.note, 500), numOrNull(b.retro_pct));
       await audit(env, who, 'create', 'partner', r.meta.last_row_id, null, b);
       return J({ ok: true, id: r.meta.last_row_id });
     } catch (e) { return J({ error: 'duplicate' }, 409); }
@@ -504,9 +520,9 @@ async function api(req, env, path, url, who) {
     const cur = await first(env, 'SELECT * FROM mkt_partners WHERE id=?', +mm[1]);
     if (!cur) return J({ error: 'not_found' }, 404);
     const b = await body(req) || {};
-    await run(env, "UPDATE mkt_partners SET name=?, ptype=?, cp_ids=?, cp_rule=?, note=?, active=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+    await run(env, "UPDATE mkt_partners SET name=?, ptype=?, cp_ids=?, cp_rule=?, note=?, active=?, retro_pct=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
       str(b.name, 120) || cur.name, str(b.ptype, 30) || cur.ptype, Array.isArray(b.cp_ids) ? JSON.stringify(b.cp_ids.slice(0, 50)) : cur.cp_ids,
-      b.cp_rule === undefined ? cur.cp_rule : (b.cp_rule === 'fop' ? 'fop' : null), b.note === undefined ? cur.note : str(b.note, 500), b.active === undefined ? cur.active : (b.active ? 1 : 0), cur.id);
+      b.cp_rule === undefined ? cur.cp_rule : (b.cp_rule === 'fop' ? 'fop' : null), b.note === undefined ? cur.note : str(b.note, 500), b.active === undefined ? cur.active : (b.active ? 1 : 0), b.retro_pct === undefined ? cur.retro_pct : numOrNull(b.retro_pct), cur.id);
     await audit(env, who, 'update', 'partner', cur.id, cur, b);
     return J({ ok: true });
   }
@@ -582,7 +598,7 @@ async function api(req, env, path, url, who) {
     return J({ ok: true, activity: act });
   }
   if (path === 'audit' && m === 'GET') return J({ rows: await all(env, 'SELECT id, at, actor, action, entity, entity_id FROM mkt_audit ORDER BY id DESC LIMIT 200') });
-  if (path === 'digest' && m === 'POST') return J(await digest(env, true));
+  if (path === 'digest' && m === 'POST') return J(await digest(env, true, q.get('channels') === 'tg' ? 'tg' : 'all'));
   return J({ error: 'not_found' }, 404);
 }
 const b_ver = (req) => req.headers.get('If-Match');
