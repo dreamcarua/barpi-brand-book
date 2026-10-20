@@ -111,8 +111,8 @@ async function freshness(env) {
 const ACT_FIELDS = ['title', 'campaign', 'start_date', 'end_date', 'prep_date', 'direction', 'partner_id', 'activity_type', 'mechanic',
   'discount_pct', 'supplier_discount_pct', 'channel', 'owner', 'priority', 'status', 'budget_plan', 'cost_fact', 'file_url', 'post_url',
   'skus', 'kpi_name', 'kpi_plan', 'kpi_fact', 'result', 'decision', 'comment', 'checklist', 'promo_code', 'landing_url', 'calc_id',
-  'sellout_units', 'sellout_revenue'];
-const NUMS = new Set(['partner_id', 'discount_pct', 'supplier_discount_pct', 'budget_plan', 'cost_fact', 'kpi_plan', 'kpi_fact', 'calc_id', 'sellout_units', 'sellout_revenue']);
+  'sellout_units', 'sellout_revenue', 'comp_pct'];
+const NUMS = new Set(['partner_id', 'discount_pct', 'supplier_discount_pct', 'budget_plan', 'cost_fact', 'kpi_plan', 'kpi_fact', 'calc_id', 'sellout_units', 'sellout_revenue', 'comp_pct']);
 function cleanAct(b, cur) {
   const a = { ...(cur || {}) };
   for (const k of ACT_FIELDS) {
@@ -133,7 +133,7 @@ function cleanAct(b, cur) {
   if (!R.DIRECTIONS.includes(a.direction)) return { err: 'direction' };
   if (!R.STATUSES.includes(a.status)) return { err: 'status' };
   if (!R.PRIORITIES.includes(a.priority)) return { err: 'priority' };
-  for (const k of ['discount_pct', 'supplier_discount_pct']) if (a[k] != null && (a[k] < 0 || a[k] > 100)) return { err: k };
+  for (const k of ['discount_pct', 'supplier_discount_pct', 'comp_pct']) if (a[k] != null && (a[k] < 0 || a[k] > 100)) return { err: k };
   for (const k of ['budget_plan', 'cost_fact']) if (a[k] < 0) return { err: k };
   return { a };
 }
@@ -222,7 +222,15 @@ async function analyseActivity(env, a, ctx) {
   const rows = await salesRows(env, cp, from, to, st);
   const exclude = ctx.acts.filter((x) => x.id !== a.id && x.partner_id === a.partner_id && R.PRICE_TYPES.includes(x.activity_type) && x.status !== 'cancelled')
     .map((x) => ({ start: x.start_date, end: x.end_date }));
-  const res = E.analysePromo({ rows, prods: ctx.prods, start: a.start_date, end: a.end_date, today, st, promoCost: +a.cost_fact || +a.budget_plan || 0, exclude });
+  // частка днів під іншими акціями партнера за 120 днів до вікна: якщо велика, «чистий» baseline — це провали між акціями
+  const lookFrom = E.addDays(a.start_date, -(preload + 120)), lookTo = E.addDays(a.start_date, -preload - 1);
+  const busy = new Set();
+  exclude.forEach((x) => { let d = E.maxDate(x.start, lookFrom); const to = E.minDate(x.end, lookTo); let g = 0; while (d <= to && g++ < 400) { busy.add(d); d = E.addDays(d, 1); } });
+  const res = E.analysePromo({ rows, prods: ctx.prods, start: a.start_date, end: a.end_date, today, st,
+    promoCost: +a.cost_fact || +a.budget_plan || 0, exclude, plannedDisc: (+a.supplier_discount_pct || 0) / 100, compPct: (+a.comp_pct || 0) / 100,
+    mixed: cp.length > 1, priceType: R.PRICE_TYPES.includes(a.activity_type) });
+  res.promo_share_before = busy.size / 120;
+  if (res.promo_share_before >= 0.4) res.flags.push('promo_heavy');
   res.activity_id = a.id; res.partner_id = a.partner_id; res.partner = p.name; res.title = a.title;
   res.start_date = a.start_date; res.end_date = a.end_date; res.discount_pct = a.discount_pct; res.supplier_discount_pct = a.supplier_discount_pct;
   res.kpi_plan = a.kpi_plan; res.kpi_name = a.kpi_name;
@@ -277,11 +285,12 @@ async function insights(env) {
       partner_id: +pid, partner: p.name, n: list.length, current: cur, rec,
       success: done.filter((x) => x.verdict === 'success').length, partial: done.filter((x) => x.verdict === 'partial').length,
       fail: done.filter((x) => x.verdict === 'fail').length,
-      avg_uplift: avg(done.map((x) => x.upliftUnits)), avg_disc: avg(done.map((x) => x.realizedDisc)),
-      sum_contribution: done.reduce((s, x) => s + (x.contribution || 0), 0), avg_roi: avg(done.map((x) => x.roi)),
+      avg_uplift: avg(done.filter((x) => x.verdict !== 'unknown').map((x) => x.upliftUnits)), avg_disc: avg(done.map((x) => x.fundDisc)),
+      sum_contribution: done.filter((x) => x.verdict !== 'unknown').reduce((s, x) => s + (x.contribution || 0), 0), avg_roi: avg(done.map((x) => x.roi)),
+      unknown: done.filter((x) => x.verdict === 'unknown').length,
       promo_share_90d: share,
       list: list.map((x) => ({ activity_id: x.activity_id, title: x.title, start_date: x.start_date, end_date: x.end_date, verdict: x.verdict,
-        upliftUnits: x.upliftUnits, realizedDisc: x.realizedDisc, contribution: x.contribution, roi: x.roi, pullForward: x.pullForward, flags: x.flags })),
+        upliftUnits: x.upliftUnits, realizedDisc: x.realizedDisc, fundDisc: x.fundDisc, invoiceOk: x.invoiceOk, contribution: x.contribution, roi: x.roi, pullForward: x.pullForward, flags: x.flags })),
     });
   }
   out.sort((a, b) => b.n - a.n);
@@ -418,7 +427,7 @@ async function api(req, env, path, url, who) {
     const [st, partners, acts, budget, fresh] = await Promise.all([settings(env), partnersAll(env), activities(env), all(env, 'SELECT * FROM mkt_budget ORDER BY ym'), freshness(env)]);
     const an = Object.fromEntries((await all(env, 'SELECT activity_id, data FROM mkt_analysis')).map((r) => {
       const d = parseJson(r.data, {});
-      return [r.activity_id, { verdict: d.verdict, upliftUnits: d.upliftUnits, contribution: d.contribution, roi: d.roi, realizedDisc: d.realizedDisc, skipped: d.skipped, flags: d.flags }];
+      return [r.activity_id, { verdict: d.verdict, upliftUnits: d.upliftUnits, contribution: d.contribution, roi: d.roi, realizedDisc: d.realizedDisc, fundDisc: d.fundDisc, skipped: d.skipped, flags: d.flags }];
     }));
     const users = await all(env, "SELECT DISTINCT owner FROM mkt_activities WHERE owner IS NOT NULL AND deleted=0");
     return J({ me: who, today, version: VERSION, settings: st, partners, activities: acts, budget, analysis: an, freshness: fresh,
@@ -588,13 +597,14 @@ async function linkCalcToActivity(env, calcId, b, who) {
     const cur = await first(env, 'SELECT * FROM mkt_activities WHERE id=? AND deleted=0', id);
     if (!cur) return null;
     const comment = [String(cur.comment || '').replace(/Калькулятор #\d+:[^\n]*\n?/g, '').trim(), extra].filter(Boolean).join('\n');
+    await run(env, "UPDATE mkt_activities SET comp_pct=COALESCE(?, comp_pct) WHERE id=?", numOrNull(b.comp_pct), id);
     await run(env, "UPDATE mkt_activities SET calc_id=?, kpi_name=?, kpi_plan=?, supplier_discount_pct=COALESCE(?, supplier_discount_pct), discount_pct=COALESCE(?, discount_pct), budget_plan=CASE WHEN ? IS NOT NULL AND budget_plan=0 THEN ? ELSE budget_plan END, comment=?, updated_at=strftime('%Y-%m-%d %H:%M:%f','now'), updated_by=? WHERE id=?",
       calcId, kpi.kpi_name, kpi.kpi_plan, numOrNull(b.supplier_discount_pct), numOrNull(b.customer_discount_pct), numOrNull(k.costs), numOrNull(k.costs), comment, who, id);
   } else {
-    const r = await run(env, `INSERT INTO mkt_activities (title, start_date, end_date, direction, partner_id, activity_type, mechanic, discount_pct, supplier_discount_pct,
-        status, budget_plan, kpi_name, kpi_plan, comment, calc_id, source, created_by, updated_by) VALUES (?,?,?,?,?,?,?,?,?,'planned',?,?,?,?,?,'calc',?,?)`,
+    const r = await run(env, `INSERT INTO mkt_activities (title, start_date, end_date, direction, partner_id, activity_type, mechanic, discount_pct, supplier_discount_pct, comp_pct,
+        status, budget_plan, kpi_name, kpi_plan, comment, calc_id, source, created_by, updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,'planned',?,?,?,?,?,'calc',?,?)`,
     str(b.title, 160), b.start_date, b.end_date, b.direction || 'partners', numOrNull(b.partner_id), str(b.activity_type, 40) || 'Знижка',
-    str(b.mechanic, 500), numOrNull(b.customer_discount_pct), numOrNull(b.supplier_discount_pct), numOrNull(k.costs) || 0, kpi.kpi_name, kpi.kpi_plan, extra, calcId, who, who);
+    str(b.mechanic, 500), numOrNull(b.customer_discount_pct), numOrNull(b.supplier_discount_pct), numOrNull(b.comp_pct), numOrNull(k.costs) || 0, kpi.kpi_name, kpi.kpi_plan, extra, calcId, who, who);
     id = r.meta.last_row_id;
     await audit(env, who, 'create', 'activity', id, null, { from_calc: calcId });
   }

@@ -96,3 +96,22 @@ test('ICS: стабільний UID і дата кінця не включно',
   assert.match(s, /DTEND;VALUE=DATE:20261201/);
   assert.ok(s.split('\r\n').every((l) => new TextEncoder().encode(l).length <= 75));
 });
+
+test('компенсація поза накладною віднімається, без умов — вартість невідома', () => {
+  const pid = 'p1';
+  const prods = { [pid]: { ...small, sku: 'B-1' } };
+  const rows = [];
+  let d = '2026-01-01';
+  while (d <= '2026-03-31') { rows.push({ d, pid, q: 2, net: 100 }); d = E.addDays(d, 1); }
+  d = '2026-04-01';
+  while (d <= '2026-04-21') { rows.push({ d, pid, q: 4, net: 200 }); d = E.addDays(d, 1); }   // ціна в накладних та сама
+  const base = { rows, prods, start: '2026-04-08', end: '2026-04-21', today: '2026-06-30', st };
+  const r0 = E.analysePromo(base);
+  assert.equal(r0.verdict, 'unknown');
+  assert.ok(r0.flags.includes('cost_unknown'));
+  const r1 = E.analysePromo({ ...base, compPct: 0.15 });
+  assert.ok(Math.abs(r1.compCost - 0.15 * 21 * 200) < 1e-6);
+  assert.ok(Math.abs(r1.contribution - (r0.contribution - r1.compCost)) < 1e-6);
+  assert.notEqual(r1.verdict, 'unknown');
+  assert.ok(Math.abs(r1.fundDisc - 0.15) < 1e-9);
+});

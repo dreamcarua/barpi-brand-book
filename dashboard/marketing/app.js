@@ -34,6 +34,7 @@ const L_PTYPE = { network: ['мережа', 'chain'], online: ['онлайн', '
 const CHANNELS = { [T('Партнерські', 'Partner')]: ['Сайт партнера', 'Instagram партнера', 'Facebook партнера', 'Email партнера', 'Push партнера', 'Офлайн-магазин', 'Полиця / POS', 'Офлайн+онлайн'],
   Barpi: ['Barpi.ua', 'Meta Ads', 'Google Ads', 'Email / CRM', 'Instagram Barpi (підтримка кампанії)'], Offline: ['Festival', 'Event', 'Exhibition', 'Інше'] };
 const RESULTS = { success: ['Успішне', 'Successful'], partial: ['Частково успішне', 'Partly successful'], fail: ['Неефективне', 'Ineffective'] };
+const VERDICTS = { ...RESULTS, unknown: ['Вартість невідома', 'Cost unknown'] };
 const DECISIONS = { repeat: ['Повторити', 'Repeat'], repeat_changed: ['Повторити зі змінами', 'Repeat with changes'], change_discount: ['Змінити знижку', 'Change discount'],
   change_sku: ['Змінити SKU', 'Change SKUs'], change_mechanic: ['Змінити механіку', 'Change mechanic'], change_support: ['Змінити маркетингову підтримку', 'Change marketing support'],
   stop: ['Не повторювати', 'Do not repeat'], test: ['Потрібен додатковий тест', 'Needs another test'] };
@@ -44,7 +45,7 @@ const PROMO_GOALS = { revenue: ['Збільшити оборот', 'Grow revenue
   stock: ['Зменшити залишки', 'Reduce stock'], buyers: ['Залучити нових покупців', 'Win new buyers'], other: ['Інше', 'Other'] };
 const L = (map, k) => (map[k] ? map[k][lang === 'en' ? 1 : 0] : (k ?? ''));
 const statusTag = (s) => `<span class="tag ${({ active: 'good', ready: 'good', approved: 'info', prep: 'info', approval: 'warn', idea: '', planned: 'navy', done: '', cancelled: 'bad', postponed: 'warn' })[s] || ''}">${esc(L(L_STATUS, s))}</span>`;
-const verdictTag = (v) => (v ? `<span class="tag ${v === 'success' ? 'good' : v === 'partial' ? 'warn' : 'bad'}">${esc(L(RESULTS, v))}</span>` : '<span class="tag">—</span>');
+const verdictTag = (v) => (v ? `<span class="tag ${v === 'success' ? 'good' : v === 'partial' ? 'warn' : v === 'unknown' ? 'info' : 'bad'}">${esc(L(VERDICTS, v))}</span>` : '<span class="tag">—</span>');
 
 // ── стан ─────────────────────────────────────────────────────────────────────
 const S = {
@@ -76,7 +77,8 @@ async function load() {
   if (!S.cursor) S.cursor = d.today;
   if (!S.listMonth) S.listMonth = d.today.slice(0, 7);
   const f = d.freshness || {};
-  $('#fresh').innerHTML = f.last_doc ? `${T('МойСклад: останнє відвантаження', 'MoySklad: last shipment')}<br>${esc(dmy(f.last_doc.slice(0, 10)))} ${esc(f.last_doc.slice(11, 16))}` : '';
+  const sy = f.synced ? new Date(f.synced.replace(' ', 'T') + 'Z') : null;
+  $('#fresh').innerHTML = sy && !isNaN(sy) ? `${T('МойСклад синхронізовано', 'MoySklad synced')}<br>${esc(sy.toLocaleString('uk-UA', { timeZone: 'Europe/Kyiv', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))}` : '';
 }
 
 // ── фільтри ─────────────────────────────────────────────────────────────────
@@ -400,6 +402,7 @@ async function openActivity(id, preset = {}) {
       ${fld(T('Механіка', 'Mechanic'), inp('mechanic', a.mechanic, 'text', 'maxlength="500" placeholder="−15 % на SKU 70 г; 1+1; подарунок"'), 'full', T('Для акцій Barpi.ua текст іде в рекламу дослівно', 'For Barpi.ua promos this text goes into ads verbatim'))}
       ${fld(T('Знижка покупцю, %', 'Shopper discount, %'), inp('discount_pct', a.discount_pct, 'number', 'min="0" max="100" step="0.1"'))}
       ${fld(T('Наша знижка на відвантаження, %', 'Our shipment discount, %'), inp('supplier_discount_pct', a.supplier_discount_pct, 'number', 'min="0" max="100" step="0.1"'))}
+      ${fld(T('Компенсація партнеру поза накладною, %', 'Off-invoice compensation to partner, %'), inp('comp_pct', a.comp_pct, 'number', 'min="0" max="100" step="0.1"'), '', T('як у специфікаціях MasterZoo / Pethouse: ціна відвантаження та сама, знижку покупцю компенсуємо', 'as in MasterZoo / Pethouse specs: same shipment price, we compensate the shopper discount'))}
       ${fld(T('Кампанія (парасолька)', 'Campaign (umbrella)'), inp('campaign', a.campaign, 'text', 'placeholder="Black Friday 2026"'))}
       ${fld(T('Дедлайн підготовки', 'Prep deadline'), inp('prep_date', a.prep_date, 'date'))}
       ${fld('SKU / ' + T('асортимент', 'assortment'), inp('skus', skus, 'text', 'placeholder="B-0011, B-0035"'), 'full', T('Артикули через кому — потрібні для виявлення різних цін на той самий SKU', 'SKUs comma-separated — used to detect different prices on the same SKU'))}
@@ -469,6 +472,11 @@ const FLAG_TXT = {
   post_incomplete: () => T('вікно «після» ще не закрите — провал після акції пораховано частково', 'post window still open — post-promo dip is partial'),
   running: () => T('акція ще триває', 'promo still running'),
   post_cut_by_next: () => T('вікно «після» обрізане наступною акцією партнера', 'post window cut by the next partner promo'),
+  mixed_prices: () => T('у партнера кілька контрагентів з різними прайсами — знижку з накладних не рахуємо', 'several counterparties with different price lists — invoice discount ignored'),
+  comp_estimated: () => T('компенсацію пораховано від виручки sell-in у вікні (наближення до sell-out)', 'compensation estimated on window sell-in revenue (proxy for sell-out)'),
+  no_baseline: () => T('до акції продажів не було — приріст не рахується', 'no sales before the promo — uplift not computed'),
+  cost_unknown: () => T('знижки в накладних немає, а компенсація / наша знижка / витрати не внесені — прибуток акції завищений, внесіть умови', 'no invoice discount and no compensation / our discount / costs entered — profit is overstated, enter the terms'),
+  promo_heavy: () => T('партнер більшу частину часу під акціями — baseline це провали між акціями, приріст завищений', 'partner is on promo most of the time — baseline is the dips between promos, uplift overstated'),
 };
 function tipHtml(t) {
   const n = (x) => fmtN(x * 100);
@@ -481,6 +489,7 @@ function tipHtml(t) {
     below_breakeven: () => T(`Остання акція: приріст <b>${pct(t.got, 0, true)}</b> при потрібних <b>${pct(t.need, 0, true)}</b> для знижки ${n(t.d)} % — знижка не окупилась.`, `Last promo: uplift <b>${pct(t.got, 0, true)}</b> vs <b>${pct(t.need, 0, true)}</b> needed for a ${n(t.d)} % discount — it did not pay back.`),
     drop_skus: () => T(`Не реагують на знижку: ${esc(t.skus.join('; '))} — прибрати з наступної акції.`, `Do not respond to the discount: ${esc(t.skus.join('; '))} — drop them next time.`),
     hero_skus: () => T(`Тягнуть акцію: ${esc(t.skus.join('; '))} — робити їх героями наступної.`, `Drive the promo: ${esc(t.skus.join('; '))} — make them heroes next time.`),
+    enter_costs: () => T(`${t.n} акцій без вартості: знижки в цінах відвантаження немає, отже її компенсуєте окремо. Внесіть «Компенсацію партнеру поза накладною, %» зі специфікації промо — інакше висновки про прибуток неповні.`, `${t.n} promos without cost: no discount in shipment prices, so it is compensated separately. Enter "Off-invoice compensation, %" from the promo spec — otherwise profit conclusions are incomplete.`),
     promo_is_norm: () => T(`<b>${n(t.share)} %</b> днів за останні 90 партнер працює під знижкою — знижка стала нормою, покупець звикає купувати лише в акцію. Рідше і коротше.`, `<b>${n(t.share)} %</b> of the last 90 days this partner ran a discount — discounting has become the norm. Fewer and shorter promos.`),
   }[t.code];
   return `<div class="tip ${t.level === 'good' ? 'good' : t.level === 'bad' ? 'bad' : t.level === 'warn' ? 'warn' : 'info'}"><span>${t.level === 'good' ? '✅' : t.level === 'bad' ? '⛔' : t.level === 'warn' ? '⚠️' : '💡'}</span><div>${txt ? txt() : esc(t.code)}</div></div>`;
@@ -502,9 +511,9 @@ function analysisHtml(an, calc) {
     <div class="row" style="margin-bottom:10px">${verdictTag(an.verdict)}<span class="small muted">${T('вікно', 'window')} ${esc(range(w.winFrom, w.winTo))} (${T('з закупкою наперед', 'incl. pre-load')}) · baseline ${b.days} ${T('дн.', 'd')} ${T('до', 'before')} ${esc(dm(w.baseTo))}${w.postTo ? ` · ${T('після', 'after')} ${esc(range(w.postFrom, w.postTo))}` : ''}</span></div>
     <div class="kpis" style="margin-bottom:12px">
       <div class="kpi"><div class="l">${T('Приріст пачок', 'Units uplift')}</div><div class="v ${an.upliftUnits > 0 ? '' : ''}">${pct(an.upliftUnits, 0, true)}</div></div>
-      <div class="kpi"><div class="l">${T('Фактична знижка', 'Realised discount')}</div><div class="v">${pct(an.realizedDisc, 1)}</div><div class="s">${T('за цінами відвантажень', 'from shipment prices')}</div></div>
+      <div class="kpi"><div class="l">${T('Наше фінансування знижки', 'Our discount funding')}</div><div class="v">${pct(an.fundDisc, 1)}</div><div class="s">${T('у накладних', 'in invoices')}: ${pct(an.realizedDisc, 1)}${an.invoiceOk ? '' : ' (' + T('не показово', 'not reliable') + ')'}${an.compCost ? ' · ' + T('компенсація', 'compensation') + ' ' + uah(an.compCost) : ''}</div></div>
       <div class="kpi"><div class="l">${T('Закупка наперед', 'Forward buying')}</div><div class="v">${pct(an.pullForward)}</div><div class="s">${T('частка приросту, що «зʼїв» провал після', 'share of uplift eaten by post dip')}</div></div>
-      <div class="kpi ${an.contribution > 0 ? 'good' : 'bad'}"><div class="l">${T('Інкрементальний прибуток', 'Incremental profit')}</div><div class="v">${uah(an.contribution)}</div><div class="s">${T('з урахуванням провалу після і витрат', 'net of post dip and costs')}</div></div>
+      <div class="kpi ${an.contribution === null ? '' : an.contribution > 0 ? 'good' : 'bad'}"><div class="l">${T('Інкрементальний прибуток', 'Incremental profit')}</div><div class="v">${uah(an.contribution)}</div><div class="s">${T('з урахуванням провалу після і витрат', 'net of post dip and costs')}</div></div>
       <div class="kpi"><div class="l">ROI</div><div class="v">${an.roi === null ? '—' : pct(an.roi)}</div><div class="s">${T('інвестиція у знижку', 'discount investment')} ${uah(an.discountInvestment)}</div></div>
     </div>
     <div class="tw"><table><thead><tr><th>KPI</th><th class="n">Baseline</th><th class="n">${T('Прогноз', 'Forecast')}</th><th class="n">${T('Факт', 'Actual')}</th><th class="n">${T('Факт vs baseline', 'Actual vs baseline')}</th><th class="n">${T('Факт vs прогноз', 'Actual vs forecast')}</th></tr></thead><tbody>
@@ -611,7 +620,8 @@ async function renderResults() {
       <div class="kpi good"><div class="l">${T('Успішні', 'Successful')}</div><div class="v">${done.filter((x) => x.verdict === 'success').length}</div></div>
       <div class="kpi warn"><div class="l">${T('Частково', 'Partly')}</div><div class="v">${done.filter((x) => x.verdict === 'partial').length}</div></div>
       <div class="kpi bad"><div class="l">${T('Неефективні', 'Ineffective')}</div><div class="v">${done.filter((x) => x.verdict === 'fail').length}</div></div>
-      <div class="kpi ${done.reduce((s, x) => s + (x.contribution || 0), 0) >= 0 ? 'good' : 'bad'}"><div class="l">${T('Сумарний інкрем. прибуток', 'Total incremental profit')}</div><div class="v">${uah(done.reduce((s, x) => s + (x.contribution || 0), 0))}</div></div>
+      <div class="kpi"><div class="l">${T('Вартість невідома', 'Cost unknown')}</div><div class="v">${done.filter((x) => x.verdict === 'unknown').length}</div><div class="s">${T('внесіть компенсацію', 'enter compensation')}</div></div>
+      <div class="kpi"><div class="l">${T('Сумарний інкрем. прибуток', 'Total incremental profit')}</div><div class="v">${uah(done.filter((x) => x.verdict !== 'unknown').reduce((s, x) => s + (x.contribution || 0), 0))}</div><div class="s">${T('лише акції з відомою вартістю', 'only promos with known cost')}</div></div>
     </div>
     ${r.partners.filter((p) => p.n).map((p) => `
       <div class="card"><h2>${esc(p.partner)} <span class="tag">${p.n}</span><span class="sp"></span><span class="small muted" style="text-transform:none;letter-spacing:0">${T('сер. приріст', 'avg uplift')} ${pct(p.avg_uplift, 0, true)} · ${T('сер. знижка', 'avg discount')} ${pct(p.avg_disc, 1)} · ${T('сумарно', 'total')} ${uah(p.sum_contribution)} · ${T('під знижкою 90 дн.', 'on discount 90d')} ${pct(p.promo_share_90d)}</span></h2>
@@ -619,8 +629,8 @@ async function renderResults() {
         <div>${p.rec.grid && p.rec.grid.length ? `<div class="small muted" style="margin-bottom:4px">${T('Прогноз на 14 днів за поточним темпом і відгуком партнера', '14-day forecast at the current pace and partner response')}${p.rec.assumedK ? ' · ' + T('припущення', 'assumption') : ` · k=${fmtN(p.rec.k, 2)}`}</div>
           <table><thead><tr><th>${T('Знижка', 'Discount')}</th><th class="n">${T('Очік. приріст', 'Exp. uplift')}</th><th class="n">${T('Потрібно для BE', 'Needed for BE')}</th><th class="n">Δ ${T('прибутку', 'profit')}</th></tr></thead><tbody>
           ${p.rec.grid.map((g) => `<tr class="${p.rec.best && p.rec.best.d === g.d ? 'hl' : ''}"><td>−${fmtN(g.d * 100)} %</td><td class="n">${pct(g.lift, 0, true)}</td><td class="n">${g.need === null ? '∞' : pct(g.need, 0, true)}</td><td class="n">${uah(g.inc)}</td></tr>`).join('')}</tbody></table>` : ''}</div></div>
-        <div class="tw" style="margin-top:10px"><table><thead><tr><th>${T('Акція', 'Promo')}</th><th>${T('Період', 'Period')}</th><th>${T('Оцінка', 'Verdict')}</th><th class="n">${T('Приріст', 'Uplift')}</th><th class="n">${T('Знижка факт', 'Disc. actual')}</th><th class="n">${T('Закупка наперед', 'Fwd buying')}</th><th class="n">${T('Інкрем. прибуток', 'Incr. profit')}</th><th class="n">ROI</th></tr></thead><tbody>
-          ${p.list.slice().reverse().map((x) => `<tr class="click" data-act="${x.activity_id}"><td>${esc(x.title)}${(x.flags || []).includes('thin_baseline') ? ' <span class="tag warn">baseline</span>' : ''}</td><td class="num">${esc(range(x.start_date, x.end_date))}</td><td>${verdictTag(x.verdict)}</td><td class="n">${pct(x.upliftUnits, 0, true)}</td><td class="n">${pct(x.realizedDisc, 1)}</td><td class="n">${pct(x.pullForward)}</td><td class="n">${uah(x.contribution)}</td><td class="n">${x.roi === null ? '—' : pct(x.roi)}</td></tr>`).join('')}
+        <div class="tw" style="margin-top:10px"><table><thead><tr><th>${T('Акція', 'Promo')}</th><th>${T('Період', 'Period')}</th><th>${T('Оцінка', 'Verdict')}</th><th class="n">${T('Приріст', 'Uplift')}</th><th class="n">${T('Наша знижка', 'Our discount')}</th><th class="n">${T('Закупка наперед', 'Fwd buying')}</th><th class="n">${T('Інкрем. прибуток', 'Incr. profit')}</th><th class="n">ROI</th></tr></thead><tbody>
+          ${p.list.slice().reverse().map((x) => `<tr class="click" data-act="${x.activity_id}"><td>${esc(x.title)}${(x.flags || []).includes('thin_baseline') ? ' <span class="tag warn">baseline</span>' : ''}${(x.flags || []).includes('promo_heavy') ? ` <span class="tag warn" title="${esc(FLAG_TXT.promo_heavy())}">${T('акції підряд', 'back-to-back')}</span>` : ''}</td><td class="num">${esc(range(x.start_date, x.end_date))}</td><td>${verdictTag(x.verdict)}</td><td class="n">${pct(x.upliftUnits, 0, true)}</td><td class="n">${pct(x.fundDisc, 1)}</td><td class="n">${pct(x.pullForward)}</td><td class="n">${uah(x.contribution)}</td><td class="n">${x.roi === null ? '—' : pct(x.roi)}</td></tr>`).join('')}
         </tbody></table></div>
       </div>`).join('') || `<div class="empty">${T('Ще немає проаналізованих акцій — натисніть «Перерахувати всі акції»', 'No analysed promos yet — press "Recompute all promos"')}</div>`}`;
   $('#reRun').onclick = async () => {
@@ -637,7 +647,8 @@ function newCalc(preset = {}) {
   const p = preset.partner_id ? S.data.pmap[preset.partner_id] : null;
   return { partner_id: preset.partner_id || '', title: preset.title || (p ? `${p.name} — промо` : ''), start: preset.start_date || E.addDays(t, 14), end: preset.end_date || E.addDays(t, 27),
     ptype: 'regular', goal: 'profit', note: '', method: 'd28', bfrom: '', bto: '', base: null, sel: new Set(), sd: preset.supplier_discount_pct ?? 10, pd: 0, cd: preset.discount_pct ?? '',
-    perSku: {}, costs: [], q: '', abc: '', onlyStock: false, fcOverride: '', customD: 12, customG: 40, calcId: null, activityId: preset.id || null };
+    perSku: {}, costs: [], q: '', abc: '', onlyStock: false, fcOverride: '', customD: 12, customG: 40, calcId: null, activityId: preset.id || null,
+    mode: preset.comp_pct ? 'comp' : (p && p.ptype === 'network' ? 'comp' : 'invoice') };
 }
 function calcLines(c) {
   if (!c.base) return [];
@@ -759,7 +770,8 @@ function calcBody(c, r, shown) {
   </div>
   <div class="grid g2">
     <div class="card"><h2>${T('Умови промо', 'Promo terms')}</h2><div class="form">
-      ${fld(T('Знижка постачальника (наша), %', 'Supplier (our) discount, %'), `<input id="cSd" type="number" min="0" max="100" step="0.5" value="${esc(c.sd)}">`, '', T('впливає на нашу виручку і маржу', 'affects our revenue and margin'))}
+      <div class="fld full"><label>${T('Як фінансуємо знижку', 'How we fund the discount')}</label><div class="seg">${[['invoice', T('знижка в ціні відвантаження', 'discount in shipment price')], ['comp', T('компенсація поза накладною', 'off-invoice compensation')]].map(([k, l]) => `<button type="button" data-mode="${k}" class="${c.mode === k ? 'on' : ''}">${l}</button>`).join('')}</div><div class="hint">${T('Для прибутку однаково: кожна пачка коштує нам ціна × %. Різниця — коли платимо: одразу в накладній чи актом компенсації за продажі (MasterZoo, Pethouse).', 'Same for profit: each pack costs us price × %. The difference is when we pay: in the invoice or via a compensation act on sales (MasterZoo, Pethouse).')}</div></div>
+      ${fld(T('Наша знижка / компенсація, %', 'Our discount / compensation, %'), `<input id="cSd" type="number" min="0" max="100" step="0.5" value="${esc(c.sd)}">`, '', T('впливає на нашу маржу', 'affects our margin'))}
       ${fld(T('Знижка контрагента, %', 'Partner discount, %'), `<input id="cPd" type="number" min="0" max="100" step="0.5" value="${esc(c.pd)}">`, '', T('за рахунок партнера, нашу маржу не чіпає', 'funded by the partner, does not touch our margin'))}
       ${fld(T('Кінцева знижка покупцю, %', 'Final shopper discount, %'), `<input id="cCd" type="number" min="0" max="100" step="0.5" value="${esc(c.cd === '' ? (+c.sd || 0) + (+c.pd || 0) : c.cd)}">`, '', T('сила пропозиції на полиці', 'offer strength on the shelf'))}
       ${fld(T('Прогноз приросту, %', 'Forecast growth, %'), `<input id="cFc" type="number" step="1" value="${esc(c.fcOverride)}" placeholder="${esc(fmtN(r.lift * 100))}">`, '', r.assumedK ? T('порожньо = припущення без історії партнера', 'empty = assumption without partner history') : T(`порожньо = з історії партнера: k ${fmtN(r.k, 2)} × знижка × (1 − закупка наперед ${pct(r.pf)})`, `empty = from partner history: k ${fmtN(r.k, 2)} × discount × (1 − fwd buying ${pct(r.pf)})`))}
@@ -794,7 +806,7 @@ function calcBody(c, r, shown) {
       <dt>Incremental profit</dt><dd class="num" style="color:${fc.incProfit >= 0 ? 'var(--good)' : 'var(--bad)'}"><b>${uah(fc.incProfit)}</b> (${be.baseContribution ? pct(fc.incProfit / be.baseContribution, 0, true) : '—'})</dd>
       <dt>Promo ROI</dt><dd class="num">${fc.roi === null ? '—' : pct(fc.roi)}</dd></dl></div>
   </div>
-  <div class="card"><h2>${T('Економіка промо по SKU', 'Promo economics by SKU')}</h2><div class="tw"><table><thead><tr><th>SKU</th><th class="n">${T('Ціна', 'Price')}</th><th class="n">Promo price</th><th class="n">GP/${T('шт до', 'pc before')}</th><th class="n">GP/${T('шт в акції', 'pc promo')}</th><th class="n">Δ ₴/${T('шт', 'pc')}</th><th class="n">Δ ${T('маржі', 'margin')}</th><th class="n">BE ${T('шт', 'pcs')}</th><th class="n">${T('Залишок', 'Stock')}</th></tr></thead><tbody>
+  <div class="card"><h2>${T('Економіка промо по SKU', 'Promo economics by SKU')}</h2><div class="tw"><table><thead><tr><th>SKU</th><th class="n">${T('Ціна', 'Price')}</th><th class="n">${c.mode === 'comp' ? T('Нетто після компенсації', 'Net after compensation') : 'Promo price'}</th><th class="n">GP/${T('шт до', 'pc before')}</th><th class="n">GP/${T('шт в акції', 'pc promo')}</th><th class="n">Δ ₴/${T('шт', 'pc')}</th><th class="n">Δ ${T('маржі', 'margin')}</th><th class="n">BE ${T('шт', 'pcs')}</th><th class="n">${T('Залишок', 'Stock')}</th></tr></thead><tbody>
     ${r.lines.map((l) => { const pp = l.p * (1 - l.sd), g0 = l.p - l.c, g1 = pp - l.c, b1 = E.breakEven([l]); return `<tr><td>${esc(l.name)}</td><td class="n">${fmtN(l.p, 2)}</td><td class="n">${fmtN(pp, 2)}</td><td class="n">${fmtN(g0, 2)}</td><td class="n ${g1 <= 0 ? 'bad' : ''}">${fmtN(g1, 2)}</td><td class="n">${fmtN(g1 - g0, 2)}</td><td class="n">${fmtN(((pp ? g1 / pp : 0) - (l.p ? g0 / l.p : 0)) * 100, 1)} п.п.</td><td class="n">${b1.ok ? fmtN(b1.beUnits, 1) : '∞'}</td><td class="n ${b1.ok && l.stock < b1.beUnits ? 'bad' : ''}">${fmtN(l.stock)}</td></tr>`; }).join('')}
   </tbody></table></div><div class="tiny muted" style="margin-top:6px">${T('Break-even портфеля рахується одним коефіцієнтом росту для всього міксу (структура продажів SKU як у baseline), а не сумою окремих SKU.', 'Portfolio break-even uses one growth factor for the whole mix (SKU structure as in baseline), not a sum of single SKUs.')}</div></div>
   <div class="card"><h2>${T('Порівняння рівнів знижки', 'Discount comparison')}<span class="sp"></span><span class="small" style="text-transform:none;letter-spacing:0">custom <input class="mini" id="cCustD" type="number" step="0.5" value="${esc(c.customD)}"> %</span></h2><div class="tw"><table><thead><tr><th>${T('Знижка', 'Discount')}</th><th class="n">Promo margin</th><th class="n">Break-even units</th><th class="n">Units growth</th><th class="n">Break-even revenue</th><th class="n">Revenue growth</th><th class="n">${T('Прогноз Δ прибутку', 'Forecast Δ profit')}</th></tr></thead><tbody>
@@ -848,6 +860,7 @@ function bindCalc() {
   $$('[data-sku]').forEach((x) => x.onchange = () => { x.checked ? c.sel.add(x.dataset.sku) : c.sel.delete(x.dataset.sku); re(); });
   $$('[data-psd]').forEach((x) => x.onchange = () => { c.perSku[x.dataset.psd] = x.value; re(); });
   const num = (id, k) => { const el = $(id); if (el) el.onchange = () => { c[k] = el.value; re(); }; };
+  $$('[data-mode]').forEach((b) => b.onclick = () => { c.mode = b.dataset.mode; re(); });
   num('#cSd', 'sd'); num('#cPd', 'pd'); num('#cCd', 'cd'); num('#cFc', 'fcOverride'); num('#cCustD', 'customD'); num('#cCustG', 'customG');
   const add = $('#cAddCost'); if (add) add.onclick = () => { c.costs.push({ cat: 'placement', sum: '', comment: '' }); re(); };
   $$('[data-cc]').forEach((el) => el.onchange = () => { c.costs[+el.dataset.cc][el.dataset.k] = el.value; re(); });
@@ -858,12 +871,12 @@ function bindCalc() {
     const lines = c.base.lines.filter((l) => c.sel.has(l.pid));
     const body = {
       title: c.title || 'Промо', partner_id: +c.partner_id, start_date: c.start, end_date: c.end, status: link ? 'planned' : 'draft', verdict: r.verdict,
-      inputs: { partner_id: c.partner_id, ptype: c.ptype, goal: c.goal, note: c.note, method: c.method, bfrom: c.bfrom, bto: c.bto, sd: c.sd, pd: c.pd, cd: c.cd, perSku: c.perSku, costs: c.costs, sel, fcOverride: c.fcOverride, customD: c.customD, customG: c.customG },
+      inputs: { mode: c.mode, partner_id: c.partner_id, ptype: c.ptype, goal: c.goal, note: c.note, method: c.method, bfrom: c.bfrom, bto: c.bto, sd: c.sd, pd: c.pd, cd: c.cd, perSku: c.perSku, costs: c.costs, sel, fcOverride: c.fcOverride, customD: c.customD, customG: c.customG },
       snapshot: { ...c.base, lines: c.base.lines, saved_at: new Date().toISOString(), selected: lines.map((l) => l.pid) },
       result: { be: r.be, effSd: r.effSd, lift: r.lift, k: r.k, pf: r.pf, costs: r.costs, stock: r.stock, max: r.mx, reasons: r.reasons, forecast: { units: r.fc.units, revenue: r.fc.revenue, gp: r.fc.gp, margin: r.fc.margin, contribution: r.fc.contribution, incProfit: r.fc.incProfit, roi: r.fc.roi, discountInvestment: r.fc.discountInvestment } },
       kpi: { be_units: r.be.ok ? r.be.beUnits : null, growth: r.be.ok ? r.be.growth : null, be_revenue: r.be.ok ? r.be.beRevenue : null, inc_profit: r.fc.incProfit, costs: r.costs },
-      supplier_discount_pct: Math.round(r.effSd * 1000) / 10, customer_discount_pct: c.cd === '' ? (+c.sd || 0) + (+c.pd || 0) : +c.cd,
-      mechanic: `${T('Знижка', 'Discount')} −${fmtN(c.cd === '' ? (+c.sd || 0) + (+c.pd || 0) : +c.cd, 1)} % ${T('покупцю', 'to shopper')} (${T('наша', 'ours')} −${fmtN(r.effSd * 100, 1)} %, ${T('партнера', 'partner')} −${fmtN(+c.pd || 0, 1)} %); ${lines.length} SKU`,
+      supplier_discount_pct: c.mode === 'comp' ? 0 : Math.round(r.effSd * 1000) / 10, comp_pct: c.mode === 'comp' ? Math.round(r.effSd * 1000) / 10 : 0, customer_discount_pct: c.cd === '' ? (+c.sd || 0) + (+c.pd || 0) : +c.cd,
+      mechanic: `${T('Знижка', 'Discount')} −${fmtN(c.cd === '' ? (+c.sd || 0) + (+c.pd || 0) : +c.cd, 1)} % ${T('покупцю', 'to shopper')} (${T('наша', 'ours')} ${fmtN(r.effSd * 100, 1)} % ${c.mode === 'comp' ? T('компенсацією', 'as compensation') : T('у ціні відвантаження', 'in shipment price')}, ${T('партнера', 'partner')} ${fmtN(+c.pd || 0, 1)} %); ${lines.length} SKU`,
       activity_type: c.ptype === 'bf' ? 'Black Friday' : 'Знижка', direction: (S.data.pmap[c.partner_id] || {}).ptype === 'own' ? 'ecom' : 'partners',
     };
     if (link) { if (c.activityId) body.activity_id = c.activityId; else body.create_activity = true; }

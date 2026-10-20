@@ -104,7 +104,9 @@ export function cleanDays(endDay, n, exclude = [], maxBack = 182) {
 // ── Post-analysis акції за відвантаженнями (sell-in) ────────────────────────
 // Вікно ефекту = [старт − preload; кінець]: мережа закуповує ДО старту акції.
 // Baseline = baseline_days днів перед вікном. Провал після = post_days днів після кінця.
-export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0, exclude = [] }) {
+// plannedDisc — наша знижка в ціні відвантаження за планом (0..1); compPct — компенсація партнеру поза накладною (0..1),
+// рахується від виручки sell-in у вікні як наближення до sell-out; mixed — у партнера кілька контрагентів з різними прайсами.
+export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0, exclude = [], plannedDisc = 0, compPct = 0, mixed = false, priceType = true }) {
   const preload = num(st, 'preload_days', 7), postN = num(st, 'post_days', 28), bN = num(st, 'baseline_days', 56);
   const winFrom = addDays(start, -preload);
   const winTo = minDate(end, today);
@@ -160,35 +162,49 @@ export function analysePromo({ rows, prods, start, end, today, st, promoCost = 0
   const incGpNet = winGp + postGp - rateGp * (winDays + postDays);
   const postComplete = postEnd <= today || (nextStart && nextStart <= today);
   const cost = +promoCost || 0;
-  const contribution = (postDays ? incGpNet : incGpWin) - cost;
-  const realizedDisc = discQ > 0 ? discW / discQ : null;
-  const invest = Math.max(0, discInv) + cost;
-  const roi = invest > 0 ? contribution / invest : null;
   const flags = [];
+  const specCross = baseFrom < (st.spec_change_date || '2026-09-14') && end >= (st.spec_change_date || '2026-09-14');
+  const realizedDisc = discQ > 0 ? discW / discQ : null;
+  // фактична знижка з накладних надійна лише без зміни специфікації і без змішаних прайсів
+  const invoiceOk = realizedDisc !== null && !specCross && !mixed;
+  const compCost = Math.max(0, +compPct || 0) * W.net;
+  const contribution = B.q > 0 ? (postDays ? incGpNet : incGpWin) - cost - compCost : null;
+  const fundDisc = invoiceOk && realizedDisc >= 0.02 ? realizedDisc : ((+plannedDisc || 0) + (+compPct || 0)) || null;
+  const invest = Math.max(0, invoiceOk ? discInv : 0) + cost + compCost;
+  const roi = invest > 0 && contribution !== null ? contribution / invest : null;
   if (B.shipDays < 4 || bDays.size < bN * 0.6) flags.push('thin_baseline');
   if (bDays.size < daysIncl(baseFrom, baseTo)) flags.push('baseline_cleaned');
-  if (baseFrom < (st.spec_change_date || '2026-09-14') && end >= (st.spec_change_date || '2026-09-14')) flags.push('spec_change');
+  if (specCross) flags.push('spec_change');
+  if (mixed) flags.push('mixed_prices');
+  if (compCost > 0) flags.push('comp_estimated');
+  if (B.q <= 0) flags.push('no_baseline');
+  const costUnknown = priceType && !(invoiceOk && realizedDisc >= 0.02) && !(+compPct > 0) && !(+plannedDisc > 0) && cost <= 0;
+  if (costUnknown) flags.push('cost_unknown');
   if (!postComplete && end < today) flags.push('post_incomplete');
   if (end >= today) flags.push('running');
   if (nextStart && nextStart < postEnd) flags.push('post_cut_by_next');
   let verdict = null;
-  if (started && end < today && B.q > 0) verdict = contribution > 0 ? 'success' : upliftUnits !== null && upliftUnits > 0.1 ? 'partial' : 'fail';
+  if (started && end < today && B.q > 0 && contribution !== null) {
+    if (costUnknown) verdict = 'unknown';
+    else verdict = contribution > 0 ? 'success' : upliftUnits !== null && upliftUnits > 0.1 ? 'partial' : 'fail';
+  }
   return {
     windows: { baseFrom, baseTo, winFrom, winTo, postFrom, postTo: postDays ? postTo : null, postComplete },
     base: { q: B.q, net: r2(B.net), gp: r2(baseGp), days: bDays.size, shipDays: B.shipDays, rateQ: r2(rateQ) },
     win: { q: W.q, net: r2(W.net), gp: r2(winGp), days: winDays, expQ: r2(expWinQ) },
     post: { q: P.q, net: r2(P.net), gp: r2(postGp), days: postDays, expQ: r2(expPostQ) },
     upliftUnits, upliftRev, pullForward, realizedDisc,
-    incGpWin: r2(incGpWin), incGpNet: r2(incGpNet), promoCost: cost, contribution: r2(contribution),
-    discountInvestment: r2(Math.max(0, discInv)), roi, verdict, flags, skus,
-    response: upliftUnits !== null && realizedDisc && realizedDisc >= 0.03 ? upliftUnits / realizedDisc : null,
+    incGpWin: r2(incGpWin), incGpNet: r2(incGpNet), promoCost: cost, compCost: r2(compCost), contribution: contribution === null ? null : r2(contribution),
+    discountInvestment: r2(Math.max(0, invoiceOk ? discInv : 0) + compCost), roi, verdict, flags, skus, fundDisc, invoiceOk,
+    response: upliftUnits !== null && fundDisc && fundDisc >= 0.03 && !costUnknown ? upliftUnits / fundDisc : null,
   };
 }
 
 // ── Підказки на наступну акцію партнера ───────────────────────────────────────
 // hist: post-analysis минулих цінових акцій партнера; cur: {rateQ, price, gpu} за останні baseline_days.
 export function recommendNext(hist, cur, st) {
-  const ok = hist.filter((h) => h && h.verdict && !h.flags.includes('thin_baseline'));
+  const unknown = hist.filter((h) => h && h.verdict === 'unknown').length;
+  const ok = hist.filter((h) => h && h.verdict && h.verdict !== 'unknown' && !h.flags.includes('thin_baseline'));
   const k = median(ok.map((h) => h.response).filter((x) => x !== null && x > -5 && x < 30));
   const pf = median(ok.map((h) => h.pullForward).filter((x) => x !== null));
   const out = { k, pullForward: pf, n: ok.length, tips: [], best: null, grid: [] };
@@ -207,14 +223,16 @@ export function recommendNext(hist, cur, st) {
     out.assumedK = k === null;
   }
   const last = ok[ok.length - 1];
+  if (unknown) out.tips.push({ code: 'enter_costs', level: 'warn', n: unknown });
   if (!ok.length) out.tips.push({ code: 'no_history', level: 'info' });
   if (out.best) out.tips.push({ code: 'best_depth', level: 'good', d: out.best.d, inc: out.best.inc });
   else if (cur && cur.rateQ > 0) out.tips.push({ code: 'no_price_promo', level: 'warn' });
   if (pf !== null && pf >= 0.5) out.tips.push({ code: 'pull_forward', level: 'warn', pf });
   if (last && last.verdict === 'partial') out.tips.push({ code: 'volume_not_profit', level: 'warn' });
-  if (last && last.realizedDisc !== null && last.upliftUnits !== null && last.realizedDisc > 0.03) {
-    const need = cur && cur.gpu > 0 && cur.gpu - cur.price * last.realizedDisc > 0 ? cur.gpu / (cur.gpu - cur.price * last.realizedDisc) - 1 : null;
-    if (need !== null && last.upliftUnits < need) out.tips.push({ code: 'below_breakeven', level: 'bad', need, got: last.upliftUnits, d: last.realizedDisc });
+  const ld = last ? last.fundDisc : null;
+  if (last && ld && last.upliftUnits !== null && ld > 0.03) {
+    const need = cur && cur.gpu > 0 && cur.gpu - cur.price * ld > 0 ? cur.gpu / (cur.gpu - cur.price * ld) - 1 : null;
+    if (need !== null && last.upliftUnits < need) out.tips.push({ code: 'below_breakeven', level: 'bad', need, got: last.upliftUnits, d: ld });
   }
   if (last) {
     const losers = (last.skus || []).filter((s) => s.uplift !== null && s.uplift < 0 && s.base_q >= 5).slice(0, 3).map((s) => s.name);
