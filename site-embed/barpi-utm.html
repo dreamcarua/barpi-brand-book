@@ -1,9 +1,12 @@
 <script>
-/* Barpi · ad-director: UTM to order (owner decision 13.10.2026).
-   Installed in Horoshop: Маркетинг → Маркетингові сервіси → «Barpi UTM → замовлення», inside <head>.
+/* Barpi · ad-director: UTM to order (owner decision 13.10.2026; fbq wrapper removed 21.10.2026).
+   Installed in Horoshop: Маркетинг → Маркетингові сервіси → «Barpi UTM → замовлення», inside <head> (adminLegacy id 16).
    1) Any page opened with utm_* or fbclid: remember the touch (last touch 30 days, first touch kept).
-   2) Thank-you page: catch the purchase (GA4 dataLayer, fbq Purchase, or the order number on the page)
-      and send order number + value + remembered UTM to brand.barpi.ua/t/order. No name, phone or email is sent. */
+   2) Thank-you page: catch the purchase (Horoshop checkout_success, GA4 dataLayer, or the order number on the page)
+      and send order number + value + remembered UTM to brand.barpi.ua/t/order. No name, phone or email is sent.
+   NEVER wrap or replace window.fbq here: the pixel stub loads fbevents.js late (after interaction or load+3.5 s);
+   a wrapper installed before that gets callMethod, the real stub does not, and every browser event after PageView
+   is lost in a dead queue (that happened 13.10–21.10.2026: browser Purchase/AddToCart/ViewContent were 0). */
 (function () {
   var EP = 'https://brand.barpi.ua/t/order', DAY = 864e5, K_LAST = 'bp_ad_touch', K_FIRST = 'bp_ad_first', K_SENT = 'bp_ad_sent';
   function get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
@@ -65,22 +68,29 @@
   scan(); wrap();
   var n = 0, sv = setInterval(function () { scan(); wrap(); if (++n > 60) clearInterval(sv); }, 500);
 
-  // Meta pixel: fbq('track','Purchase',{value,currency},{eventID}) — eventID often carries the order number
+  // Purchase from Horoshop itself: GLOBAL.marketingEvents.checkout_success(order_id, cart, name, email, phone, eventId).
+  // 21.10.2026: window.fbq is NOT wrapped any more. Wrapping it before fbevents.js loaded (deferred pixel) left the real
+  // stub without callMethod, so every browser pixel event after PageView stayed in a dead queue from 13.10 to 21.10.
+  var pendingFb = null;
   var tries = 0, iv = setInterval(function () {
-    if (window.fbq && !window.fbq.__bp) {
-      var orig = window.fbq;
-      var w = function () {
-        try { if (arguments[0] === 'track' && arguments[1] === 'Purchase') { var o = arguments[3] || {}; pendingFb = { id: o.eventID, v: (arguments[2] || {}).value, c: (arguments[2] || {}).currency }; } } catch (e) {}
-        return orig.apply(this, arguments);
-      };
-      for (var k in orig) { try { w[k] = orig[k]; } catch (e) {} }
-      w.__bp = true; window.fbq = w; clearInterval(iv);
+    var m = window.GLOBAL && window.GLOBAL.marketingEvents;
+    if (m && !window.__bpCheckoutHook) {
+      window.__bpCheckoutHook = true;
+      (m.checkout_success = m.checkout_success || []).push(function (order_id, cart) {
+        try {
+          var tot = cart && cart.total && cart.total.total ? cart.total.total.sum : null;
+          var cur = window.GLOBAL.currency && window.GLOBAL.currency.iso;
+          var items = ((cart && cart.products) || []).map(function (p) { return { id: p.article, q: p.quantity * 1, p: p.price * 1 }; });
+          pendingFb = { id: order_id, v: tot, c: cur };
+          send(order_id, tot, cur, items, 'horoshop');
+        } catch (e) {}
+      });
+      clearInterval(iv);
     }
     if (++tries > 50) clearInterval(iv);
   }, 200);
-  var pendingFb = null;
 
-  // Fallback on the thank-you page: number from the page text, value from the Meta Purchase if seen
+  // Fallback on the thank-you page: number from the page text, value from the Horoshop purchase if seen
   function fromPage() {
     if (!/checkout|order|thank|success|zamovl/i.test(location.pathname + location.search)) return;
     var m = (document.body && document.body.innerText || '').match(/(?:Замовлення|Заказ|Order)\s*(?:№|#|No\.?)\s*(\d{2,10})/i);
