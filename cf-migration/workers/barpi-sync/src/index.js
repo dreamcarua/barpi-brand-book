@@ -1,7 +1,8 @@
 /* ============================================================
    barpi-sync Worker — MoySklad → Cloudflare D1
    Schedule: every hour (cron 0 * * * *)
-   Manual: POST /sync?key=SYNC_API_KEY[&only=...][&all=1][&full=1]
+   Manual: POST /sync?key=SYNC_API_KEY[&only=...][&all=1][&full=1][&updated_since=YYYY-MM-DD]
+   2026-10-21: документні сутності тягнуться за updated (див. sinceFilterFor), не за moment.
 
    2026-08-26 COST FIX (D1 load reduction):
    - rebuildSalesSku() тепер ІНКРЕМЕНТАЛЬНИЙ (курсор у sync_state).
@@ -153,6 +154,22 @@ async function syncExpenseItems(env) {
   return data.rows?.length || 0;
 }
 
+// 21.10.2026 FIX: курсор за ЧАСОМ ЗМІНИ документа (updated), а не за датою документа (moment).
+// Курсор `moment>` пропускав документи, проведені заднім числом, і зміни сум: у дзеркалі бракувало
+// оплат за червень-жовтень 2026 (напр. вересень: 64 з 66, -54 723 грн) і вони не з'являлись ніколи.
+// Тепер: updated >= (остання успішна синхронізація сутності − 1 год), у часі МойСкладу (Москва, UTC+3 без DST).
+// Ручна дозавантажка: POST /sync?key=…&updated_since=YYYY-MM-DD[&only=paymentin,demand].
+// Видалені в МойСкладі документи цим не прибираються (окреме завдання).
+let UPDATED_SINCE = null;
+function msTime(ms) { return new Date(ms).toISOString().slice(0, 19).replace('T', ' '); }
+async function sinceFilterFor(env, entity, cursor) {
+  if (UPDATED_SINCE) return `updated>=${UPDATED_SINCE}`;
+  const st = await env.DB.prepare(`SELECT last_synced_at FROM sync_state WHERE entity = ?`).bind(entity).first();
+  const ts = st?.last_synced_at ? Date.parse(String(st.last_synced_at).replace(' ', 'T') + 'Z') : NaN;
+  if (!Number.isNaN(ts)) return `updated>=${msTime(ts + 3 * 3600e3 - 3600e3)}`;
+  return cursor?.last_moment ? `moment>${cursor.last_moment.replace('T', ' ').slice(0, 19)}` : null;
+}
+
 // Generic transactional entity sync (demand, paymentin, paymentout, etc.)
 async function syncTransactionalEntity(env, entityName, path, tableName, extraColumns = {}, extraParams = {}, opts = {}) {
   // opts.pageSize: smaller pages for heavy entities; opts.compact(row): shrink the row before storing (27.09.2026, D1 32 MiB RPC limit)
@@ -160,7 +177,7 @@ async function syncTransactionalEntity(env, entityName, path, tableName, extraCo
   let offset = 0, total = 0;
   // Get cursor for incremental sync
   const cursor = await env.DB.prepare(`SELECT last_moment FROM sync_state WHERE entity = ?`).bind(entityName).first();
-  const sinceFilter = cursor?.last_moment ? `moment>${cursor.last_moment.replace('T', ' ').slice(0, 19)}` : null;
+  const sinceFilter = await sinceFilterFor(env, entityName, cursor);
 
   let lastMoment = cursor?.last_moment || null;
 
@@ -243,7 +260,7 @@ async function syncSupplies(env) {
   // Used by v_product_avg_cost view → v_production_efficiency.
   let offset = 0, total = 0;
   const cursor = await env.DB.prepare(`SELECT last_moment FROM sync_state WHERE entity = ?`).bind('supply').first();
-  const sinceFilter = cursor?.last_moment ? `moment>${cursor.last_moment.replace('T', ' ').slice(0, 19)}` : null;
+  const sinceFilter = await sinceFilterFor(env, 'supply', cursor);
   let lastMoment = cursor?.last_moment || null;
   while (true) {
     const params = { limit: 50, offset, order: 'moment,asc', expand: 'positions,positions.assortment,agent,store' };
@@ -307,7 +324,7 @@ async function syncLosses(env) {
   // FIX 2026-06-03: loss entity has sum=0 at root, real sum is in positions (price * quantity).
   let offset = 0, total = 0;
   const cursor = await env.DB.prepare(`SELECT last_moment FROM sync_state WHERE entity = ?`).bind('loss').first();
-  const sinceFilter = cursor?.last_moment ? `moment>${cursor.last_moment.replace('T', ' ').slice(0, 19)}` : null;
+  const sinceFilter = await sinceFilterFor(env, 'loss', cursor);
   let lastMoment = cursor?.last_moment || null;
   while (true) {
     const params = { limit: 50, offset, order: 'moment,asc', expand: 'positions,store' };
@@ -364,7 +381,7 @@ async function syncProcessingActs(env) {
   // Use expand=materials,products and sum positions (price * quantity in kopecks).
   let offset = 0, total = 0;
   const cursor = await env.DB.prepare(`SELECT last_moment FROM sync_state WHERE entity = ?`).bind('processing').first();
-  const sinceFilter = cursor?.last_moment ? `moment>${cursor.last_moment.replace('T', ' ').slice(0, 19)}` : null;
+  const sinceFilter = await sinceFilterFor(env, 'processing', cursor);
   let lastMoment = cursor?.last_moment || null;
 
   while (true) {
@@ -574,6 +591,23 @@ async function getFreshEntities(env) {
 
 async function runFullSync(env, opts = {}) {
   const log = { started: new Date().toISOString(), results: {}, errors: {}, skipped: [] };
+  // Одноразова дозавантажка без ключа (21.10.2026): рядок sync_state entity='__backfill', last_moment =
+  // 'YYYY-MM-DD' або 'YYYY-MM-DD|paymentin,demand'. Найближчий прогін (cron чи ручний) тягне ці сутності
+  // за updated>=дата і видаляє рядок, якщо помилок не було. Ставиться вручну через D1.
+  let backfillFlag = null;
+  if (!opts.updatedSince) {
+    try {
+      const bf = await env.DB.prepare(`SELECT last_moment FROM sync_state WHERE entity = '__backfill'`).first();
+      const m = bf && /^(\d{4}-\d{2}-\d{2})(?:\|([a-z,]+))?$/.exec(String(bf.last_moment || ''));
+      if (m) {
+        backfillFlag = m[0];
+        opts.updatedSince = m[1] + ' 00:00:00';
+        opts.skipRecent = false;
+        if (m[2]) opts.only = new Set(m[2].split(',').filter(Boolean));
+      }
+    } catch (_) {}
+  }
+  UPDATED_SINCE = opts.updatedSince || null; // скидається в кінці (стан ізолята живе між запитами)
   const only = opts.only; // Set<entity-slug> or null
   const skipRecent = opts.skipRecent !== false; // default true
   const fresh = skipRecent ? await getFreshEntities(env) : new Set();
@@ -611,6 +645,14 @@ async function runFullSync(env, opts = {}) {
       log.errors[name] = e.message || String(e);
       // 27.09.2026: record the failure so it is visible in sync_state / GET / (before: silent, token was dead 06–27.09 unnoticed)
       if (entity) { try { await env.DB.prepare(`UPDATE sync_state SET last_error = ?, updated_at = datetime('now') WHERE entity = ?`).bind(String(log.errors[name]).slice(0, 500), entity).run(); } catch (_) {} }
+    }
+  }
+  UPDATED_SINCE = null;
+  if (opts.updatedSince) log.updated_since = opts.updatedSince;
+  if (backfillFlag) {
+    log.backfill = backfillFlag;
+    if (Object.keys(log.errors).length === 0) {
+      try { await env.DB.prepare(`DELETE FROM sync_state WHERE entity = '__backfill' AND last_moment = ?`).bind(backfillFlag).run(); } catch (_) {}
     }
   }
   log.finished = new Date().toISOString();
@@ -770,7 +812,7 @@ export default {
       const state = await env.DB.prepare(`SELECT entity, last_synced_at, rows_synced, last_error FROM sync_state ORDER BY entity`).all();
       return new Response(JSON.stringify({
         worker: 'barpi-sync',
-        version: '1.6-order-by-code',
+        version: '1.7-updated-cursor',
         status: 'alive',
         d1: 'barpi-bible',
         cron: '0 * * * * (hourly)',
@@ -794,6 +836,12 @@ export default {
       if (onlyParam) opts.only = new Set(onlyParam.split(',').map(s => s.trim()).filter(Boolean));
       if (allParam === '1') opts.skipRecent = false;
       if (fullParam === '1') opts.fullSalesSku = true;
+      const us = url.searchParams.get('updated_since');
+      if (us) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(us)) return new Response('updated_since: YYYY-MM-DD', { status: 400 });
+        opts.updatedSince = us + ' 00:00:00';
+        opts.skipRecent = false;
+      }
       const log = await runFullSync(env, opts);
       return new Response(JSON.stringify(log, null, 2), { headers: { 'Content-Type': 'application/json' } });
     }
