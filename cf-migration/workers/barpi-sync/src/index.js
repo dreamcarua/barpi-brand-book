@@ -163,7 +163,9 @@ async function syncExpenseItems(env) {
 // Видалені в МойСкладі документи цим не прибираються (окреме завдання).
 let UPDATED_SINCE = null;
 function msTime(ms) { return new Date(ms).toISOString().slice(0, 19).replace('T', ' '); }
+let FILTER_OVERRIDE = null; // помісячне вікно дозавантажки (__window)
 async function sinceFilterFor(env, entity, cursor) {
+  if (FILTER_OVERRIDE) return FILTER_OVERRIDE;
   if (UPDATED_SINCE) return `updated>=${UPDATED_SINCE}`;
   const st = await env.DB.prepare(`SELECT last_synced_at FROM sync_state WHERE entity = ?`).bind(entity).first();
   const ts = st?.last_synced_at ? Date.parse(String(st.last_synced_at).replace(' ', 'T') + 'Z') : NaN;
@@ -704,6 +706,30 @@ async function runFullSync(env, opts = {}) {
       if (entity) { try { await env.DB.prepare(`UPDATE sync_state SET last_error = ?, updated_at = datetime('now') WHERE entity = ?`).bind(String(log.errors[name]).slice(0, 500), entity).run(); } catch (_) {} }
     }
   }
+  // 21.10.2026: помісячна дозавантажка. Повна (__backfill з 2025) для demand падала (503 МС, «D1 Network connection
+  // lost») і блокувала звичайний синк. Рядок sync_state entity='__window', last_moment='2026-02,2026-06|demand':
+  // після звичайних кроків бере до 3 місяців за прогін (filter moment у межах місяця), успішні місяці прибирає з рядка.
+  try {
+    const wf = await env.DB.prepare(`SELECT last_moment FROM sync_state WHERE entity = '__window'`).first();
+    const wm = wf && /^([0-9]{4}-[0-9]{2}(?:,[0-9]{4}-[0-9]{2})*)\|([a-z]+)$/.exec(String(wf.last_moment || ''));
+    const WFN = { demand: syncDemand, paymentin: syncPayments, paymentout: syncPaymentsOut, processing: syncProcessingActs,
+      supply: syncSupplies, loss: syncLosses, salesreturn: syncReturns, customerorder: syncCustomerOrders };
+    if (wm && WFN[wm[2]]) {
+      const months = wm[1].split(','); const done = []; log.window = {};
+      for (const m of months.slice(0, 3)) {
+        const [y, mo] = m.split('-').map(Number);
+        const next = mo === 12 ? `${y + 1}-01` : `${y}-${String(mo + 1).padStart(2, '0')}`;
+        FILTER_OVERRIDE = `moment>=${m}-01 00:00:00;moment<${next}-01 00:00:00`;
+        try { log.window[m] = await WFN[wm[2]](env); done.push(m); }
+        catch (e) { log.window[m] = 'error: ' + String(e.message || e).slice(0, 160); break; }
+        finally { FILTER_OVERRIDE = null; }
+      }
+      const rest = months.filter((m) => !done.includes(m));
+      if (rest.length) await env.DB.prepare(`UPDATE sync_state SET last_moment = ?, updated_at = datetime('now') WHERE entity = '__window'`).bind(rest.join(',') + '|' + wm[2]).run();
+      else await env.DB.prepare(`DELETE FROM sync_state WHERE entity = '__window'`).run();
+      await env.DB.prepare(`INSERT OR REPLACE INTO sync_state (entity, last_synced_at, last_moment, updated_at) VALUES ('window', datetime('now'), ?, datetime('now'))`).bind(JSON.stringify(log.window).slice(0, 900)).run();
+    }
+  } catch (e) { log.errors.window = String(e.message || e).slice(0, 200); FILTER_OVERRIDE = null; }
   UPDATED_SINCE = null;
   if (opts.updatedSince) log.updated_since = opts.updatedSince;
   if (backfillFlag) {
@@ -869,7 +895,7 @@ export default {
       const state = await env.DB.prepare(`SELECT entity, last_synced_at, rows_synced, last_error FROM sync_state ORDER BY entity`).all();
       return new Response(JSON.stringify({
         worker: 'barpi-sync',
-        version: '1.8.1-reconcile-first',
+        version: '1.8.2-window-backfill',
         status: 'alive',
         d1: 'barpi-bible',
         cron: '0 * * * * (hourly)',
