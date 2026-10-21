@@ -2,7 +2,8 @@
    barpi-sync Worker — MoySklad → Cloudflare D1
    Schedule: every hour (cron 0 * * * *)
    Manual: POST /sync?key=SYNC_API_KEY[&only=...][&all=1][&full=1][&updated_since=YYYY-MM-DD]
-   2026-10-21: документні сутності тягнуться за updated (див. sinceFilterFor), не за moment.
+   2026-10-21: документні сутності тягнуться за updated (див. sinceFilterFor), не за moment;
+   видалені в МС документи прибираються щодоби (reconcileDeleted, 03:00 UTC або прапорець __reconcile).
 
    2026-08-26 COST FIX (D1 load reduction):
    - rebuildSalesSku() тепер ІНКРЕМЕНТАЛЬНИЙ (курсор у sync_state).
@@ -589,6 +590,50 @@ async function getFreshEntities(env) {
   return fresh;
 }
 
+// 21.10.2026: звірка видалених. Документ, видалений у МойСкладі, раніше лишався в D1 назавжди (оплати 17.06 СТ-ВЕТ
+// 18 794,70 і 28.08 сайт 450 грн: у МС 404, у дзеркалі є). Раз на добу (03:00 UTC, до повного ребілду sales_sku) або
+// за прапорцем sync_state.__reconcile: повний список id з МС без expand; рядки D1, яких там немає, видаляються.
+// Запобіжники: список МС неповний (кількість != meta.size) -> пропуск; зникло більше max(5, 2 %) рядків -> пропуск.
+const RECONCILE = [
+  ['paymentin', '/entity/paymentin', 'moysklad_payments'],
+  ['paymentout', '/entity/paymentout', 'moysklad_payments_out'],
+  ['demand', '/entity/demand', 'moysklad_demand'],
+  ['salesreturn', '/entity/salesreturn', 'moysklad_returns'],
+  ['supply', '/entity/supply', 'moysklad_supplies'],
+  ['loss', '/entity/loss', 'moysklad_losses'],
+  ['processing', '/entity/processing', 'moysklad_processing_acts'],
+  ['customerorder', '/entity/customerorder', 'moysklad_customer_orders'],
+  ['purchaseorder', '/entity/purchaseorder', 'moysklad_purchase_orders'],
+  ['move', '/entity/move', 'moysklad_moves'],
+];
+async function reconcileDeleted(env) {
+  const out = {};
+  for (const [ent, path, table] of RECONCILE) {
+    try {
+      const ids = new Set(); let offset = 0, size = null;
+      for (;;) {
+        const j = await fetchMS(env, path, { limit: 1000, offset });
+        size = j.meta && typeof j.meta.size === 'number' ? j.meta.size : null;
+        for (const r of j.rows || []) ids.add(r.id);
+        if (!j.rows || j.rows.length < 1000) break;
+        offset += 1000;
+      }
+      if (size === null || ids.size !== size) { out[ent] = `skip: list incomplete (${ids.size}/${size})`; continue; }
+      const d1 = (await env.DB.prepare(`SELECT ms_id FROM ${table}`).all()).results || [];
+      const gone = d1.map((r) => r.ms_id).filter((id) => id && !ids.has(id));
+      if (gone.length > Math.max(5, d1.length * 0.02)) { out[ent] = `skip: ${gone.length} of ${d1.length} missing in MS (guard)`; continue; }
+      for (let i = 0; i < gone.length; i += 50) {
+        const chunk = gone.slice(i, i + 50);
+        await env.DB.prepare(`DELETE FROM ${table} WHERE ms_id IN (${chunk.map(() => '?').join(',')})`).bind(...chunk).run();
+      }
+      out[ent] = gone.length ? { deleted: gone.length, ids: gone.slice(0, 20) } : 0;
+    } catch (e) {
+      out[ent] = 'error: ' + String(e.message || e).slice(0, 160);
+    }
+  }
+  return out;
+}
+
 async function runFullSync(env, opts = {}) {
   const log = { started: new Date().toISOString(), results: {}, errors: {}, skipped: [] };
   // Одноразова дозавантажка без ключа (21.10.2026): рядок sync_state entity='__backfill', last_moment =
@@ -607,6 +652,11 @@ async function runFullSync(env, opts = {}) {
       }
     } catch (_) {}
   }
+  let reconcileFlag = false;
+  try {
+    const rf = await env.DB.prepare(`SELECT 1 AS x FROM sync_state WHERE entity = '__reconcile'`).first();
+    if (rf) { reconcileFlag = true; opts.reconcile = true; }
+  } catch (_) {}
   UPDATED_SINCE = opts.updatedSince || null; // скидається в кінці (стан ізолята живе між запитами)
   const only = opts.only; // Set<entity-slug> or null
   const skipRecent = opts.skipRecent !== false; // default true
@@ -633,6 +683,13 @@ async function runFullSync(env, opts = {}) {
     ['contracts', syncContracts],
     ['sales_sku', rebuildSalesSku],
   ];
+  // 21.10.2026: звірка першою: прогін із важкою дозавантажкою може не дійти до кінця (ліміт CPU, 503/524 МС)
+  if (opts.reconcile) {
+    log.reconcile = await reconcileDeleted(env);
+    try { await env.DB.prepare(`INSERT OR REPLACE INTO sync_state (entity, last_synced_at, last_moment, updated_at) VALUES ('reconcile', datetime('now'), ?, datetime('now'))`).bind(JSON.stringify(log.reconcile).slice(0, 900)).run(); } catch (_) {}
+    const bad = Object.values(log.reconcile).some((v) => typeof v === 'string' && v.startsWith('error'));
+    if (reconcileFlag && !bad) { try { await env.DB.prepare(`DELETE FROM sync_state WHERE entity = '__reconcile'`).run(); } catch (_) {} }
+  }
   for (const [name, fn] of steps) {
     const entity = NAME_TO_ENTITY[name];
     if (only && entity && !only.has(entity)) { log.skipped.push(name); continue; }
@@ -768,7 +825,7 @@ export default {
   // Cron Trigger — щогодини. Повний ребілд sales_sku раз на добу о 03:00 UTC.
   async scheduled(event, env, ctx) {
     const hourUTC = new Date(event.scheduledTime || Date.now()).getUTCHours();
-    ctx.waitUntil(runFullSync(env, { fullSalesSku: hourUTC === 3 }));
+    ctx.waitUntil(runFullSync(env, { fullSalesSku: hourUTC === 3, reconcile: hourUTC === 3 }));
   },
 
   // HTTP — manual trigger or status check
@@ -812,7 +869,7 @@ export default {
       const state = await env.DB.prepare(`SELECT entity, last_synced_at, rows_synced, last_error FROM sync_state ORDER BY entity`).all();
       return new Response(JSON.stringify({
         worker: 'barpi-sync',
-        version: '1.7-updated-cursor',
+        version: '1.8.1-reconcile-first',
         status: 'alive',
         d1: 'barpi-bible',
         cron: '0 * * * * (hourly)',
@@ -836,6 +893,7 @@ export default {
       if (onlyParam) opts.only = new Set(onlyParam.split(',').map(s => s.trim()).filter(Boolean));
       if (allParam === '1') opts.skipRecent = false;
       if (fullParam === '1') opts.fullSalesSku = true;
+      if (url.searchParams.get('reconcile') === '1') opts.reconcile = true;
       const us = url.searchParams.get('updated_since');
       if (us) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(us)) return new Response('updated_since: YYYY-MM-DD', { status: 400 });

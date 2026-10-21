@@ -3,6 +3,10 @@ main = "src/index.js"
 compatibility_date = "2026-06-01"
 account_id = "ab63a85bdfbf5894c28efe7076acbd82"
 
+# 21.10.2026: дозавантажка документів з розгорнутими позиціями не вкладалась у 30 с CPU
+[limits]
+cpu_ms = 300000
+
 # Hourly cron trigger
 [triggers]
 crons = ["0 * * * *"]
