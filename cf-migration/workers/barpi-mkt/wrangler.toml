@@ -11,6 +11,8 @@ workers_dev = false
 routes = [
   { pattern = "brand.barpi.ua/dashboard/api/mkt/*", zone_name = "barpi.ua" },
   { pattern = "brand.barpi.ua/mkt-ics/*", zone_name = "barpi.ua" },
+  # 22.10.2026: техчерговий @barpi_tech_bot, за секретом BOT_WRITE_KEY (див. src/index.js botApi)
+  { pattern = "brand.barpi.ua/mkt-bot/*", zone_name = "barpi.ua" },
 ]
 
 [[d1_databases]]

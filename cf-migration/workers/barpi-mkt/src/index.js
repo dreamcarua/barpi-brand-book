@@ -12,7 +12,7 @@ import { accessUser } from './access.js';
 import * as E from '../../../../dashboard/marketing/lib/econ.js';
 import * as R from '../../../../dashboard/marketing/lib/rules.js';
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0'; // 22.10.2026: /mkt-bot/ для техчергового
 const PAGE_URL = 'https://brand.barpi.ua/dashboard/marketing/';
 const STATUS_UK = { idea: 'Ідея', planned: 'Заплановано', approval: 'На погодженні', approved: 'Погоджено', prep: 'У підготовці',
   ready: 'Готово до запуску', active: 'Активно', done: 'Завершено', postponed: 'Відкладено', cancelled: 'Скасовано' };
@@ -641,6 +641,46 @@ async function linkCalcToActivity(env, calcId, b, who) {
   return row;
 }
 
+// ── Техчерговий @barpi_tech_bot (22.10.2026, рішення Вадима) ────────────────
+// /mkt-bot/* поза Cloudflare Access, за секретом BOT_WRITE_KEY (Worker secret; на сервері лише в /etc/barpibot-apply,
+// бот його не бачить). Пише сервер ТІЛЬКИ після ✅ того, хто попросив (або Вадима) у робочій групі.
+// Лише поля результату наявних активностей; ті самі перевірки cleanAct і журнал mkt_audit.
+const BOT_FIELDS = ['kpi_name', 'kpi_plan', 'kpi_fact', 'result', 'decision', 'sellout_units', 'sellout_revenue', 'cost_fact', 'comment', 'status'];
+function eqKey(a, b) {
+  const x = new TextEncoder().encode(a || ''), y = new TextEncoder().encode(b || '');
+  if (!b || x.length !== y.length) return false;
+  let d = 0; for (let i = 0; i < x.length; i++) d |= x[i] ^ y[i];
+  return d === 0;
+}
+async function botApi(req, env, path, url) {
+  if (!eqKey(req.headers.get('X-Bot-Key'), env.BOT_WRITE_KEY)) return J({ error: 'forbidden' }, 403);
+  if (path === 'activities' && req.method === 'GET') {
+    const ids = String(url.searchParams.get('ids') || '').split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0).slice(0, 100);
+    if (!ids.length) return J({ rows: [] });
+    const rows = await all(env, `SELECT id, title, start_date, end_date, partner_id, updated_at, ${BOT_FIELDS.join(', ')} FROM mkt_activities WHERE deleted=0 AND id IN (${ids.map(() => '?').join(',')})`, ...ids);
+    return J({ rows });
+  }
+  const mm = path.match(/^activities\/(\d+)$/);
+  if (mm && req.method === 'PATCH') {
+    const cur = await first(env, 'SELECT * FROM mkt_activities WHERE id=? AND deleted=0', +mm[1]);
+    if (!cur) return J({ error: 'not_found' }, 404);
+    const b = await body(req); if (!b || typeof b.fields !== 'object') return J({ error: 'json' }, 400);
+    if (b.if_updated_at && b.if_updated_at !== cur.updated_at) return J({ error: 'conflict', current: cur }, 409);
+    const bad = Object.keys(b.fields).filter((k) => !BOT_FIELDS.includes(k));
+    if (bad.length) return J({ error: 'field_not_allowed', fields: bad }, 400);
+    const { a, err } = cleanAct(b.fields, cur);
+    if (err) return J({ error: 'invalid', field: err }, 400);
+    const who = ('barpibot · ' + String(b.actor || '').replace(/[^\w @.()'’ʼ-]/gu, '').slice(0, 80)).trim();
+    await run(env, `UPDATE mkt_activities SET ${BOT_FIELDS.map((k) => k + '=?').join(',')}, updated_at=strftime('%Y-%m-%d %H:%M:%f','now'), updated_by=? WHERE id=?`,
+      ...BOT_FIELDS.map((k) => (a[k] === undefined ? null : a[k])), who, cur.id);
+    const row = await first(env, 'SELECT * FROM mkt_activities WHERE id=?', cur.id);
+    await audit(env, who, 'update', 'activity', cur.id, cur, row);
+    await mirrorAdEvent(env, row, await partnersAll(env), who);
+    return J({ ok: true, id: row.id, updated_at: row.updated_at });
+  }
+  return J({ error: 'not_found' }, 404);
+}
+
 // ── ICS ──────────────────────────────────────────────────────────────────────
 async function ics(env, token) {
   if (!env.ICS_TOKEN || token !== env.ICS_TOKEN) return new Response('not found', { status: 404 });
@@ -658,6 +698,7 @@ export default {
       if (p === '/dashboard/api/mkt/healthz') return J({ ok: true, service: 'barpi-mkt', version: VERSION });
       const im = p.match(/^\/mkt-ics\/([A-Za-z0-9_-]{16,80})\.ics$/);
       if (im && req.method === 'GET') return await ics(env, im[1]);
+      if (p.startsWith('/mkt-bot/')) return await botApi(req, env, p.slice('/mkt-bot/'.length), url);
       if (p.startsWith('/dashboard/api/mkt/')) {
         const who = await accessUser(req, env);
         if (!who) return J({ error: 'access required' }, 401);
