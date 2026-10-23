@@ -12,7 +12,7 @@ import { accessUser } from './access.js';
 import * as E from '../../../../dashboard/marketing/lib/econ.js';
 import * as R from '../../../../dashboard/marketing/lib/rules.js';
 
-const VERSION = '1.1.0'; // 22.10.2026: /mkt-bot/ для техчергового
+const VERSION = '1.2.0'; // 23.10.2026: прайс партнера в калькуляторі; 1.1.0: // 22.10.2026: /mkt-bot/ для техчергового
 const PAGE_URL = 'https://brand.barpi.ua/dashboard/marketing/';
 const STATUS_UK = { idea: 'Ідея', planned: 'Заплановано', approval: 'На погодженні', approved: 'Погоджено', prep: 'У підготовці',
   ready: 'Готово до запуску', active: 'Активно', done: 'Завершено', postponed: 'Відкладено', cancelled: 'Скасовано' };
@@ -365,14 +365,23 @@ async function calcBase(env, q) {
   const agg = {};
   rows.forEach((r) => { const x = agg[r.pid] || (agg[r.pid] = { q: 0, net: 0 }); x.q += r.q; x.net += r.net; });
   const vat = 1 + E.num(st, 'vat_rate', 20) / 100;
+  const retro = 1 - (+p.retro_pct || 0) / 100;
+  // 23.10.2026 (#20261022-1445-9fad): прайс партнера, чинний на дату старту акції, має пріоритет над фактом і загальним прайсом
+  const pp = {};
+  try {
+    for (const r of await all(env, `SELECT product_ms_id, price_vat, valid_from FROM mkt_partner_prices
+        WHERE partner_id=? AND valid_from<=? AND (valid_to IS NULL OR valid_to>=?) ORDER BY valid_from`, p.id, start, start)) pp[r.product_ms_id] = r;
+  } catch (e) { console.error('[mkt/partner_prices]', e.message); }
   const lines = [];
   for (const pr of Object.values(prods)) {
-    if (!E.isFinished(pr) || pr.archived && !agg[pr.pid]) continue;
+    if (!E.isFinished(pr) || pr.archived && !agg[pr.pid] && !pp[pr.pid]) continue;
     const a = agg[pr.pid] || { q: 0, net: 0 };
-    const price = a.q > 0 ? a.net / a.q : (pr.price_opt ? (pr.price_opt / vat) * (1 - (+p.retro_pct || 0) / 100) : 0);
+    const own = pp[pr.pid];
+    const price = own ? (own.price_vat / vat) * retro : a.q > 0 ? a.net / a.q : (pr.price_opt ? (pr.price_opt / vat) * retro : 0);
     const cost = E.unitCost(pr, start, st);
     lines.push({ pid: pr.pid, sku: pr.sku, name: pr.name, kind: E.skuKind(pr), base_units_period: a.q, base_revenue_period: a.net,
-      u: a.q * k, p: price, c: cost, stock: pr.stock, price_source: a.q > 0 ? 'fact' : 'price_list', revenue: a.net });
+      u: a.q * k, p: price, c: cost, stock: pr.stock, price_source: own ? 'partner_price' : a.q > 0 ? 'fact' : 'price_list',
+      partner_price_vat: own ? own.price_vat : null, partner_price_from: own ? own.valid_from : null, revenue: a.net });
   }
   const abc = E.abcClasses(lines.map((l) => ({ pid: l.pid, revenue: l.revenue })), st);
   lines.forEach((l) => { l.abc = l.revenue > 0 ? abc[l.pid] : null; l.gpu = l.p - l.c; l.margin = l.p ? (l.p - l.c) / l.p : null; });
