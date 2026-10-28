@@ -309,6 +309,6 @@ html.bp-cr-lock,html.bp-cr-lock body{overflow:hidden}
 .bp #bp-ing article a.bp-name-link:hover{text-decoration:underline}
 .bp #bp-ing article .bp-buy{display:inline-block;margin-top:10px;font-weight:700;color:var(--navy);text-decoration:underline!important;min-height:44px;line-height:44px}
 .bp .bp-calc-buy{margin-top:16px;justify-content:center;width:100%}
-.bp .bp-chips li,.bp .bp-logos span{background:transparent;border:0;border-radius:0;padding:2px 0;cursor:default}
+.bp .bp-chips li,.bp .bp-logos span{background:transparent;border:0;border-radius:0;padding:2px 0;cursor:default;font-weight:500;color:#333}
 .bp .bp-chips,.bp .bp-logos{gap:6px 18px}
 .bp .bp-chips li:not(:last-child)::after,.bp .bp-logos span:not(:last-child)::after{content:"·";margin-left:18px;color:var(--muted,#888)}
