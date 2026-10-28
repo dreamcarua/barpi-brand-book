@@ -158,3 +158,39 @@
     }
   });
 })();
+
+/* 28.10.2026 (site audit, Clarity dead/rage clicks on /details/): product names, pack photos and the
+   calculator now lead to the product cards; PDF links show their size and a loading state. */
+(function () {
+  if (location.pathname !== "/details/") return;
+  var U = { "легені": "/yalovychi-leheni-barpi-15g/", "пупочки": "/kuriachi-shlunky-barpi-20g/", "шлунки": "/kuriachi-shlunky-barpi-20g/",
+    "серденька": "/kuriachi-serdechka-barpi-20g/", "печінка": "/yalovycha-pechinka-barpi-20g/", "крекер": "/yalovychyi-rubets-barpi-15g/",
+    "рубець": "/yalovychyi-rubets-barpi-15g/", "хрустики": "/yalovycha-trakheia-barpi-20g/", "трахея": "/yalovycha-trakheia-barpi-20g/",
+    "довгожуйка": "/yalovycha-stanova-zhyla-barpi-20g/", "безе": "/yalovyche-vymia-barpi-20g/", "вим": "/yalovyche-vymia-barpi-20g/",
+    "сир стіки": "/syr-stiky-barpi-20g/", "сир": "/syr-kulky-barpi-20g/", "зефір": "/yalovychi-leheni-barpi-15g/" };
+  function url(t) { t = (t || "").toLowerCase(); for (var k in U) if (t.indexOf(k) >= 0) return U[k]; return null; }
+  function go() {
+    var root = document.querySelector(".bp"); if (!root) return;
+    // ingredient cards: image + name become links, plus an explicit "Купити" link
+    root.querySelectorAll("#bp-ing article").forEach(function (a) {
+      var img = a.querySelector("img"), h = a.querySelector("h3,h4,b,strong"), u = url((img && img.alt) || (h && h.textContent));
+      if (!u || a.querySelector(".bp-buy")) return;
+      if (img && !img.closest("a")) { var w = document.createElement("a"); w.href = u; w.setAttribute("aria-label", img.alt); img.parentNode.insertBefore(w, img); w.appendChild(img); }
+      if (h && !h.closest("a")) { var l = document.createElement("a"); l.href = u; l.className = "bp-name-link"; while (h.firstChild) l.appendChild(h.firstChild); h.appendChild(l); }
+      var b = document.createElement("a"); b.href = u; b.className = "bp-buy"; b.textContent = "Купити →"; a.appendChild(b);
+    });
+    // calculator: link to the selected product under the result
+    root.querySelectorAll(".bp-calc").forEach(function (c) {
+      var sel = c.querySelector("select"), out = c.querySelector(".bp-out"); if (!sel || !out) return;
+      var l = document.createElement("a"); l.className = "bp-btn bp-btn--pri bp-calc-buy"; out.appendChild(l);
+      function upd() { var o = sel.options[sel.selectedIndex], u = url(o.textContent); l.hidden = !u; if (u) { l.href = u; l.textContent = "Купити «" + o.textContent.split(",")[0].replace(/\s*\(.*\)/, "") + "» →"; } }
+      sel.addEventListener("change", upd); upd();
+    });
+    // PDF: show size, give feedback while a 3.3 MB file loads on mobile
+    root.querySelectorAll('a[href$=".pdf"][download]').forEach(function (a) {
+      if (!/МБ/.test(a.textContent)) a.appendChild(document.createTextNode(" (PDF, 3,3 МБ)"));
+      a.addEventListener("click", function () { var t = a.textContent; a.textContent = "Завантажується…"; setTimeout(function () { a.textContent = t; }, 5000); });
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go();
+})();
