@@ -188,7 +188,7 @@
     });
     // PDF: show size, give feedback while a 3.3 MB file loads on mobile
     root.querySelectorAll('a[href$=".pdf"][download]').forEach(function (a) {
-      if (!/МБ/.test(a.textContent)) a.appendChild(document.createTextNode(" (PDF, 3,3 МБ)"));
+      if (!/МБ/.test(a.textContent)) a.appendChild(document.createTextNode(" · 3,3 МБ"));
       a.addEventListener("click", function () { var t = a.textContent; a.textContent = "Завантажується…"; setTimeout(function () { a.textContent = t; }, 5000); });
     });
   }
