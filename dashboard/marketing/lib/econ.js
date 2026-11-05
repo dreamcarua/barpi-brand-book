@@ -30,7 +30,8 @@ export function skuKind(p) {
   if (/зразок/i.test(name) || !/^Готова продукція/.test(path)) return 'other';
   if (/Апетайзер/i.test(path) || /^Апетайзер/i.test(name)) return 'jar';
   if (/20\/15/.test(path)) return 'small';
-  if (/50.60.70/.test(path)) return 'large';
+  // групи МС: «50\60\70 гр.» (стара назва), «100\60 гр.» і «70\50 гр.» (з осені 2026, #20261105-1253-216b)
+  if (/50.60.70|100.60|70.50/.test(path)) return 'large';
   return 'other';
 }
 export const isFinished = (p) => skuKind(p) !== 'other';

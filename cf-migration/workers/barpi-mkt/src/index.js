@@ -12,7 +12,7 @@ import { accessUser } from './access.js';
 import * as E from '../../../../dashboard/marketing/lib/econ.js';
 import * as R from '../../../../dashboard/marketing/lib/rules.js';
 
-const VERSION = '1.2.0'; // 23.10.2026: прайс партнера в калькуляторі; 1.1.0: // 22.10.2026: /mkt-bot/ для техчергового
+const VERSION = '1.2.1'; // 05.11.2026: групи МС 100\60 і 70\50 = великі пачки; 1.2.0 23.10.2026: прайс партнера в калькуляторі; 1.1.0: // 22.10.2026: /mkt-bot/ для техчергового
 const PAGE_URL = 'https://brand.barpi.ua/dashboard/marketing/';
 const STATUS_UK = { idea: 'Ідея', planned: 'Заплановано', approval: 'На погодженні', approved: 'Погоджено', prep: 'У підготовці',
   ready: 'Готово до запуску', active: 'Активно', done: 'Завершено', postponed: 'Відкладено', cancelled: 'Скасовано' };

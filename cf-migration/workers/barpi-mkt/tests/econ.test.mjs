@@ -20,6 +20,21 @@ test('собівартість пачки за каноном v4', () => {
   assert.equal(E.unitCost({ name: 'Зразок_Barpi_ЗЕФІР', path: 'Росхідні матеріали' }, '2026-10-01', st), 0);
 });
 
+test('нові групи великих пачок МС 100\\60 і 70\\50 = large (#20261105-1253-216b)', () => {
+  const g100 = 'Готова продукція/Сушені ласощі 100\\60 гр.', g70 = 'Готова продукція/Сушені ласощі 70\\50 гр.';
+  const pup70 = { name: 'Хрусткі смаколики для тварин Barpі «Курячі пупочки» (шлунки)70г.', path: g70 };
+  const zef50 = { name: 'Хрусткі смаколики для тварин Barpі «Зефір яловичий» (легені)50г.', path: g70 };
+  const crk60 = { name: 'Хрусткі смаколики для тварин Barpi «Крекер яловичий»(рубець)60г', path: g100 };
+  const pup100 = { name: 'Хрусткі смаколики для тварин Barpі «Курячі пупочки» (шлунки)100г.', path: g100 };
+  for (const p of [pup70, zef50, crk60, pup100]) { assert.equal(E.skuKind(p), 'large'); assert.ok(E.isFinished(p)); }
+  assert.equal(E.skuKind(big), 'large');                               // стара назва групи лишається
+  assert.equal(E.netWeightG(pup70, '2026-11-05', st), 70);
+  assert.equal(E.netWeightG(zef50, '2026-11-05', st), 50);
+  assert.equal(E.netWeightG(crk60, '2026-11-05', st), 60);
+  assert.equal(E.skuKind(small), 'small');
+  assert.equal(E.skuKind({ name: 'X', path: 'Готова продукція/Інше' }), 'other');
+});
+
 test('break-even одного SKU: класична формула', () => {
   // ціна 100, собівартість 60 → GP 40; знижка 10 % → GP 30; потрібно 40/30 = +33,3 %
   const be = E.breakEven([{ u: 300, p: 100, c: 60, sd: 0.1 }], 0);
