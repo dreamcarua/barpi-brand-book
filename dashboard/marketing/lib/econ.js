@@ -60,6 +60,36 @@ export function unitCost(p, date, st) {
   return r2(num(st, 'cost_per_kg', 620) * netWeightG(p, date, st) / 1000 + pack);
 }
 
+// ── Пари карток МС: стара картка → нова (#20261105-1210-5cb1) ────────────────
+// З осені 2026 великі пачки заведені новими картками (Код Л-…). Продажі старої картки
+// рахуються як продажі нової: один товар, старі картки в розрахунку окремо не показуються.
+// Ключі — поле «Код» картки МС (moysklad_products.sku_id); кирилична «В» = латинська «B».
+export const CARD_PAIRS = {
+  'B-0015': 'Л-10000', 'B-0016': 'Л-10002', 'B-0009': 'Л-10003', 'B-0010': 'Л-10004',
+  'B-0011': 'Л-10005', 'B-0012': 'Л-10006', 'B-0017': 'Л-10007', 'B-0014': 'Л-10008',
+};
+export const normCode = (c) => String(c || '').trim().replace(/^В/, 'B');
+// prods: {ms_id: {pid, sku}} → {старий ms_id: новий ms_id}; пара без нової картки в дзеркалі не діє
+export function pairMap(prods) {
+  const byCode = {};
+  Object.values(prods || {}).forEach((p) => { byCode[normCode(p.sku)] = p.pid; });
+  const out = {};
+  for (const [o, n] of Object.entries(CARD_PAIRS)) if (byCode[o] && byCode[n]) out[byCode[o]] = byCode[n];
+  return out;
+}
+// rows: [{d, pid, q, net, docs}] → старий pid замінено новим, рядки одного дня і товару складено
+export function mergePairs(rows, map) {
+  if (!map || !Object.keys(map).length) return rows;
+  const by = new Map();
+  for (const r of rows) {
+    const pid = map[r.pid] || r.pid;
+    const k = r.d + '|' + pid;
+    const x = by.get(k);
+    if (x) { x.q += r.q; x.net += r.net; x.docs = (x.docs || 0) + (r.docs || 0); } else by.set(k, { ...r, pid });
+  }
+  return [...by.values()];
+}
+
 // ── ABC за виручкою ─────────────────────────────────────────────────────────
 export function abcClasses(items, st) {
   const a = num(st, 'abc_a', 80) / 100, b = num(st, 'abc_b', 95) / 100;

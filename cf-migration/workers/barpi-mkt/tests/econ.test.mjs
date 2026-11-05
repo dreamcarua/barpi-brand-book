@@ -35,6 +35,19 @@ test('нові групи великих пачок МС 100\\60 і 70\\50 = lar
   assert.equal(E.skuKind({ name: 'X', path: 'Готова продукція/Інше' }), 'other');
 });
 
+test('пари карток: продажі старої картки йдуть у нову (#20261105-1210-5cb1)', () => {
+  const prods = { o1: { pid: 'o1', sku: 'B-0011' }, n1: { pid: 'n1', sku: 'Л-10005' }, o2: { pid: 'o2', sku: 'В-0017' }, n2: { pid: 'n2', sku: 'Л-10007' },
+    o3: { pid: 'o3', sku: 'B-0013' }, o4: { pid: 'o4', sku: 'B-0014' } };
+  const m = E.pairMap(prods);
+  assert.deepEqual(m, { o1: 'n1', o2: 'n2' });                          // кирилична В-0017 теж; B-0014 без нової картки не діє
+  const rows = E.mergePairs([{ d: '2026-10-10', pid: 'o1', q: 5, net: 500, docs: 1 }, { d: '2026-10-10', pid: 'n1', q: 2, net: 260, docs: 1 },
+    { d: '2026-10-11', pid: 'o1', q: 1, net: 100, docs: 1 }, { d: '2026-10-10', pid: 'o3', q: 3, net: 300, docs: 1 }], m);
+  const a = E.aggregate(rows, '2026-10-01', '2026-10-31');
+  assert.equal(a.by.n1.q, 8); assert.equal(a.by.n1.net, 860); assert.equal(a.by.o1, undefined);
+  assert.equal(a.by.o3.q, 3); assert.equal(a.q, 11);
+  assert.equal(rows.filter((r) => r.pid === 'n1' && r.d === '2026-10-10').length, 1);
+});
+
 test('break-even одного SKU: класична формула', () => {
   // ціна 100, собівартість 60 → GP 40; знижка 10 % → GP 30; потрібно 40/30 = +33,3 %
   const be = E.breakEven([{ u: 300, p: 100, c: 60, sd: 0.1 }], 0);

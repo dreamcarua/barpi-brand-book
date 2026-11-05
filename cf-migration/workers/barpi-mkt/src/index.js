@@ -12,7 +12,7 @@ import { accessUser } from './access.js';
 import * as E from '../../../../dashboard/marketing/lib/econ.js';
 import * as R from '../../../../dashboard/marketing/lib/rules.js';
 
-const VERSION = '1.2.1'; // 05.11.2026: групи МС 100\60 і 70\50 = великі пачки; 1.2.0 23.10.2026: прайс партнера в калькуляторі; 1.1.0: // 22.10.2026: /mkt-bot/ для техчергового
+const VERSION = '1.3.0'; // 05.11.2026: пари карток стара → нова (1.3.0); групи МС 100\60 і 70\50 = великі пачки; 1.2.0 23.10.2026: прайс партнера в калькуляторі; 1.1.0: // 22.10.2026: /mkt-bot/ для техчергового
 const PAGE_URL = 'https://brand.barpi.ua/dashboard/marketing/';
 const STATUS_UK = { idea: 'Ідея', planned: 'Заплановано', approval: 'На погодженні', approved: 'Погоджено', prep: 'У підготовці',
   ready: 'Готово до запуску', active: 'Активно', done: 'Завершено', postponed: 'Відкладено', cancelled: 'Скасовано' };
@@ -74,7 +74,8 @@ async function salesRows(env, cpIds, from, to, st, retro = 0) {
         GROUP BY d, pid`, ...chunk, from, E.addDays(to, 1));
     rows.forEach((r) => out.push({ d: r.d, pid: r.pid, q: +r.q || 0, net: ((+r.gross || 0) / vat) * (1 - (+retro || 0)), docs: r.docs }));
   }
-  return out;
+  // 05.11.2026 (#20261105-1210-5cb1): продажі старої картки великої пачки = продажі нової (E.CARD_PAIRS)
+  return E.mergePairs(out, E.pairMap(await products(env)));
 }
 async function returnsSum(env, cpIds, from, to, st) {
   if (!cpIds.length) return 0;
@@ -373,8 +374,9 @@ async function calcBase(env, q) {
         WHERE partner_id=? AND valid_from<=? AND (valid_to IS NULL OR valid_to>=?) ORDER BY valid_from`, p.id, start, start)) pp[r.product_ms_id] = r;
   } catch (e) { console.error('[mkt/partner_prices]', e.message); }
   const lines = [];
+  const paired = E.pairMap(prods); // старі картки пар окремим рядком не показуємо
   for (const pr of Object.values(prods)) {
-    if (!E.isFinished(pr) || pr.archived && !agg[pr.pid] && !pp[pr.pid]) continue;
+    if (!E.isFinished(pr) || paired[pr.pid] || pr.archived && !agg[pr.pid] && !pp[pr.pid]) continue;
     const a = agg[pr.pid] || { q: 0, net: 0 };
     const own = pp[pr.pid];
     const price = own ? (own.price_vat / vat) * retro : a.q > 0 ? a.net / a.q : (pr.price_opt ? (pr.price_opt / vat) * retro : 0);
