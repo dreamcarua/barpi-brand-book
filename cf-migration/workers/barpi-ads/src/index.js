@@ -80,10 +80,15 @@ async function order(req, env) {
 //  2. The memory-kit Action only checks that (1) is alive (heartbeat fresh, Telegram configured).
 // A check starts only after its first run row exists.
 const CHECKS = [
-  { key: 'express-check', limit_h: 4 },      // express every 3 h + 1 h
+  { key: 'express-check', limit_h: 5 },      // normal days 08/12/16/20 Kyiv (LIMITS.md 09.11.2026); night limit below
   { key: 'daily-diagnostic', limit_h: 26 },
   { key: 'event-stop', limit_h: 26 },
 ];
+const EXPRESS_NIGHT_LIMIT_H = 13;            // no runs 20:10-08:10 Kyiv on a normal day
+function expressLimitH(now) {
+  const hour = +new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Kyiv', hour: '2-digit', hourCycle: 'h23' }).format(now);
+  return hour >= 10 && hour <= 21 ? 5 : EXPRESS_NIGHT_LIMIT_H;
+}
 const MIRROR_LIMIT_H = 30;                   // mirror Meta -> D1 runs daily at 06:35 Kyiv
 const REPEAT_H = 6;
 const HEARTBEAT_LIMIT_MIN = 75;              // cron every 30 min; deadman alerts after 75 min
@@ -112,9 +117,10 @@ async function evaluate(env) {
   for (const c of CHECKS) {
     if (!last[c.key]) { checks[c.key] = { state: 'not started' }; continue; }
     const age_h = (now - Date.parse(last[c.key])) / H;
-    const late = age_h > c.limit_h;
-    checks[c.key] = { last: last[c.key], age_h: +age_h.toFixed(2), limit_h: c.limit_h, late };
-    if (late) problems.push({ key: `late:${c.key}`, text: `${c.key}: останній прогін ${age_h.toFixed(1)} год тому (межа ${c.limit_h} год)` });
+    const limit_h = c.key === 'express-check' ? expressLimitH(now) : c.limit_h;
+    const late = age_h > limit_h;
+    checks[c.key] = { last: last[c.key], age_h: +age_h.toFixed(2), limit_h, late };
+    if (late) problems.push({ key: `late:${c.key}`, text: `${c.key}: останній прогін ${age_h.toFixed(1)} год тому (межа ${limit_h} год)` });
   }
   const mir = await env.DB.prepare('SELECT MAX(updated_at) AS last FROM ad_daily').first();
   if (mir && mir.last) {
