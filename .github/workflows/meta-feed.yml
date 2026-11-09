@@ -1,4 +1,4 @@
-name: Build Meta catalog feed
+name: Build Meta + Google product feeds
 
 on:
   schedule:
@@ -18,11 +18,13 @@ jobs:
           python-version: "3.12"
       - name: Build feed from barpi.com.ua
         run: python3 ads/feed/build_feed.py ads/feed/meta-catalog.xml
+      - name: Build Google Merchant Center feed
+        run: cd ads/feed && python3 build_google_feed.py google-merchant.xml
       - name: Commit if changed
         run: |
           git config user.name "barpi-feed-bot"
           git config user.email "bot@barpi.com.ua"
-          git add ads/feed/meta-catalog.xml
+          git add ads/feed/meta-catalog.xml ads/feed/google-merchant.xml
           git diff --cached --quiet && echo "no changes" && exit 0
-          git commit -m "feed: refresh meta-catalog.xml ($(date -u +%Y-%m-%d))"
+          git commit -m "feed: refresh meta-catalog.xml + google-merchant.xml ($(date -u +%Y-%m-%d))"
           git push
