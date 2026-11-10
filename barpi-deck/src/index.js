@@ -7,6 +7,8 @@
  *   GET  /deck            → session? deck HTML : login form
  *   POST /deck            → check password, set signed cookie, redirect
  *   GET  /deck/pdf        → session? PDF inline : redirect to /deck
+ *   GET  /deck/dd         → session? investor DD answers (R2 dd.html)
+ *   GET  /deck/dd/file/x  → session? xlsx table from R2 dd/x.xlsx
  *   GET  /deck/exit       → clear session
  */
 
@@ -166,12 +168,12 @@ async function clearFail(env, ip) {
 
 /* ---------- R2 ---------- */
 
-async function serveObject(env, key, contentType, filename) {
+async function serveObject(env, key, contentType, filename, disposition = 'inline') {
   const obj = await env.DECK.get(key);
   if (!obj) return new Response('Файл не знайдено', { status: 404, headers: BASE_HEADERS });
   const h = new Headers(BASE_HEADERS);
   h.set('Content-Type', contentType);
-  if (filename) h.set('Content-Disposition', `inline; filename="${filename}"`);
+  if (filename) h.set('Content-Disposition', `${disposition}; filename="${filename}"`);
   return new Response(obj.body, { headers: h });
 }
 
@@ -234,6 +236,19 @@ export default {
     if (!ok) return sub === '' ? loginPage(page, base, null) : redirect(base);
 
     if (sub === '') return serveObject(env, page.key, 'text/html; charset=utf-8');
+
+    // --- investor DD answers: /deck/dd and its xlsx tables /deck/dd/file/<slug>.xlsx ---
+    if (base === '/deck' && sub === '/dd') {
+      return serveObject(env, 'dd.html', 'text/html; charset=utf-8');
+    }
+    if (base === '/deck' && sub.startsWith('/dd/file/')) {
+      const name = sub.slice('/dd/file/'.length);
+      if (!/^[a-z0-9-]{1,80}\.xlsx$/.test(name)) {
+        return new Response('Не знайдено', { status: 404, headers: BASE_HEADERS });
+      }
+      return serveObject(env, `dd/${name}`,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', `Barpi_${name}`, 'attachment');
+    }
 
     // --- document proxy: /checklist/file/<uuid> ---
     if (page.files && sub.startsWith('/file/')) {
