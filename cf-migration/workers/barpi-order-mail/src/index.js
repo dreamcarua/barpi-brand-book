@@ -1,8 +1,9 @@
-/* barpi-order-mail v1.0 (28.09.2026)
+/* barpi-order-mail v1.1 (10.11.2026: МС numbers the order, description as typed by hand, duplicate vs manual entry, group alerts)
+   v1.0 (28.09.2026)
    Email Worker for office@barpi.com.ua. Forwards every message unchanged, and turns
    Horoshop new-order notifications into MoySklad customer orders via barpi-sync. */
 import PostalMime from 'postal-mime';
-import { parseOrder } from './parse.js';
+import { parseOrder, buildDescription } from './parse.js';
 
 async function tg(env, text) {
   if (!env.TG_TOKEN || !env.TG_CHAT) return;
@@ -34,18 +35,23 @@ async function handle(raw, env) {
     await tg(env, `⚠️ <b>Замовлення №${esc(o.number)}</b> з сайту не внесено в МойСклад автоматично: не зійшлась сума або не знайдено товари (позицій ${o.items.length}, сума позицій ${sumItems}, сума в листі ${o.total}).\n${lines}\nЛист збережено: <code>${esc(key)}</code>. Внесіть вручну.`);
     return { ok: false, key, o };
   }
-  if (env.MODE !== 'live') {
-    await tg(env, `🧪 Замовлення №${esc(o.number)} розібрано (тестовий режим), ${o.total} грн:\n${lines}`);
-    return { ok: true, shadow: true };
-  }
+  const description = buildDescription(o);
   const body = {
-    name: String(o.number),
-    description: [`Horoshop №${o.number}`, o.customer, o.phone, o.delivery, o.payment, o.comment ? 'Коментар: ' + o.comment : ''].filter(Boolean).join('\n'),
+    number: String(o.number),
+    description,
     positions: o.items.map((i) => ({ code: i.code, quantity: i.qty, price_kop: Math.round(i.price * 100) })),
   };
+  if (env.MODE !== 'live') {
+    // shadow: run the whole sync path (duplicates, code lookup, payload) with dryrun, create nothing
+    const dr = await env.SYNC.fetch('https://barpi-sync/order-by-code', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Order-Key': env.ORDER_API_KEY }, body: JSON.stringify({ ...body, dryrun: true }) });
+    const dj = await dr.json().catch(() => ({ ok: false, error: 'HTTP ' + dr.status }));
+    const st = !dj.ok ? `помилка «${esc(dj.error)}»` : dj.duplicate ? `уже є в МС №${esc(dj.name)} (${dj.manual ? 'вручну' : 'автоматично'}), не дублювали б` : 'готово до внесення';
+    await tg(env, `🧪 Замовлення сайту №${esc(o.number)} розібрано (тестовий режим, в МойСклад не вносимо), ${o.total} грн:\n${lines}\nОпис:\n<code>${esc(description)}</code>\nМойСклад: ${st}`);
+    return { ok: true, shadow: true, sync: dj.ok ? { duplicate: !!dj.duplicate } : dj };
+  }
   const r = await env.SYNC.fetch('https://barpi-sync/order-by-code', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Order-Key': env.ORDER_API_KEY }, body: JSON.stringify(body) });
   const j = await r.json().catch(() => ({ ok: false, error: 'HTTP ' + r.status }));
-  if (j.ok) await tg(env, j.duplicate ? `ℹ️ Замовлення №${esc(o.number)} вже є в МойСкладі.` : `✅ Замовлення №${esc(o.number)} з сайту внесено в МойСклад (${o.total} грн, позицій ${o.items.length}).`);
+  if (j.ok) await tg(env, j.duplicate ? `ℹ️ Замовлення сайту №${esc(o.number)} вже є в МойСкладі (${j.manual ? 'внесене вручну' : 'автоматично'}), №${esc(j.name)}; не дублюю.` : `✅ Замовлення сайту №${esc(o.number)} внесено в МойСклад як №${esc(j.name)} (${o.total} грн, позицій ${o.items.length}).`);
   else await tg(env, `⚠️ Замовлення №${esc(o.number)}: МойСклад відповів помилкою «${esc(j.error)}». Внесіть вручну. Лист: <code>${esc(key)}</code>`);
   return j;
 }
@@ -56,5 +62,5 @@ export default {
     await message.forward(env.FORWARD_TO);
     ctx.waitUntil(handle(raw, env).catch((e) => tg(env, '⚠️ barpi-order-mail: ' + esc(e.message || e))));
   },
-  async fetch() { return new Response('barpi-order-mail 1.0: email worker', { status: 200 }); },
+  async fetch() { return new Response('barpi-order-mail 1.1: email worker', { status: 200 }); },
 };

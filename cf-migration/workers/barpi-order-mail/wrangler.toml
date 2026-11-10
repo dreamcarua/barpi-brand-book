@@ -11,7 +11,7 @@ account_id = "ab63a85bdfbf5894c28efe7076acbd82"
 
 [vars]
 FORWARD_TO = "office@barpi.ua"
-MODE = "live"
+MODE = "shadow"  # 10.11.2026: розбір без створення 2-3 дні; live після звірки з ручними (#20261110-0826-1cbf)
 
 [[services]]
 binding = "SYNC"

@@ -25,7 +25,9 @@ export function parseOrder(subject, text, html) {
   for (let k = 0; k < hits.length; k++) {
     const code = hits[k][1];
     const from = hits[k].index + code.length;
-    const to = k + 1 < hits.length ? hits[k + 1].index : Math.min(body.length, from + 300);
+    let to = k + 1 < hits.length ? hits[k + 1].index : Math.min(body.length, from + 300);
+    const tl = body.slice(from, to).search(/(?:Всього|Разом|До сплати|Загальна сума|Сума замовлення)/i);
+    if (tl >= 0) to = from + tl; // the window of an item never reaches the grand total
     const win = body.slice(from, to);
     const prices = [...win.matchAll(MONEY)].map((m) => num(m[1])).filter((v) => v > 0);
     let qty = null, price = null;
@@ -45,12 +47,33 @@ export function parseOrder(subject, text, html) {
   const tm = body.match(/(?:Всього|Разом|До сплати|Загальна сума|Сума замовлення)[^\d]{0,40}(\d[\d\s ]*(?:[.,]\d{1,2})?)\s*(?:грн|₴)/i);
   const total = tm ? num(tm[1]) : null;
   const phone = (body.match(/\+?3?8?\s?\(?0\d{2}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/) || [])[0] || '';
-  const pick = (re) => { const m = body.match(re); return m ? m[0].replace(/\s+/g, ' ').trim().slice(0, 200) : ''; };
+  const flat = body.replace(/ \| /g, ' ');
+  const pick = (re) => { const m = flat.match(re); return m ? m[0].replace(/\s+/g, ' ').trim().slice(0, 200) : ''; };
   return {
     number, items: uniq, total, phone,
-    customer: pick(/(?:ПІБ|Ім'я|Імʼя|Покупець|Одержувач)[^\n|]{0,80}/i),
+    customer: pick(/(?:ПІБ|Ім'я|Імʼя|Покупець|Одержувач)[^\n]{0,80}/i),
     delivery: pick(/(?:Доставка|Відділення|Нова пошта)[^\n]{0,160}/i),
+    deliveryLines: deliveryBlock(body),
     payment: pick(/(?:Оплата|Спосіб оплати)[^\n]{0,120}/i),
     comment: (body.match(/Коментар[^\n]{0,300}/i) || [''])[0].replace(/^Коментар\S*\s*/i, ''),
   };
+}
+
+// Lines between «Доставка» and «Оплата» (city, carrier, branch) as the colleagues write them into the МС description.
+export function deliveryBlock(body) {
+  const t = String(body || '');
+  const a = t.search(/Доставка/i);
+  if (a < 0) return [];
+  const rest = t.slice(a);
+  const b = rest.search(/(?:Спосіб оплати|Оплата)/i);
+  const seg = b > 0 ? rest.slice(0, b) : rest.slice(0, 400);
+  return seg.split('\n').map((l) => l.replace(/\s*\|\s*/g, ' ').replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, 6);
+}
+
+// Description in the manual format (order 01212): «<ПІБ> Рахунок №<site no>» / phone / «Доставка <місто>» / carrier / «Відділення …» / «Оплата <спосіб>».
+export function buildDescription(o) {
+  const clean = (s) => String(s || '').replace(/^(?:ПІБ|Ім'я|Імʼя|Покупець|Одержувач)\s*[:\-]?\s*/i, '').trim();
+  const head = [clean(o.customer), `Рахунок №${o.number}`].filter(Boolean).join(' ');
+  const deliv = o.deliveryLines && o.deliveryLines.length ? o.deliveryLines : (o.delivery ? [o.delivery] : []);
+  return [head, o.phone, ...deliv, o.payment, o.comment ? 'Коментар: ' + o.comment : ''].filter(Boolean).join('\n');
 }

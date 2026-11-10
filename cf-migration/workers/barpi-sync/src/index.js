@@ -808,39 +808,70 @@ async function createBundle(env, body) {
 }
 
 
-// ---------- Horoshop order (by product codes) → MoySklad customerorder (28.09.2026) ----------
-// Called by barpi-order-mail (Email Worker) via service binding. Defaults = current manual practice:
-// org ФОП Аксьонов, agent «Замовлення Сайт "Barpi"», store = main store. Idempotent by name (= Horoshop order number).
+// ---------- Horoshop order (by product codes) → MoySklad customerorder (28.09.2026; v1.9 10.11.2026) ----------
+// Called by barpi-order-mail (Email Worker) via service binding. Fields = the manual practice (sample: order 01212 of 09.11.2026):
+// org ФОП Аксьонов + account …9564, agent «Замовлення Сайт "Barpi"», sales channel «Сайт ТМ "Barpi"», project «Продажі Роздріб»,
+// main store, applicable=true, no reserve, МС numbers the order itself (site number only in the description «Рахунок №N»).
+// Idempotent by externalCode «horoshop-<N>»; an order already typed by hand («Рахунок №N» in a site-agent order of +-3 days) is not duplicated.
 const SITE_DEFAULTS = {
   organization: '3502ff01-bdd3-11ef-0a80-143d00041e3a',
+  organizationAccount: '350305c4-bdd3-11ef-0a80-143d00041e3b',
   agent: '692978bd-cc60-11ef-0a80-01a800502201',
   store: '8a1ab25d-bd6a-11ef-0a80-018b00004748',
+  salesChannel: '7500aed3-e2f1-11f0-0a80-1a220015cdb1',
+  project: '1966e1b0-97d7-11f1-0a80-0e2b00147a2c',
 };
+// MoySklad codes use Cyrillic look-alike letters («В-0044» is Cyrillic В); the site may send the Latin twin: try both spellings.
+const L2C = { A: 'А', B: 'В', C: 'С', E: 'Е', H: 'Н', I: 'І', K: 'К', M: 'М', O: 'О', P: 'Р', T: 'Т', X: 'Х' };
+const C2L = Object.fromEntries(Object.entries(L2C).map(([l, c]) => [c, l]));
+function codeVariants(code) {
+  const c = String(code);
+  return [...new Set([c, c.replace(/[A-Z]/g, (ch) => L2C[ch] || ch), c.replace(/[А-ЯІ]/g, (ch) => C2L[ch] || ch)])];
+}
 async function resolveCode(env, code) {
-  const r = await env.DB.prepare(`SELECT ms_id FROM moysklad_products WHERE json_extract(raw_json,'$.code') = ? AND ms_archived = 0 LIMIT 1`).bind(String(code)).first();
-  if (r) return { type: 'product', id: r.ms_id };
-  const j = await fetchMS(env, '/entity/bundle', { filter: 'code=' + code, limit: 1 });
-  if (j.rows && j.rows[0]) return { type: 'bundle', id: j.rows[0].id };
-  const j2 = await fetchMS(env, '/entity/product', { filter: 'code=' + code, limit: 1 });
-  if (j2.rows && j2.rows[0]) return { type: 'product', id: j2.rows[0].id };
+  for (const v of codeVariants(code)) {
+    const r = await env.DB.prepare(`SELECT ms_id FROM moysklad_products WHERE json_extract(raw_json,'$.code') = ? AND ms_archived = 0 LIMIT 1`).bind(v).first();
+    if (r) return { type: 'product', id: r.ms_id };
+    const j = await fetchMS(env, '/entity/bundle', { filter: 'code=' + v, limit: 1 });
+    if (j.rows && j.rows[0]) return { type: 'bundle', id: j.rows[0].id };
+    const j2 = await fetchMS(env, '/entity/product', { filter: 'code=' + v, limit: 1 });
+    if (j2.rows && j2.rows[0]) return { type: 'product', id: j2.rows[0].id };
+  }
   return null;
 }
+const pad2 = (n) => String(n).padStart(2, '0');
+const msMoment = (d) => `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
 async function createOrderByCode(env, body) {
-  const name = String(body.name || '').trim();
-  if (!name) throw new Error('name (order number) required');
-  const exists = await fetchMS(env, '/entity/customerorder', { filter: 'name=' + name, limit: 1 });
-  if (exists.rows && exists.rows[0]) return { id: exists.rows[0].id, name, duplicate: true };
+  const number = String(body.number || body.name || '').trim();
+  if (!/^\d{2,8}$/.test(number)) throw new Error('number (site order number, digits) required');
+  const externalCode = 'horoshop-' + number;
+  const exists = await fetchMS(env, '/entity/customerorder', { filter: 'externalCode=' + externalCode, limit: 1 });
+  if (exists.rows && exists.rows[0]) return { id: exists.rows[0].id, name: exists.rows[0].name, duplicate: true };
+  // already typed by hand? same site number in the description of a site-agent order within +-3 days
+  const from = msMoment(new Date(Date.now() - 3 * 86400000)), to = msMoment(new Date(Date.now() + 3 * 86400000));
+  const agentHref = `${env.MS_BASE_URL}/entity/counterparty/${SITE_DEFAULTS.agent}`;
+  const recent = await fetchMS(env, '/entity/customerorder', { filter: `agent=${agentHref};moment>=${from};moment<=${to}`, limit: 100, order: 'moment,desc' });
+  const re = new RegExp('Рахунок\\s*№\\s*' + number + '(?!\\d)');
+  const manual = ((recent && recent.rows) || []).find((r) => re.test(r.description || ''));
+  if (manual) return { id: manual.id, name: manual.name, duplicate: true, manual: true };
   const positions = [], missing = [];
   for (const p of body.positions || []) {
     const r = await resolveCode(env, p.code);
     if (!r) { missing.push(p.code); continue; }
-    positions.push({ quantity: Number(p.quantity) || 1, price: Math.round(Number(p.price_kop) || 0), assortment: { meta: { href: `${env.MS_BASE_URL}/entity/${r.type}/${r.id}`, type: r.type, mediaType: 'application/json' } } });
+    positions.push({ quantity: Number(p.quantity) || 1, price: Math.round(Number(p.price_kop) || 0), reserve: 0, assortment: { meta: { href: `${env.MS_BASE_URL}/entity/${r.type}/${r.id}`, type: r.type, mediaType: 'application/json' } } });
   }
   if (missing.length) throw new Error('codes not found in MoySklad: ' + missing.join(', '));
   if (!positions.length) throw new Error('no positions');
   const m = (type, id) => ({ meta: { href: `${env.MS_BASE_URL}/entity/${type}/${id}`, type, mediaType: 'application/json' } });
-  const payload = { name, organization: m('organization', SITE_DEFAULTS.organization), agent: m('counterparty', SITE_DEFAULTS.agent), store: m('store', SITE_DEFAULTS.store), description: String(body.description || '').slice(0, 4000), positions };
-  if (body.dryrun) return { dryrun: true, positions: positions.length };
+  const payload = {
+    externalCode, applicable: true,
+    organization: m('organization', SITE_DEFAULTS.organization),
+    organizationAccount: { meta: { href: `${env.MS_BASE_URL}/entity/organization/${SITE_DEFAULTS.organization}/accounts/${SITE_DEFAULTS.organizationAccount}`, type: 'account', mediaType: 'application/json' } },
+    agent: m('counterparty', SITE_DEFAULTS.agent), store: m('store', SITE_DEFAULTS.store),
+    salesChannel: m('saleschannel', SITE_DEFAULTS.salesChannel), project: m('project', SITE_DEFAULTS.project),
+    description: String(body.description || '').slice(0, 4000), positions,
+  };
+  if (body.dryrun) return { dryrun: true, positions: positions.length, payload };
   const r = await fetch(`${env.MS_BASE_URL}/entity/customerorder`, { method: 'POST', headers: MS_HEADERS(env.MOYSKLAD_TOKEN), body: JSON.stringify(payload) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error((j.errors && j.errors[0] && j.errors[0].error) || `MS HTTP ${r.status}`);
