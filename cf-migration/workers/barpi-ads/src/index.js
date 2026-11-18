@@ -80,15 +80,11 @@ async function order(req, env) {
 //  2. The memory-kit Action only checks that (1) is alive (heartbeat fresh, Telegram configured).
 // A check starts only after its first run row exists.
 const CHECKS = [
-  { key: 'express-check', limit_h: 5 },      // normal days 08/12/16/20 Kyiv (LIMITS.md 09.11.2026); night limit below
+  { key: 'express-check', limit_h: 27 },     // barpi express 1/day 13:10 Warsaw since 16.11.2026 (LIMITS.md); 24 h + 3 h slack
   { key: 'daily-diagnostic', limit_h: 26 },
   { key: 'event-stop', limit_h: 26 },
 ];
-const EXPRESS_NIGHT_LIMIT_H = 13;            // no runs 20:10-08:10 Kyiv on a normal day
-function expressLimitH(now) {
-  const hour = +new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Kyiv', hour: '2-digit', hourCycle: 'h23' }).format(now);
-  return hour >= 10 && hour <= 21 ? 5 : EXPRESS_NIGHT_LIMIT_H;
-}
+function expressLimitH() { return 27; }       // 1 run/day; if the schedule changes (LIMITS.md), change this too
 const MIRROR_LIMIT_H = 30;                   // mirror Meta -> D1 runs daily at 06:35 Kyiv
 const REPEAT_H = 6;
 const HEARTBEAT_LIMIT_MIN = 75;              // cron every 30 min; deadman alerts after 75 min
