@@ -36,7 +36,7 @@ export default {
     }
   },
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(cronTick(env));
+    ctx.waitUntil(cronTick(env, ctx));
   },
 };
 
@@ -169,7 +169,22 @@ async function tg(env, text) {
   return !!j.ok;
 }
 
-async function cronTick(env) {
+// Auto-repair pipeline (owner-dm edge): technical failure alerts must also reach it. Fire-and-forget, never throws, never
+// blocks the Telegram alert. Worker secret AUTOFIX_TOKEN. Edge dedups 24h; only failure branches call it.
+function autofixReport(env, ctx, text) {
+  try {
+    if (!env.AUTOFIX_TOKEN) return;
+    const p = fetch('https://wotghlaehnvxyeacznvv.supabase.co/functions/v1/owner-dm', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-autofix-token': env.AUTOFIX_TOKEN },
+      body: JSON.stringify({ alert: String(text).slice(0, 3500), project: 'barpi' }),
+      signal: AbortSignal.timeout(10000),
+    }).then((r) => r.text()).catch(() => {});
+    if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(p);
+  } catch (_) { /* never break the original alert */ }
+}
+
+async function cronTick(env, ctx) {
   const tgState = env.TG_TOKEN && env.TG_CHAT ? 'configured' : 'missing';
   const { problems } = await evaluate(env);
   const keys = problems.map(p => p.key).sort().join('|');
@@ -179,6 +194,7 @@ async function cronTick(env) {
   let send = null;
   if (keys && (keys !== prevKeys || sinceH >= REPEAT_H)) {
     send = `⚠️ Barpi реклама, сторож:\n• ${problems.map(p => p.text).join('\n• ')}\nhttps://brand.barpi.ua/t/watch`;
+    autofixReport(env, ctx, send);   // technical failure keys only: missed runs, stale mirror, stuck journal
   } else if (!keys && prevKeys) {
     send = '✅ Barpi реклама, сторож: усе знову в нормі.';
   }
