@@ -31,6 +31,8 @@ export function parseOrder(subject, text, html) {
     const win = body.slice(from, to);
     const prices = [...win.matchAll(MONEY)].map((m) => num(m[1])).filter((v) => v > 0);
     let qty = null, price = null;
+    const px = win.match(/(\d[\d\s ]*(?:[.,]\d{1,2})?)\s*(?:грн|₴)\s*[×x]\s*(\d{1,3})/i); // Horoshop: «89.00 грн×2»
+    if (px) { items.push({ code, qty: +px[2], price: num(px[1]) }); continue; }
     const q = win.match(/(\d{1,3})\s*(?:шт|од|x|×)/i) || win.match(/(?:кількість|к-сть)\D{0,5}(\d{1,3})/i);
     if (prices.length >= 2) {
       price = prices[0];
@@ -49,14 +51,29 @@ export function parseOrder(subject, text, html) {
   const phone = (body.match(/\+?3?8?\s?\(?0\d{2}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/) || [])[0] || '';
   const flat = body.replace(/ \| /g, ' ');
   const pick = (re) => { const m = flat.match(re); return m ? m[0].replace(/\s+/g, ' ').trim().slice(0, 200) : ''; };
+  const f = labeledFields(body);
+  const dm = (body.split(/\n\s*Замовлення\s*\n/)[1] || '').match(/Знижка[^\n]{0,60}?(\d{1,3}(?:[.,]\d+)?)\s*%/i); // coupon line sits after the items, not in the customer comment
   return {
-    number, items: uniq, total, phone,
-    customer: pick(/(?:ПІБ|Ім'я|Імʼя|Покупець|Одержувач)[^\n]{0,80}/i),
+    number, items: uniq, total, discountPct: dm ? num(dm[1]) : 0,
+    phone: f['Телефон'] || phone,
+    email: f['Е-пошта'] || f['E-mail'] || '',
+    customer: f["Ім'я та прізвище"] || f['Імʼя та прізвище'] || pick(/(?:ПІБ|Ім'я|Імʼя|Покупець|Одержувач)[^\n]{0,80}/i),
+    city: f['Місто'] || '', carrier: f['Спосіб доставки'] || '', address: f['Адреса'] || '',
     delivery: pick(/(?:Доставка|Відділення|Нова пошта)[^\n]{0,160}/i),
     deliveryLines: deliveryBlock(body),
-    payment: pick(/(?:Оплата|Спосіб оплати)[^\n]{0,120}/i),
-    comment: (body.match(/Коментар[^\n]{0,300}/i) || [''])[0].replace(/^Коментар\S*\s*/i, ''),
+    payment: f['Спосіб оплати'] || pick(/(?:Оплата|Спосіб оплати)[^\n]{0,120}/i),
+    comment: f['Коментар'] || (body.match(/Коментар[^\n]{0,300}/i) || [''])[0].replace(/^Коментар\S*\s*/i, ''),
   };
+}
+
+// Horoshop mail is a two-column table «Label | \n value | »; returns {label: value} for the block before «Замовлення».
+export function labeledFields(body) {
+  const head = String(body || '').split(/\n\s*Замовлення\s*\n/)[0];
+  const out = {};
+  for (const m of head.matchAll(/([^\n|]{2,40}?)\s*\|\s*\n\s*([^\n|]+?)\s*\|/g)) {
+    const k = m[1].trim(); if (!(k in out)) out[k] = m[2].replace(/\s+/g, ' ').trim();
+  }
+  return out;
 }
 
 // Lines between «Доставка» and «Оплата» (city, carrier, branch) as the colleagues write them into the МС description.
@@ -71,9 +88,13 @@ export function deliveryBlock(body) {
 }
 
 // Description in the manual format (order 01212): «<ПІБ> Рахунок №<site no>» / phone / «Доставка <місто>» / carrier / «Відділення …» / «Оплата <спосіб>».
+export const shortCity = (c) => String(c || '').replace(/\s*\(.*?\)\s*/g, ' ').replace(/^\s*(?:м\.|с\.|смт\.?|с-ще|селище)\s*/i, '').trim();
 export function buildDescription(o) {
   const clean = (s) => String(s || '').replace(/^(?:ПІБ|Ім'я|Імʼя|Покупець|Одержувач)\s*[:\-]?\s*/i, '').trim();
   const head = [clean(o.customer), `Рахунок №${o.number}`].filter(Boolean).join(' ');
+  if (o.city || o.carrier || o.address) {
+    return [head, o.phone, o.email, o.city ? 'Доставка\t' + shortCity(o.city) : '', o.carrier, o.address, o.payment ? 'Оплата\t' + o.payment : '', o.comment ? 'Коментар: ' + o.comment : ''].filter(Boolean).join('\n');
+  }
   const deliv = o.deliveryLines && o.deliveryLines.length ? o.deliveryLines : (o.delivery ? [o.delivery] : []);
   return [head, o.phone, ...deliv, o.payment, o.comment ? 'Коментар: ' + o.comment : ''].filter(Boolean).join('\n');
 }

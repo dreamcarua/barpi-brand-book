@@ -29,7 +29,10 @@ async function handle(raw, env) {
   try { await env.RAW.put(key, raw); } catch (_) {}
 
   const sumItems = o.items.reduce((a, i) => a + i.price * i.qty, 0);
-  const ok = o.items.length > 0 && o.total != null && Math.abs(sumItems - o.total) < 1.01;
+  const pct = o.discountPct || 0;
+  // as MoySklad does: each position rounded to kopecks after the percent discount
+  const expected = o.items.reduce((a, i) => a + Math.round(i.price * i.qty * (100 - pct)) / 100, 0);
+  const ok = o.items.length > 0 && pct < 100 && o.total != null && Math.abs(expected - o.total) < (pct ? 0.06 : 1.01);
   const lines = o.items.map((i) => `• ${esc(i.code)} × ${i.qty} по ${i.price} грн`).join('\n');
   if (!ok) {
     await tg(env, `⚠️ <b>Замовлення №${esc(o.number)}</b> з сайту не внесено в МойСклад автоматично: не зійшлась сума або не знайдено товари (позицій ${o.items.length}, сума позицій ${sumItems}, сума в листі ${o.total}).\n${lines}\nЛист збережено: <code>${esc(key)}</code>. Внесіть вручну.`);
@@ -39,7 +42,7 @@ async function handle(raw, env) {
   const body = {
     number: String(o.number),
     description,
-    positions: o.items.map((i) => ({ code: i.code, quantity: i.qty, price_kop: Math.round(i.price * 100) })),
+    positions: o.items.map((i) => ({ code: i.code, quantity: i.qty, price_kop: Math.round(i.price * 100), discount: o.discountPct || 0 })),
   };
   if (env.MODE !== 'live') {
     // shadow: run the whole sync path (duplicates, code lookup, payload) with dryrun, create nothing

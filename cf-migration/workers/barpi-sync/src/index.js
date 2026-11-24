@@ -858,7 +858,7 @@ async function createOrderByCode(env, body) {
   for (const p of body.positions || []) {
     const r = await resolveCode(env, p.code);
     if (!r) { missing.push(p.code); continue; }
-    positions.push({ quantity: Number(p.quantity) || 1, price: Math.round(Number(p.price_kop) || 0), reserve: 0, assortment: { meta: { href: `${env.MS_BASE_URL}/entity/${r.type}/${r.id}`, type: r.type, mediaType: 'application/json' } } });
+    positions.push({ quantity: Number(p.quantity) || 1, price: Math.round(Number(p.price_kop) || 0), discount: Math.min(100, Math.max(0, Number(p.discount) || 0)), reserve: 0, assortment: { meta: { href: `${env.MS_BASE_URL}/entity/${r.type}/${r.id}`, type: r.type, mediaType: 'application/json' } } });
   }
   if (missing.length) throw new Error('codes not found in MoySklad: ' + missing.join(', '));
   if (!positions.length) throw new Error('no positions');

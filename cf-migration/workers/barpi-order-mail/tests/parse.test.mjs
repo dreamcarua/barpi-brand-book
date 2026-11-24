@@ -32,3 +32,23 @@ test('last item window does not swallow the grand total', () => {
   assert.equal(o.items[0].qty, 2);
   assert.equal(o.total, 300);
 });
+
+const real = `<table><tr><td>063 000 00 00</td></tr><tr><td>Замовлення №900</td></tr>
+<tr><td>Ім'я та прізвище</td></tr><tr><td>Іваненко Іван</td></tr><tr><td>Е-пошта</td></tr><tr><td>test@example.com</td></tr>
+<tr><td>Телефон</td></tr><tr><td>+380 67 000 0000</td></tr><tr><td>Місто</td></tr><tr><td>м. Боярка (Київська обл., Фастівський р-н.)</td></tr>
+<tr><td>Спосіб доставки</td></tr><tr><td>ТОВ"Нова Пошта"</td></tr><tr><td>Адреса</td></tr><tr><td>Відділення №1</td></tr>
+<tr><td>Спосіб оплати</td></tr><tr><td>Післяплата</td></tr><tr><td>Передзвонити</td></tr><tr><td>Ні</td></tr></table>
+<p>Замовлення</p><table><tr><td>B-0001<br>Назва<br>89.00 грн×2</td><td>178.00 грн</td></tr>
+<tr><td>B-0003 (на сайті — B-0003)<br>Назва<br>89.00 грн×1</td><td>89.00 грн</td></tr></table>
+<p>Знижка по купону 10%</p><p>Доставка «Нова Пошта» –26.70 грн</p><p>Всього 240.30 грн</p>`;
+test('real Horoshop format: labeled fields, qty, coupon discount', () => {
+  const o = parseOrder('Нове замовлення на сайті №900', '', real);
+  assert.deepEqual(o.items.map((i) => [i.code, i.qty, i.price]), [['B-0001', 2, 89], ['B-0003', 1, 89]]);
+  assert.equal(o.total, 240.3);
+  assert.equal(o.discountPct, 10);
+  const d = buildDescription(o).split('\n');
+  assert.equal(d[0], 'Іваненко Іван Рахунок №900');
+  assert.equal(d[1], '+380 67 000 0000');
+  assert.ok(d.includes('Доставка\tБоярка'));
+  assert.ok(d.includes('Оплата\tПіслявплата'.replace('Післяв','Після')));
+});
