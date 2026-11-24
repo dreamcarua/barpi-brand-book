@@ -53,7 +53,7 @@ def main():
          "email": "office@barpi.ua", "sameAs": ["https://www.instagram.com/barpi.ua/"]},
     ]}
     out = tpl.replace("<!--FAQ-->", details).replace(
-        "<!--JSONLD-->", '<script type="application/ld+json">' + json.dumps(ld, ensure_ascii=False) + "</script>")
+        "<!--JSONLD-->", '<script type="application/ld+json" id="bp-faq-ld">' + json.dumps(ld, ensure_ascii=False) + "</script>")
     open(os.path.join(HERE, "creators.html"), "w", encoding="utf-8").write(out)
     print("creators.html", len(out), "bytes,", len(FAQ), "FAQ")
 
