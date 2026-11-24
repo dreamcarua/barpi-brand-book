@@ -115,8 +115,8 @@
           if (!j || !j.ok) throw new Error((j && j.error) || "network");
           ga("creator_application", { creator_platform: b.platform, creator_audience: b.audience, creator_role: b.role });
           slot.innerHTML = '<div class="bp-cv-ok" role="status"><div class="bp-ico" aria-hidden="true">🐾</div><h3>Дякуємо! Заявку отримали.</h3>' +
-            '<p class="bp-muted">Менеджерка Barpi відповість вам протягом 24 годин на пошту чи в Telegram. Поки чекаєте, подивіться наші <a href="/dehustatsiini-nabory-lasoshchiv/">дегустаційні набори</a>.</p></div>';
-          slot.scrollIntoView({ behavior: "smooth", block: "center" });
+            '<p class="bp-muted">Команда Barpi відповість вам протягом 24 годин на пошту чи в Telegram. Поки чекаєте, подивіться наші <a href="/dehustatsiini-nabory-lasoshchiv/">дегустаційні набори</a>.</p></div>';
+          slot.style.minHeight = "0"; slot.scrollIntoView({ behavior: "smooth", block: "center" });
         })
         .catch(function (e) {
           err.textContent = ERR[e.message] || ERR.network; err.hidden = false;
