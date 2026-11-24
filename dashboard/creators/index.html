@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Блогери і UGC · Barpi</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  Barpi · Блогери і UGC-автори (influencer-director, рішення Вадима 24.11.2026). v1.0.0
+  Сторінка без даних і без секретів (репозиторій публічний): усе з воркера barpi-creators (/dashboard/api/creators/*).
+  Вхід дає Cloudflare Access (/dashboard/*), воркер ще раз перевіряє JWT. Заявки окремо від B2B-лідів.
+  Двомовна (правило Brand Bible): статичний текст <span data-lang>, у JS T(uk, en).
+-->
+<style>
+:root{--navy:#001154;--blue:#BAD9F4;--sky:#EEF4FC;--paper:#F5F8FC;--ink:#0B1433;--muted:#5a6275;--line:#DFE6F1;--red:#b3261e;--amber:#b26a00;--green:#1f7a35;--r:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Rubik,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5}
+body.lang-uk [data-lang=en],body.lang-en [data-lang=uk]{display:none!important}
+a{color:var(--navy)}
+.top{background:var(--navy);color:#fff}
+.top .in{max-width:1400px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.top .sub{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:600}
+.top .ttl{font-weight:800;font-size:18px}
+.top .sp{flex:1}
+.top a{color:#fff;opacity:.85;font-size:13px;text-decoration:none}
+.lang{display:flex;border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:2px}
+.lang button{background:none;border:0;color:rgba(255,255,255,.75);font:700 11px Rubik;letter-spacing:.1em;padding:6px 12px;border-radius:99px;cursor:pointer}
+.lang button.on{background:var(--blue);color:var(--navy)}
+main{max-width:1400px;margin:0 auto;padding:24px}
+h1{font-size:28px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.lead{color:var(--muted);margin-bottom:18px;max-width:880px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 10px 24px -18px rgba(0,17,84,.5)}
+.kpi b{display:block;font-size:28px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi span{font-size:13px;color:var(--muted)}
+.kpi.alert{border-color:#f3c1bd;background:#fff6f5}.kpi.alert b{color:var(--red)}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:8px 16px;font:600 14px Rubik;color:var(--navy);cursor:pointer}
+.tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.bar input,.bar select{border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:#fff;min-height:40px}
+.bar input{min-width:240px}
+.btn{border:0;border-radius:99px;padding:9px 16px;font:700 14px Rubik;cursor:pointer;background:var(--navy);color:#fff}
+.btn.sec{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
+.btn.danger{background:#fff;color:var(--red);border:1.5px solid var(--red)}
+table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+th{background:var(--sky);color:var(--navy);font-weight:700;font-size:12.5px}
+tr.row{cursor:pointer}tr.row:hover td{background:#fafcff}
+.score{display:inline-block;min-width:38px;text-align:center;border-radius:99px;padding:2px 8px;font-weight:800;font-size:13px}
+.s-hi{background:#e3f4e7;color:var(--green)}.s-mid{background:#fff3dc;color:var(--amber)}.s-lo{background:#f1f2f6;color:var(--muted)}
+.st{display:inline-block;border-radius:99px;padding:2px 10px;font-size:12.5px;font-weight:600;background:var(--sky);color:var(--navy);white-space:nowrap}
+.st-new{background:#fde8e6;color:var(--red)}.st-shipped,.st-content_live{background:#e3f4e7;color:var(--green)}.st-spam,.st-rejected,.st-closed{background:#f1f2f6;color:var(--muted)}
+.wait{color:var(--red);font-weight:700;font-size:12.5px}
+.muted{color:var(--muted)}.small{font-size:12.5px}
+.empty{background:#fff;border:1px dashed var(--line);border-radius:var(--r);padding:32px;text-align:center;color:var(--muted)}
+#drawer{position:fixed;inset:0;background:rgba(0,17,84,.35);display:none;z-index:20}
+#drawer.on{display:block}
+#panel{position:absolute;right:0;top:0;bottom:0;width:min(640px,100%);background:#fff;overflow:auto;padding:22px;box-shadow:-20px 0 60px -30px rgba(0,17,84,.6)}
+#panel h2{font-size:22px;color:var(--navy);margin-bottom:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--navy);margin-top:8px}
+.f input,.f select,.f textarea{border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font:400 14px Rubik;color:var(--ink);min-height:40px}
+.box{background:var(--sky);border-radius:12px;padding:12px 14px;margin:12px 0}
+.box dt{font-size:12px;color:var(--muted)}.box dd{margin:0 0 8px;word-break:break-word}
+.hist{font-size:13px;color:var(--muted);border-left:2px solid var(--blue);padding-left:12px;margin-top:14px}
+.hist div{margin-bottom:6px}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.guide{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:20px;max-width:900px}
+.guide h3{color:var(--navy);margin:14px 0 6px}.guide li{margin:0 0 6px 18px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:99px;font-weight:600;display:none;z-index:30}
+@media (max-width:760px){main{padding:14px}.hide-m{display:none}.grid2{grid-template-columns:1fr}.bar input{min-width:0;flex:1}}
+</style>
+</head>
+<body class="lang-uk">
+<header class="top"><div class="in">
+<div><div class="sub">Barpi · influencer-director</div><div class="ttl"><span data-lang="uk">Блогери і UGC-автори</span><span data-lang="en">Creators and UGC</span></div></div>
+<div class="sp"></div>
+<a href="https://barpi.com.ua/blogeram/" target="_blank" rel="noopener"><span data-lang="uk">Сторінка для блогерів ↗</span><span data-lang="en">Creators page ↗</span></a>
+<a href="/dashboard/"><span data-lang="uk">← Дашборди</span><span data-lang="en">← Dashboards</span></a>
+<div class="lang"><button data-l="uk" class="on">UA</button><button data-l="en">EN</button></div>
+</div></header>
+<main>
+<h1><span data-lang="uk">Заявки блогерів</span><span data-lang="en">Creator applications</span></h1>
+<p class="lead"><span data-lang="uk">Кожна заявка з barpi.com.ua/blogeram/ приходить сюди і в Telegram «Barpi_Marketing». Відповідаємо протягом 24 годин і ставимо «В роботі». Окремо від B2B-партнерів.</span><span data-lang="en">Every application from barpi.com.ua/blogeram/ lands here and in the Telegram group «Barpi_Marketing». Reply within 24 hours and set «In progress». Separate from B2B partners.</span></p>
+<div class="kpis" id="kpis"></div>
+<div class="tabs" id="tabs">
+<button data-t="list" class="on"><span data-lang="uk">Заявки</span><span data-lang="en">Applications</span></button>
+<button data-t="codes"><span data-lang="uk">Промокоди і продажі</span><span data-lang="en">Promo codes and sales</span></button>
+<button data-t="guide"><span data-lang="uk">Як працювати</span><span data-lang="en">How to work</span></button>
+</div>
+<section id="v-list">
+<div class="bar">
+<input id="q" type="search">
+<select id="fs"></select>
+<select id="fk"><option value=""></option><option value="application"></option><option value="ambassador"></option></select>
+<button class="btn sec" id="add"><span data-lang="uk">+ Додати автора</span><span data-lang="en">+ Add creator</span></button>
+</div>
+<div id="list"></div>
+</section>
+<section id="v-codes" hidden><div id="codes"></div></section>
+<section id="v-guide" hidden>
+<div class="guide">
+<div data-lang="uk">
+<h3>Щодня</h3>
+<ul><li>Відповісти кожній новій заявці протягом 24 годин (на пошту чи в Telegram автора) і поставити статус «В роботі». О 10:17 бот у «Barpi_Marketing» називає заявки без відповіді понад добу.</li>
+<li>Бал 0-100: 70+ сильна, 45-69 середня, нижче перевірити вручну. Бал рахує система: профіль, приклад відео, аудиторія, роль, ідея, контакт.</li></ul>
+<h3>Статуси</h3>
+<ul><li><b>Нова</b> → <b>В роботі</b> (відповіли) → <b>Пропозиція</b> (запропонували набір чи продукти) → <b>Погоджено до відправлення</b> (погодила Альона або Вадим) → <b>Надіслано</b> (є документ МойСклад і ТТН) → <b>Контент вийшов</b> (є посилання) → <b>Закрито</b>.</li>
+<li><b>Відмова</b> і <b>Спам</b> закривають заявку без відправки.</li></ul>
+<h3>Що пропонуємо</h3>
+<ul><li>Набір або окремі смаколики безкоштовно, доставка Новою поштою за наш рахунок (відправляє ФОП Аксьонов).</li><li>Персональний промокод −10% для аудиторії: створити купон у Horoshop (Маркетинг → Промокоди) і вписати код у картку автора. Продажі за кодом видно на вкладці «Промокоди і продажі».</li><li>Оплата UGC лише в окремих випадках: суму вписати в картку.</li><li>Спільний пост з @barpi.ua. Позначку «реклама» не просимо.</li></ul>
+<h3>Ніколи</h3>
+<ul><li>Жодних обіцянок, що смаколики лікують, запобігають чи допомагають після хвороб. Не «гіпоалергенні». Лише склад, хруст і реакція. Автору 18+.</li></ul>
+</div>
+<div data-lang="en">
+<h3>Daily</h3><ul><li>Reply to every new application within 24 hours and set «In progress». At 10:17 the bot in «Barpi_Marketing» lists applications waiting over a day.</li><li>Score 0-100: 70+ strong, 45-69 medium, below: check by hand.</li></ul>
+<h3>Statuses</h3><ul><li>New → In progress → Offer → Approved to ship → Shipped (MoySklad document and waybill) → Content live → Closed. Rejected and Spam close without shipping.</li></ul>
+<h3>Offer</h3><ul><li>Free set or single treats, Nova Poshta delivery paid by Barpi; personal -10% code created in Horoshop and written into the card; UGC fee case by case; collab post with @barpi.ua.</li></ul>
+<h3>Never</h3><ul><li>No health or medical promises, not «hypoallergenic». Composition, crunch and reaction only. Creators 18+.</li></ul>
+</div>
+</div>
+</section>
+</main>
+<div id="drawer"><div id="panel"></div></div>
+<div class="toast" id="toast"></div>
+<script src="app.js?v=1"></script>
+</body>
+</html>
