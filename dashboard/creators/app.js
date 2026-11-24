@@ -5,7 +5,7 @@
   var LANG = (function () { try { return localStorage.getItem("bp_lang") || "uk"; } catch (e) { return "uk"; } })();
   function T(uk, en) { return LANG === "en" ? en : uk; }
   var ST = { new: ["Нова", "New"], in_progress: ["В роботі", "In progress"], offer: ["Пропозиція", "Offer"], approved_ship: ["Погоджено до відправлення", "Approved to ship"], shipped: ["Надіслано", "Shipped"], content_live: ["Контент вийшов", "Content live"], closed: ["Закрито", "Closed"], rejected: ["Відмова", "Rejected"], spam: ["Спам", "Spam"] };
-  var AUD = { "lt1k": "<1k", "1-5k": "1-5k", "5-20k": "5-20k", "20-100k": "20-100k", "100k+": "100k+", "ugc": "UGC" };
+  var AUD = { "lt1k": "до 1 тис.", "1-5k": "1-5 тис.", "5-20k": "5-20 тис.", "20-100k": "20-100 тис.", "100k+": "100 тис.+", "ugc": "UGC" };
   var ROLE = { owner: ["Власник", "Owner"], petfluencer: ["Петблогер", "Petfluencer"], cynologist: ["Кінолог", "Dog trainer"], groomer: ["Грумер", "Groomer"], vet: ["Ветеринар", "Vet"], shop: ["Зоомагазин", "Pet shop"], shelter: ["Притулок", "Shelter"], ugc: ["UGC-автор", "UGC creator"] };
   var PETS = { dog: ["Собака", "Dog"], cat: ["Кіт", "Cat"], both: ["Собака і кіт", "Dog and cat"], other: ["Інше", "Other"] };
   var FMT = { tasting: ["Дегустація", "Tasting"], training: ["Тренування", "Training"], unboxing: ["Розпаковка", "Unboxing"], compare: ["Порівняння", "Comparison"], day: ["День з улюбленцем", "Day with pet"], giveaway: ["Розіграш", "Giveaway"] };
@@ -38,7 +38,7 @@
       ["", avg, T("середній бал заявок", "average score")],
       ["", Math.round(cost).toLocaleString("uk-UA") + " ₴", T("відправки і гонорари", "shipping and fees")],
     ];
-    $("kpis").innerHTML = k.map(function (x) { return '<div class="kpi' + (x[3] && x[1] > 0 ? " alert" : "") + '" data-s="' + x[0] + '"><b>' + esc(x[1]) + "</b><span>" + esc(x[2]) + "</span></div>"; }).join("");
+    $("kpis").innerHTML = k.map(function (x, i) { return '<div class="kpi' + (x[3] && x[1] > 0 ? " alert" : "") + (x[3] && !x[1] ? " good" : "") + (i >= 6 ? " minor" : "") + '" data-s="' + x[0] + '"><b>' + esc(x[1]) + "</b><span>" + esc(x[2]) + "</span></div>"; }).join("");
   }
   function list() {
     var q = filter.q.toLowerCase();
@@ -49,14 +49,18 @@
       if (q && [r.name, r.profile_url, r.email, r.telegram, r.phone, r.city, r.promo_code].join(" ").toLowerCase().indexOf(q) < 0) return false;
       return true;
     });
+    var rank = function (r) { return r.status === "new" ? 0 : (r.status === "in_progress" || r.status === "offer" || r.status === "approved_ship") ? 1 : (r.status === "shipped") ? 2 : 3; };
+    v.sort(function (a, b) { return rank(a) - rank(b) || (rank(a) === 0 ? a.created_at - b.created_at : b.created_at - a.created_at); });
     if (!v.length) { $("list").innerHTML = '<div class="empty">' + T("Поки порожньо. Нові заявки з barpi.com.ua/blogeram/ з'являться тут.", "Empty for now. New applications will appear here.") + "</div>"; return; }
-    $("list").innerHTML = "<table><thead><tr><th>#</th><th>" + T("Автор", "Creator") + '</th><th class="hide-m">' + T("Аудиторія", "Audience") + '</th><th class="hide-m">' + T("Хто", "Who") + "</th><th>" + T("Бал", "Score") + "</th><th>" + T("Статус", "Status") + '</th><th class="hide-m">' + T("Створено", "Created") + "</th></tr></thead><tbody>" +
+    $("list").innerHTML = "<table><thead><tr><th>#</th><th>" + T("Автор", "Creator") + '</th><th>' + T("Очікує", "Waiting") + '</th><th class="hide-m">' + T("Аудиторія", "Audience") + '</th><th class="hide-m">' + T("Хто", "Who") + "</th><th>" + T("Бал", "Score") + "</th><th>" + T("Статус", "Status") + '</th><th class="hide-m">' + T("Створено", "Created") + "</th></tr></thead><tbody>" +
       v.map(function (r) {
-        var w = waitH(r);
-        return '<tr class="row" data-id="' + r.id + '"><td>' + r.id + "</td><td><b>" + esc(r.name) + "</b>" + (r.kind === "ambassador" ? ' <span class="st">' + T("амбасадор", "ambassador") + "</span>" : "") + (r.promo_code ? ' <span class="st">' + esc(r.promo_code) + "</span>" : "") +
+        var w = r.status === "new" && r.kind === "application" ? Math.floor((now - r.created_at) / 3600) : -1;
+        var wc = w >= 24 ? "w-late" : w >= 12 ? "w-soon" : "w-ok";
+        return '<tr class="row' + (w >= 24 ? " late" : "") + '" data-id="' + r.id + '"><td>' + r.id + "</td><td><b>" + esc(r.name) + "</b>" + (r.kind === "ambassador" ? ' <span class="st">' + T("амбасадор", "ambassador") + "</span>" : "") + (r.promo_code ? ' <span class="st">' + esc(r.promo_code) + "</span>" : "") +
           '<div class="small muted">' + esc(r.profile_url || "") + "</div></td>" +
+          "<td>" + (w >= 0 ? '<span class="wt ' + wc + '">' + (w >= 24 ? "⏱ " : "") + w + T(" год", " h") + '</span><button class="btn mini take" data-take="' + r.id + '">' + T("Взяти в роботу", "Take") + "</button>" : '<span class="muted small">' + T("відповіли", "answered") + "</span>") + "</td>" +
           '<td class="hide-m">' + esc(AUD[r.audience] || "") + '</td><td class="hide-m">' + esc(L(ROLE[r.role])) + (r.pets ? '<div class="small muted">' + esc(L(PETS[r.pets])) + "</div>" : "") + "</td>" +
-          "<td>" + sc(r.score) + '</td><td><span class="st st-' + esc(r.status) + '">' + esc(L(ST[r.status]) || r.status) + "</span>" + (w >= 24 ? '<div class="wait">' + T("чекає ", "waiting ") + w + T(" год", " h") + "</div>" : "") + "</td>" +
+          "<td>" + sc(r.score) + '</td><td><span class="st st-' + esc(r.status) + '">' + esc(L(ST[r.status]) || r.status) + "</span></td>" +
           '<td class="hide-m small">' + date(r.created_at) + "</td></tr>";
       }).join("") + "</tbody></table>";
   }
@@ -82,20 +86,22 @@
       (r.idea ? "<dt>" + T("Ідея", "Idea") + "</dt><dd>" + esc(r.idea) + "</dd>" : "") +
       (r.utm_source ? "<dt>" + T("Джерело", "Source") + "</dt><dd>" + esc([r.utm_source, r.utm_medium, r.utm_campaign].filter(Boolean).join(" / ")) + "</dd>" : "") +
       "</dl>" +
-      '<div class="grid2">' +
+      '<h4 class="sec">' + T("Робота з автором", "Working with the creator") + '</h4><div class="grid2">' +
       field("status", T("Статус", "Status"), "select", r.status, stOpts()) +
       field("owner", T("Хто веде", "Owner"), "text", r.owner || me.email || "") +
       field("offer", T("Що пропонуємо (набір, продукти)", "Offer (set, products)"), "text", r.offer || "") +
       field("promo_code", T("Промокод −10% (з Horoshop)", "Promo code -10% (Horoshop)"), "text", r.promo_code || "") +
+      "</div><h4 class=\"sec\">" + T("Витрати і логістика", "Costs and logistics") + '</h4><div class="grid2">' +
       field("fee_uah", T("Гонорар UGC, ₴", "UGC fee, UAH"), "number", r.fee_uah == null ? "" : r.fee_uah) +
       field("ship_cost_uah", T("Вартість відправки, ₴", "Shipping cost, UAH"), "number", r.ship_cost_uah == null ? "" : r.ship_cost_uah) +
       field("ship_doc", T("Документ МойСклад", "MoySklad document"), "text", r.ship_doc || "") +
       field("ship_ttn", T("ТТН Нова Пошта", "Nova Poshta waybill"), "text", r.ship_ttn || "") +
       "</div>" +
+      '<h4 class="sec">' + T("Результат", "Result") + "</h4>" +
       field("content_url", T("Посилання на контент", "Content link"), "text", r.content_url || "") +
       (content ? '<div class="small"><a href="' + esc(content) + '" target="_blank" rel="noopener noreferrer">' + T("відкрити контент ↗", "open content ↗") + "</a></div>" : "") +
       field("notes", T("Нотатки", "Notes"), "area", r.notes || "") +
-      '<div class="row-actions"><button class="btn" id="save">' + T("Зберегти", "Save") + "</button>" + (me.isAdmin ? '<button class="btn danger" id="del">' + T("Видалити", "Delete") + "</button>" : "") + "</div>" +
+      '<div class="row-actions sticky"><button class="btn" id="save">' + T("Зберегти", "Save") + "</button>" + (me.isAdmin ? '<button class="btn danger" id="del">' + T("Видалити", "Delete") + "</button>" : "") + "</div>" +
       '<div class="hist">' + hist.slice().reverse().map(function (h) { return "<div>" + date(h.at) + " · " + esc(h.by) + ": " + esc(h.what) + "</div>"; }).join("") + "</div>";
     $("drawer").classList.add("on");
     $("x").onclick = close;
@@ -124,17 +130,17 @@
     $("codes").innerHTML = '<div class="empty">' + T("Рахуємо…", "Counting…") + "</div>";
     api("codes").then(function (j) {
       var ks = Object.keys(j.codes || {});
-      var note = '<p class="small muted" style="margin:10px 0">' + T("Замовлення сайту з купоном (дзеркало МойСклад у D1). Останнє замовлення в дзеркалі: ", "Site orders with a coupon (MoySklad mirror in D1). Latest order in the mirror: ") + esc(j.orders_synced_until || "?") + "</p>";
+      var note = '<p class="small muted" style="margin:10px 0">' + T("Замовлення сайту з купоном, дані з МойСклад. Останнє замовлення в даних: ", "Site orders with a coupon, data from MoySklad. Latest order in the data: ") + esc(String(j.orders_synced_until || "?").slice(0, 10).split("-").reverse().join(".")) + "</p>";
       if (!ks.length) { $("codes").innerHTML = '<div class="empty">' + T("Ще немає кодів. Створіть купон у Horoshop і впишіть його в картку автора.", "No codes yet. Create a coupon in Horoshop and write it into the creator card.") + "</div>" + note; return; }
       $("codes").innerHTML = "<table><thead><tr><th>" + T("Код", "Code") + "</th><th>" + T("Автор", "Creator") + "</th><th>" + T("Замовлень", "Orders") + "</th><th>" + T("Сума, ₴", "Sum, UAH") + "</th><th>" + T("Оплачено, ₴", "Paid, UAH") + "</th><th>" + T("Останнє", "Last") + "</th></tr></thead><tbody>" +
-        ks.sort(function (a, b) { return j.codes[b].sum_uah - j.codes[a].sum_uah; }).map(function (k) { var c = j.codes[k]; return '<tr class="row" data-id="' + c.id + '"><td><b>' + esc(k) + "</b></td><td>" + esc(c.name) + "</td><td>" + c.orders + "</td><td>" + Math.round(c.sum_uah).toLocaleString("uk-UA") + "</td><td>" + Math.round(c.paid_uah).toLocaleString("uk-UA") + "</td><td>" + esc((c.last || "").slice(0, 10)) + "</td></tr>"; }).join("") + "</tbody></table>" + note;
+        ks.sort(function (a, b) { return j.codes[b].sum_uah - j.codes[a].sum_uah; }).map(function (k) { var c = j.codes[k]; return '<tr class="row" data-id="' + c.id + '"><td><b>' + esc(k) + "</b></td><td>" + esc(c.name) + "</td><td>" + c.orders + "</td><td>" + Math.round(c.sum_uah).toLocaleString("uk-UA") + "</td><td>" + Math.round(c.paid_uah).toLocaleString("uk-UA") + "</td><td>" + esc((c.last || "").slice(0, 10).split("-").reverse().join(".")) + "</td></tr>"; }).join("") + "</tbody></table>" + note;
     }).catch(function () { $("codes").innerHTML = '<div class="empty">' + T("Не вдалося завантажити.", "Failed to load.") + "</div>"; });
   }
   function setLang(l) {
     LANG = l; try { localStorage.setItem("bp_lang", l); } catch (e) {}
     document.body.className = "lang-" + l; document.documentElement.lang = l === "en" ? "en" : "uk";
     document.querySelectorAll(".lang button").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-l") === l); });
-    $("q").placeholder = T("Пошук: ім'я, профіль, контакт, код", "Search: name, profile, contact, code");
+    $("q").placeholder = T("Пошук", "Search");
     $("fs").innerHTML = '<option value="">' + T("Усі статуси", "All statuses") + "</option>" + Object.keys(ST).map(function (k) { return '<option value="' + k + '"' + (filter.s === k ? " selected" : "") + ">" + esc(L(ST[k])) + "</option>"; }).join("");
     var fk = $("fk"); fk.options[0].text = T("Усі типи", "All types"); fk.options[1].text = T("Заявки", "Applications"); fk.options[2].text = T("Амбасадори", "Ambassadors");
     kpis(); list();
@@ -155,7 +161,11 @@
   $("fk").onchange = function (e) { filter.k = e.target.value; list(); };
   $("kpis").onclick = function (e) { var k = e.target.closest(".kpi"); if (!k) return; var s = k.getAttribute("data-s"); filter.wait = s === "wait"; filter.s = s === "wait" ? "" : s; $("fs").value = filter.s; list(); };
   $("add").onclick = addForm;
-  document.addEventListener("click", function (e) { var tr = e.target.closest("tr.row"); if (tr) open(tr.getAttribute("data-id")); });
+  document.addEventListener("click", function (e) {
+    var tk = e.target.closest("[data-take]");
+    if (tk) { e.stopPropagation(); tk.disabled = true; api(tk.getAttribute("data-take"), { method: "PATCH", body: JSON.stringify({ status: "in_progress", owner: me.email || "" }) }).then(function (j) { if (j.error) throw new Error(j.error); toast(T("Взято в роботу", "Taken")); load(); }).catch(function (er) { tk.disabled = false; toast(T("Помилка: ", "Error: ") + er.message); }); return; }
+    var tr = e.target.closest("tr.row"); if (tr) open(tr.getAttribute("data-id"));
+  });
   $("drawer").addEventListener("click", function (e) { if (e.target.id === "drawer") close(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
   setLang(LANG); load();
