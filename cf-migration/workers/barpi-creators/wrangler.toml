@@ -1,0 +1,38 @@
+name = "barpi-creators"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+account_id = "ab63a85bdfbf5894c28efe7076acbd82"
+workers_dev = false
+
+# Співпраця з блогерами і UGC-авторами Barpi (influencer-director, рішення Вадима 24.11.2026).
+# Пам'ять системи: github.com/dreamcarua/influencer-director projects/barpi/profile.yaml
+#   /creators-api/*                 публічний API форми barpi.com.ua/blogeram/ (CORS лише barpi.com.ua)
+#   /dashboard/api/creators/*       за Cloudflare Access (той самий застосунок /dashboard/*), JWT перевіряється в коді
+routes = [
+  { pattern = "brand.barpi.ua/creators-api/*", zone_name = "barpi.ua" },
+  { pattern = "brand.barpi.ua/dashboard/api/creators/*", zone_name = "barpi.ua" },
+]
+
+[triggers]
+crons = ["17 * * * *"]   # дайджест о 10:17 за Києвом (година перевіряється в коді)
+
+[[d1_databases]]
+binding = "DB"
+database_name = "barpi-bible"
+database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
+
+# Ліміт частоти форми: KV barpi-bible-acl (Barpi), ключі з префіксом cr:
+[[kv_namespaces]]
+binding = "KV"
+id = "5d2685f414a14ff4ac050eea5b19bdcf"
+
+[vars]
+ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
+ACCESS_AUD = "894a00188dfb611f1e958108e9e49e9bab86d8f1b0afee56d6c0106710182a63"
+AUTOREPLY = "off"        # лист автору після заявки: увімкнути лише після затвердження текстів Вадимом
+CREATORS_ADMIN_EMAILS = "vg@abrisart.com"
+# Секрети (wrangler secret put, значень у репо немає, репо публічне):
+#   TG_TOKEN            бот @barpi_tech_bot (є в групі Barpi_Marketing)
+#   CREATORS_TG_CHATS   chat_id через кому: Barpi_Marketing
+#   DIGEST_KEY          ручний запуск /creators-api/cron/digest
+#   CREATORS_EMAILS     (необов'язково) хто бачить дашборд; не задано = усі з allowlist Access
