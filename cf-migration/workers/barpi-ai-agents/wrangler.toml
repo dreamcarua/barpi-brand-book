@@ -26,6 +26,7 @@ routes = [
   { pattern = "barpi.com.ua/blog/", zone_name = "barpi.com.ua" },
   { pattern = "barpi.com.ua/pytannia-vidpovidi/", zone_name = "barpi.com.ua" },
   { pattern = "barpi.com.ua/kariera/", zone_name = "barpi.com.ua" },
+  { pattern = "barpi.com.ua/blogeram/", zone_name = "barpi.com.ua" },
   { pattern = "barpi.com.ua/brands/", zone_name = "barpi.com.ua" },
   { pattern = "barpi.com.ua/dehustatsiini-nabory-lasoshchiv/", zone_name = "barpi.com.ua" },
   { pattern = "barpi.com.ua/naturalni-lasoshchi-dlia-sobak/", zone_name = "barpi.com.ua" },
