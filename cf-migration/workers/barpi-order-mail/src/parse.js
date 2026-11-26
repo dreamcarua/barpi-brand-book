@@ -98,3 +98,13 @@ export function buildDescription(o) {
   const deliv = o.deliveryLines && o.deliveryLines.length ? o.deliveryLines : (o.delivery ? [o.delivery] : []);
   return [head, o.phone, ...deliv, o.payment, o.comment ? 'Коментар: ' + o.comment : ''].filter(Boolean).join('\n');
 }
+
+// v1.3 (26.11.2026): create orders only from a Horoshop message that passed DMARC at our own MX
+// (Cloudflare prepends its Authentication-Results, so only the topmost one counts).
+export function fromHoroshop(mail) {
+  const domain = String((mail.from && mail.from.address) || '').toLowerCase().split('@')[1] || '';
+  if (!/^([a-z0-9-]+\.)*horoshop\.ua$/.test(domain)) return false;
+  const ar = (mail.headers || []).find((h) => h.key === 'authentication-results');
+  const v = String((ar && ar.value) || '').toLowerCase();
+  return /^\s*mx\.cloudflare\.net\s*;/.test(v) && new RegExp('dmarc=pass\\s+header\\.from=' + domain.replace(/\./g, '\\.') + '(?![a-z0-9.-])').test(v);
+}

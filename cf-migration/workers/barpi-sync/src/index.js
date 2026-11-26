@@ -837,7 +837,16 @@ async function resolveCode(env, code) {
     const j2 = await fetchMS(env, '/entity/product', { filter: 'code=' + v, limit: 1 });
     if (j2.rows && j2.rows[0]) return { type: 'product', id: j2.rows[0].id };
   }
-  return null;
+  // v1.10 (26.11.2026): for sets and big packs the site sends the МС article, not the code («Н-00002» = bundle code N-0107).
+  // Codes win; an article is accepted only when exactly one non-archived item has it.
+  const hits = new Map();
+  for (const v of codeVariants(code)) {
+    for (const type of ['bundle', 'product']) {
+      const j = await fetchMS(env, '/entity/' + type, { filter: 'article=' + v, limit: 5 });
+      for (const x of j.rows || []) if (!x.archived && x.article === v) hits.set(x.id, { type, id: x.id });
+    }
+  }
+  return hits.size === 1 ? [...hits.values()][0] : null;
 }
 const pad2 = (n) => String(n).padStart(2, '0');
 const msMoment = (d) => `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
@@ -863,8 +872,11 @@ async function createOrderByCode(env, body) {
   if (missing.length) throw new Error('codes not found in MoySklad: ' + missing.join(', '));
   if (!positions.length) throw new Error('no positions');
   const m = (type, id) => ({ meta: { href: `${env.MS_BASE_URL}/entity/${type}/${id}`, type, mediaType: 'application/json' } });
+  // same site number -> same syncId: two concurrent deliveries of one mail cannot create two orders
+  const h = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(externalCode)))].map((x) => x.toString(16).padStart(2, '0')).join('');
+  const syncId = `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
   const payload = {
-    externalCode, applicable: true,
+    syncId, externalCode, applicable: true,
     organization: m('organization', SITE_DEFAULTS.organization),
     organizationAccount: { meta: { href: `${env.MS_BASE_URL}/entity/organization/${SITE_DEFAULTS.organization}/accounts/${SITE_DEFAULTS.organizationAccount}`, type: 'account', mediaType: 'application/json' } },
     agent: m('counterparty', SITE_DEFAULTS.agent), store: m('store', SITE_DEFAULTS.store),

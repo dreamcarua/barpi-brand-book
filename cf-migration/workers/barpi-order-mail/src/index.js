@@ -1,9 +1,10 @@
-/* barpi-order-mail v1.1 (10.11.2026: МС numbers the order, description as typed by hand, duplicate vs manual entry, group alerts)
+/* barpi-order-mail v1.3 (26.11.2026: live; Horoshop sender check, no zero quantities)
+   v1.1 (10.11.2026: МС numbers the order, description as typed by hand, duplicate vs manual entry, group alerts)
    v1.0 (28.09.2026)
    Email Worker for office@barpi.com.ua. Forwards every message unchanged, and turns
    Horoshop new-order notifications into MoySklad customer orders via barpi-sync. */
 import PostalMime from 'postal-mime';
-import { parseOrder, buildDescription } from './parse.js';
+import { parseOrder, buildDescription, fromHoroshop } from './parse.js';
 
 async function tg(env, text) {
   if (!env.TG_TOKEN || !env.TG_CHAT) return;
@@ -27,12 +28,16 @@ async function handle(raw, env) {
   const d = new Date();
   const key = `order-mail/${d.toISOString().slice(0, 10)}/${o.number}-${d.getTime()}.eml`;
   try { await env.RAW.put(key, raw); } catch (_) {}
+  if (!fromHoroshop(mail)) {
+    await tg(env, `⚠️ Лист «Замовлення №${esc(o.number)}» не від Horoshop або не пройшов перевірку відправника, в МойСклад не вносимо. Відправник: ${esc(mail.from && mail.from.address)}. Лист: <code>${esc(key)}</code>`);
+    return { skipped: 'sender' };
+  }
 
   const sumItems = o.items.reduce((a, i) => a + i.price * i.qty, 0);
   const pct = o.discountPct || 0;
   // as MoySklad does: each position rounded to kopecks after the percent discount
   const expected = o.items.reduce((a, i) => a + Math.round(i.price * i.qty * (100 - pct)) / 100, 0);
-  const ok = o.items.length > 0 && pct < 100 && o.total != null && Math.abs(expected - o.total) < (pct ? 0.06 : 1.01);
+  const ok = o.items.length > 0 && o.items.every((i) => i.qty > 0) && pct < 100 && o.total != null && Math.abs(expected - o.total) < (pct ? 0.06 : 1.01);
   const lines = o.items.map((i) => `• ${esc(i.code)} × ${i.qty} по ${i.price} грн`).join('\n');
   if (!ok) {
     await tg(env, `⚠️ <b>Замовлення №${esc(o.number)}</b> з сайту не внесено в МойСклад автоматично: не зійшлась сума або не знайдено товари (позицій ${o.items.length}, сума позицій ${sumItems}, сума в листі ${o.total}).\n${lines}\nЛист збережено: <code>${esc(key)}</code>. Внесіть вручну.`);
@@ -65,5 +70,5 @@ export default {
     await message.forward(env.FORWARD_TO);
     ctx.waitUntil(handle(raw, env).catch((e) => tg(env, '⚠️ barpi-order-mail: ' + esc(e.message || e))));
   },
-  async fetch() { return new Response('barpi-order-mail 1.1: email worker', { status: 200 }); },
+  async fetch() { return new Response('barpi-order-mail 1.3: email worker', { status: 200 }); },
 };
