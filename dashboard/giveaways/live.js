@@ -43,7 +43,7 @@ export function openLive(ctx) {
         <div class="prz" id="lvPrz"></div><div class="sub" id="lvSub"></div>
         <div class="reels" id="lvReels">${Array.from({ length: digits() }, () => '<div class="reel"><div class="strip"></div></div>').join('')}<div class="count" id="lvCount"></div></div>
         <div class="flick" id="lvFlick"></div>
-        <div class="winner" id="lvWin"></div>
+        <div class="lwin" id="lvWin"></div>
       </section>
       <aside class="side right">
         ${A.otherTop.length ? `<div class="card"><div class="k">Інші версії учасників</div><div class="bars">${A.otherTop.map(([w, n]) => `<div class="r"><span class="l" style="--w:${n / A.otherTop[0][1]}"><i></i>${esc(w)}</span><b>${nf(n)}</b></div>`).join('')}</div></div>` : ''}
@@ -134,7 +134,7 @@ export function openLive(ctx) {
     else if (d.g.status === 'frozen') { prz.textContent = title(null); sub.textContent = `номери від 1 до ${nf(d.g.pool_count)} · переможців: ${pz.length || g.cfg.winners || 1}`; h += '<button type="button" class="lb2 big primary" data-l="draw">🎁 Розіграти · пробіл</button>'; if (!shown) $('#lvWin').innerHTML = '<div class="sub">Натисніть «Розіграти» або пробіл</div>'; }
     else {
       const w = shown && cur().find((x) => x.id === shown.id);
-      prz.textContent = title(w || nx); sub.textContent = `номери від 1 до ${nf(d.g.pool_count)} · відкрито ${q.filter((x) => revealed.has(x.id)).length} з ${q.length}`;
+      prz.textContent = title(w || nx); sub.textContent = `номери від 1 до ${nf(d.g.pool_count)} · відкрито ${q.filter((x) => revealed.has(x.id)).length} / ${q.length}`;
       if (asking && w) h += `<input type="text" id="lvReason" placeholder="Що саме не виконано" maxlength="300"><button type="button" class="lb2 no" data-l="fail">Підтвердити ✗</button><button type="button" class="lb2" data-l="cancel">Скасувати</button>`;
       else {
         if (w && revealed.has(w.id) && w.verdict === 'pending') h += '<button type="button" class="lb2 ok" data-l="ok">✓ Умови виконано</button><button type="button" class="lb2 no" data-l="ask">✗ Не виконано · замінити</button>';
