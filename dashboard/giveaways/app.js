@@ -1,5 +1,6 @@
 // Barpi · Розіграші · сторінка /dashboard/giveaways/ (v1.0.0, 27.11.2026). Дані лише з воркера barpi-giveaways.
 import * as L from './lib/logic.js?v=1.0.0';
+// v1.1.0: джерело 'example' (навчальний приклад на реальному пості)
 
 const API = '/dashboard/api/giveaways';
 const $ = (s, r = document) => r.querySelector(s);
@@ -13,7 +14,7 @@ const ERR = {
   no_media: 'Спершу виберіть публікацію.', title_required: 'Вкажіть назву розіграшу.', reason_required: 'Вкажіть причину.', empty_pool: 'У пулі немає жодного допущеного учасника.',
   not_frozen: 'Спершу зафіксуйте пул.', not_drawn: 'Жеребкування ще не проведено.', drawn_keep: 'Жеребкування проведено: результат зберігається. Змінити може лише адміністратор через анулювання.',
   admin_only: 'Це може зробити лише адміністратор.', pool_exhausted: 'У пулі не лишилось учасників.', already_replaced: 'Цього переможця вже замінено.',
-  demo_private: 'Тестовий розіграш не публікується і не йде в календар.', media_locked: 'Коментарі вже зібрано: публікацію змінити не можна. Створіть новий розіграш.',
+  demo_private: 'Тестовий розіграш і навчальний приклад не публікуються і не йдуть у календар.', media_locked: 'Коментарі вже зібрано: публікацію змінити не можна. Створіть новий розіграш.',
   name_required: 'Вкажіть назву шаблону.', pool_mismatch: 'Пул не збігається з контрольним хешем. Зніміть фіксацію і зафіксуйте знову.', internal: 'Внутрішня помилка сервера.',
 };
 function errText(e) {
@@ -39,6 +40,7 @@ const lines = (v) => String(v || '').split(/\n+/).map((s) => s.trim()).filter(Bo
 const copy = async (text, ok = 'Скопійовано') => { try { await navigator.clipboard.writeText(text); toast(ok); } catch (e) { toast('Не вдалося скопіювати', true); } };
 function download(name, text, type = 'text/plain') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type + ';charset=utf-8' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
 const thumb = (g) => `<div class="thumb">${g.media_thumb ? `<img src="${esc(g.media_thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${g.source === 'demo' ? 'ТЕСТ' : g.media_thumb ? '' : 'ПОСТ'}</div>`;
+const srcChip = (g) => (g.source === 'demo' ? '<span class="chip test">Тест</span>' : g.source === 'example' ? '<span class="chip test">Приклад</span>' : '');
 function mech(cfg) {
   const m = [];
   if (cfg.answer && cfg.answer.on) m.push('Правильна відповідь');
@@ -65,9 +67,9 @@ async function home() {
 function renderHome() {
   const by = { active: [], planned: [], done: [] };
   for (const g of S.rows) by[kind(g, S.now)].push(g);
-  const real = S.rows.filter((g) => g.source !== 'demo');
+  const real = S.rows.filter((g) => g.source === 'instagram');
   const tab = (id, name, n) => `<button data-act="tab" data-tab="${id}" class="${S.tab === id ? 'on' : ''}">${name}${n == null ? '' : `<i>${n}</i>`}</button>`;
-  const card = (g) => `<a class="gcard" href="#/g/${g.id}">${thumb(g)}<div><div class="t">${esc(g.title)} ${g.source === 'demo' ? '<span class="chip test">Тест</span>' : ''}</div>
+  const card = (g) => `<a class="gcard" href="#/g/${g.id}">${thumb(g)}<div><div class="t">${esc(g.title)} ${srcChip(g)}</div>
     <div class="m"><span>${mech(g.cfg).map(esc).join(' + ')}</span><span>${g.ends_at ? 'до <b>' + esc(fmt(g.ends_at)) + '</b>' : 'без дати завершення'}</span><span>коментарів <b>${g.comments_total}</b></span><span>допущено <b>${g.pool_count ?? g.ok_count}</b></span><span>переможців <b>${g.cfg.winners || 1}</b></span></div></div>
     <div class="st">${statusChip(g, S.now)}</div></a>`;
   let body = '';
@@ -78,7 +80,7 @@ function renderHome() {
   else body = by[S.tab].length ? `<div class="cards">${by[S.tab].map(card).join('')}</div>` : `<div class="empty">${{ active: 'Активних розіграшів немає.', planned: 'Запланованих розіграшів немає.', done: 'Завершених розіграшів ще немає.' }[S.tab]}</div>`;
   app.innerHTML = `<div class="head"><div><h1>Розіграші Barpi</h1><p class="lead">Створіть розіграш, виберіть публікацію, задайте умови, перевірте учасників і натисніть «Розіграти». Переможців обирає сервер, кожен крок лишається в протоколі.</p></div><div class="sp"></div><button class="btn" data-act="new">+ Створити розіграш</button></div>
     ${igBanner()}
-    <div class="kpis"><div class="kpi"><b>${by.active.length}</b><span>активних</span></div><div class="kpi"><b>${by.planned.length}</b><span>запланованих</span></div><div class="kpi"><b>${real.filter((g) => g.status === 'drawn').length}</b><span>проведено (без тестів)</span></div><div class="kpi"><b>${real.filter((g) => g.status === 'drawn').reduce((a, g) => a + (g.pool_count || 0), 0)}</b><span>учасників у проведених</span></div></div>
+    <div class="kpis"><div class="kpi"><b>${by.active.length}</b><span>активних</span></div><div class="kpi"><b>${by.planned.length}</b><span>запланованих</span></div><div class="kpi"><b>${real.filter((g) => g.status === 'drawn').length}</b><span>проведено (без тестів і прикладів)</span></div><div class="kpi"><b>${real.filter((g) => g.status === 'drawn').reduce((a, g) => a + (g.pool_count || 0), 0)}</b><span>учасників у проведених</span></div></div>
     <div class="tabs">${tab('active', 'Активні', by.active.length)}${tab('planned', 'Заплановані', by.planned.length)}${tab('done', 'Завершені', by.done.length)}${tab('templates', 'Шаблони', S.templates.length)}${tab('history', 'Історія')}</div>${body}`;
 }
 const ACTION = { create: 'Створено', edit: 'Змінено умови', fetch: 'Зібрано коментарі', decision: 'Рішення щодо учасника', freeze: 'Пул зафіксовано', unfreeze: 'Фіксацію знято', draw: 'Жеребкування', extra_draw: 'Додатковий вибір', verdict: 'Перевірка переможця', void: 'Жеребкування анульовано', publish: 'Протокол опубліковано', unpublish: 'Протокол приховано', calendar: 'Додано в календар', delete: 'Видалено' };
@@ -127,7 +129,7 @@ function renderG() {
   const d = S.d, g = d.g, open = g.status === 'open';
   const step = (id, n, t, s) => `<button data-act="step" data-step="${id}" class="${S.step === id ? 'on' : ''}">${n}. ${t}<small>${s}</small></button>`;
   app.innerHTML = `<p><a href="#/">← Усі розіграші</a></p>
-  <div class="head">${thumb(g)}<div style="flex:1;min-width:220px"><h1>${esc(g.title)}</h1><p class="lead" style="margin-bottom:0">${statusChip(g, d.now)} ${g.source === 'demo' ? '<span class="chip test">Тест</span>' : ''} ${mech(g.cfg).map((m) => `<span class="chip">${esc(m)}</span>`).join(' ')} ${g.media_permalink ? `<a href="${esc(g.media_permalink)}" target="_blank" rel="noopener noreferrer">Відкрити пост ↗</a>` : ''}</p></div></div>
+  <div class="head">${thumb(g)}<div style="flex:1;min-width:220px"><h1>${esc(g.title)}</h1><p class="lead" style="margin-bottom:0">${statusChip(g, d.now)} ${srcChip(g)} ${mech(g.cfg).map((m) => `<span class="chip">${esc(m)}</span>`).join(' ')} ${g.media_permalink ? `<a href="${esc(g.media_permalink)}" target="_blank" rel="noopener noreferrer">Відкрити пост ↗</a>` : ''}</p></div></div>
   <div class="steps">${step('rules', 1, 'Умови', g.ends_at ? 'до ' + esc(fmt(g.ends_at)) : 'без дати завершення')}${step('people', 2, 'Учасники', `допущено ${d.stats.ok} з ${d.stats.accounts}`)}${step('draw', 3, 'Жеребкування', g.status === 'drawn' ? 'проведено ' + esc(fmt(g.drawn_at)) : open ? 'пул не зафіксовано' : 'пул зафіксовано')}${step('proto', 4, 'Протокол', `${d.log.length} записів`)}</div>
   <div id="stepbox">${{ rules: stepRules, people: stepPeople, draw: stepDraw, proto: stepProto }[S.step]()}</div>`;
 }
@@ -157,7 +159,7 @@ function stepRules() {
     <label class="f">Виключити акаунти<small>через кому або з нового рядка; @${esc(S.me.ig.username)} виключено завжди</small><textarea id="f_excl" ${dis} placeholder="alona.smm, partner_shop">${esc((c.exclude || []).join(', '))}</textarea></label>
     <label class="f" style="grid-column:1/-1">Додаткові умови участі<small>Потраплять у протокол. Підписку, лайк і репост у сторіс Instagram API не показує: їх перевіряють вручну в обраного переможця.</small><textarea id="f_rules" ${dis} placeholder="Бути підписаним на @barpi.ua, поставити лайк, доставка лише по Україні">${esc(c.rules || '')}</textarea></label>
   </div><div style="margin-top:12px">${chk('f_fest', c.festive, 'Святкове оформлення презентації', 'Сніг, зірки й подарунки в режимі 9:16. Панель керування лишається звичайною.', ' ')}</div></div>
-  <div class="row"><button class="btn" data-act="save">Зберегти</button><button class="btn sec" data-act="tpl-save">Зберегти як шаблон</button>${g.source === 'instagram' ? `<button class="btn sec" data-act="calendar">${g.calendar_id ? 'Оновити в маркетинговому календарі' : 'Додати в маркетинговий календар'}</button>` : ''}<span style="flex:1"></span>${g.status !== 'drawn' || (S.me.isAdmin && g.source === 'demo') ? '<button class="btn danger" data-act="del">Видалити розіграш</button>' : ''}</div>`;
+  <div class="row"><button class="btn" data-act="save">Зберегти</button><button class="btn sec" data-act="tpl-save">Зберегти як шаблон</button>${g.source === 'instagram' ? `<button class="btn sec" data-act="calendar">${g.calendar_id ? 'Оновити в маркетинговому календарі' : 'Додати в маркетинговий календар'}</button>` : ''}<span style="flex:1"></span>${g.status !== 'drawn' || (S.me.isAdmin && g.source !== 'instagram') ? '<button class="btn danger" data-act="del">Видалити розіграш</button>' : ''}</div>`;
 }
 function readRules() {
   const v = (id) => ($('#' + id) ? $('#' + id).value : ''), on = (id) => !!($('#' + id) && $('#' + id).checked);
@@ -187,7 +189,7 @@ function stepPeople() {
     <td>${open ? `<div class="acts"><button class="y ${e.decided && e.final === 'ok' ? 'on' : ''}" title="Допустити" aria-label="Допустити" data-act="dec" data-u="${esc(e.username)}" data-d="ok">✓</button><button class="n ${e.decided && e.final === 'fail' ? 'on' : ''}" title="Не відповідає умовам" aria-label="Не відповідає умовам" data-act="ask-reason" data-u="${esc(e.username)}">✗</button><button class="q ${e.decided && e.final === 'review' ? 'on' : ''}" title="Потребує перевірки" aria-label="Потребує перевірки" data-act="dec" data-u="${esc(e.username)}" data-d="review">?</button>${e.decided ? `<button title="Повернути автоматичне рішення" aria-label="Повернути автоматичне рішення" data-act="dec" data-u="${esc(e.username)}" data-d="auto">↺</button>` : ''}</div>` : ''}</td></tr>`;
   let err = ''; try { const fe = g.fetch_error ? JSON.parse(g.fetch_error) : null; if (fe) err = `<div class="banner bad">Останній збір завершився помилкою: ${esc(ERR[fe.code] || fe.code)} ${esc(fe.ig_message || '')}</div>`; } catch (e) { /* пусто */ }
   return `${err}${g.fetch_partial ? '<div class="banner">Коментарів дуже багато: зібрано не всі. Натисніть «Оновити коментарі» ще раз.</div>' : ''}
-  <div class="panel"><div class="row">${open && g.source === 'instagram' ? '<button class="btn" data-act="fetch">Оновити коментарі</button>' : ''}<span class="muted small">${g.source === 'demo' ? 'Тестові коментарі, вигадані акаунти' : g.fetched_at ? 'Зібрано ' + esc(fmt(g.fetched_at)) + ' через Instagram Graph API' : 'Коментарі ще не збирали'}</span><span style="flex:1"></span>
+  <div class="panel"><div class="row">${open && g.source === 'instagram' ? '<button class="btn" data-act="fetch">Оновити коментарі</button>' : ''}<span class="muted small">${g.source === 'demo' ? 'Тестові коментарі, вигадані акаунти' : g.source === 'example' ? 'Навчальний приклад: справжні коментарі з поста, зібрані ' + esc(fmt(g.fetched_at)) : g.fetched_at ? 'Зібрано ' + esc(fmt(g.fetched_at)) + ' через Instagram Graph API' : 'Коментарі ще не збирали'}</span><span style="flex:1"></span>
     <span class="small muted">коментарів ${s.comments_total} · відповідей ${s.replies} (не беруть участі)${s.gone ? ' · зникло з Instagram ' + s.gone : ''} · у періоді ${s.in_window}</span></div></div>
   <div class="row" style="margin-bottom:12px"><div class="tabs" style="margin:0">${f('all', 'Усі', s.entries)}${f('ok', 'Допущені', s.ok)}${f('review', 'Перевірити', s.review)}${f('fail', 'Відхилені', s.fail)}</div><span style="flex:1"></span><input type="search" id="q" placeholder="Пошук: @акаунт, слово або №" value="${esc(S.q)}" style="max-width:300px;margin:0"></div>
   ${rows.length ? `<div class="tablewrap"><table><tr><th>№</th><th>Акаунт</th><th>Коментар</th><th>Статус</th><th></th></tr>${rows.slice(0, S.limit).map(tr).join('')}</table></div>${rows.length > S.limit ? `<p style="margin-top:10px"><button class="btn sm soft" data-act="more">Показати ще (${rows.length - S.limit})</button></p>` : ''}` : '<div class="empty">Нікого не знайдено.</div>'}
@@ -220,7 +222,7 @@ function stepDraw() {
     ${S.verify ? `<div class="banner ${S.verify.ok ? 'ok' : 'bad'}">${esc(S.verify.text)}</div>` : ''}
     <h2>Переможці</h2>${win.map(wcard).join('')}
     ${res.length ? `<h2 style="margin-top:18px">Резервні</h2>${res.map(wcard).join('')}` : ''}
-    <div class="panel" style="margin-top:18px"><h2>Публікація результатів</h2>${g.source === 'demo' ? '<p class="muted">Тестовий розіграш не публікується.</p>' : `<p class="muted small" style="margin-bottom:10px">Публічна сторінка показує назву, умови, переможців і контрольний хеш пулу. Повний список учасників не публікується.</p>
+    <div class="panel" style="margin-top:18px"><h2>Публікація результатів</h2>${g.source !== 'instagram' ? '<p class="muted">Тестовий розіграш і навчальний приклад не публікуються.</p>' : `<p class="muted small" style="margin-bottom:10px">Публічна сторінка показує назву, умови, переможців і контрольний хеш пулу. Повний список учасників не публікується.</p>
       <div class="row"><button class="btn ${g.published ? 'sec' : ''}" data-act="publish" data-on="${g.published ? 0 : 1}">${g.published ? 'Приховати протокол' : 'Опублікувати протокол'}</button>${g.published ? `<a href="${esc(link)}" target="_blank" rel="noopener" class="mono">${esc(link)}</a><button class="btn sm soft" data-act="copy-link" data-link="${esc(link)}">Копіювати</button>` : ''}</div>`}</div>
     ${S.me.isAdmin ? `<div class="panel"><h2>Анулювання</h2><p class="muted small" style="margin-bottom:10px">Лише для помилки в умовах або списку. Запис про анулювання і причина лишаються в протоколі назавжди.</p><div class="reason" style="margin:0"><input type="text" id="void_in" placeholder="Причина анулювання" maxlength="300" style="margin:0"><button class="btn danger" data-act="void">Анулювати жеребкування</button></div></div>` : ''}`;
 }
@@ -267,7 +269,7 @@ function startShow() {
   document.body.append(el);
   const stage = $('.stage', el), mid = $('.mid', el), cv = $('canvas', el), ctx = cv.getContext('2d');
   $('.ttl', el).textContent = g.title;
-  $('.foot', el).textContent = `@${S.me.ig.username} · ${fmt(g.drawn_at).slice(0, 10)} · учасників: ${g.pool_count}${g.source === 'demo' ? ' · ТЕСТ' : ''}`;
+  $('.foot', el).textContent = `@${S.me.ig.username} · ${fmt(g.drawn_at).slice(0, 10)} · учасників: ${g.pool_count}${g.source === 'demo' ? ' · ТЕСТ' : g.source === 'example' ? ' · ПРИКЛАД' : ''}`;
   let i = -1, busy = false, timer = null, raf = 0, parts = [], alive = true;
   const fit = () => { const r = stage.getBoundingClientRect(), k = Math.min(2, devicePixelRatio || 1); cv.width = r.width * k; cv.height = r.height * k; };
   fit(); addEventListener('resize', fit);

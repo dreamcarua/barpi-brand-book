@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS gw_giveaways (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'open',      -- open | frozen | drawn
-  source TEXT NOT NULL DEFAULT 'instagram', -- instagram | demo (репетиція на вигаданих коментарях)
+  source TEXT NOT NULL DEFAULT 'instagram', -- instagram | demo (репетиція на вигаданих коментарях) | example (навчальний приклад на реальному пості)
   media_id TEXT, media_permalink TEXT, media_caption TEXT, media_thumb TEXT, media_ts INTEGER,
   starts_at INTEGER, ends_at INTEGER,
   config TEXT NOT NULL DEFAULT '{}',        -- JSON: умови, кількість переможців і резерву, призи, правила, святковий режим

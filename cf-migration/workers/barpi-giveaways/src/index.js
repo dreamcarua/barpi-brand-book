@@ -10,7 +10,7 @@
 import { accessUser } from './access.js';
 import * as L from '../../../../dashboard/giveaways/lib/logic.js';
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0'; // 27.11.2026: джерело 'example' = навчальний приклад на реальному пості (не публікується, не йде в календар)
 const API = '/dashboard/api/giveaways';
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const PAGE = 'https://brand.barpi.ua/dashboard/giveaways/';
@@ -157,7 +157,7 @@ async function doDraw(env, g, by, ctx) {
   if (g.calendar_id) stmts.push(env.DB.prepare("UPDATE mkt_activities SET status = 'done', kpi_fact = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ? AND source = 'giveaways'").bind(pool.length, by, g.calendar_id));
   try { await env.DB.batch(stmts); } // UNIQUE(giveaway_id, gen, round): друге одночасне натискання відкотиться цілком
   catch (e) { if (/UNIQUE/i.test(String(e.message))) return { repeated: true }; throw e; }
-  if (g.source !== 'demo') ctx.waitUntil(tgSend(env, `🎁 <b>Розіграш проведено:</b> ${esc(g.title)}\nУчасників у пулі: ${pool.length}, переможців: ${W}\n${PAGE}#/g/${g.id}`));
+  if (g.source === 'instagram') ctx.waitUntil(tgSend(env, `🎁 <b>Розіграш проведено:</b> ${esc(g.title)}\nУчасників у пулі: ${pool.length}, переможців: ${W}\n${PAGE}#/g/${g.id}`));
   return { ok: true };
 }
 async function doExtra(env, g, by, b) {
@@ -294,7 +294,7 @@ async function dashboard(req, env, ctx, path, email) {
     return json({ ok: true });
   }
   if (!act && m === 'DELETE') {
-    if (g.status === 'drawn' && !(isAdmin && g.source === 'demo')) throw new E('drawn_keep', 409);
+    if (g.status === 'drawn' && !(isAdmin && g.source !== 'instagram')) throw new E('drawn_keep', 409);
     if (!isAdmin && g.created_by !== email) throw new E('admin_only', 403);
     await env.DB.batch([env.DB.prepare('UPDATE gw_giveaways SET deleted = 1, published = 0, updated_at = ? WHERE id = ?').bind(now(), g.id), logStmt(env, g.id, email, 'delete', { title: g.title })]);
     return json({ ok: true });
