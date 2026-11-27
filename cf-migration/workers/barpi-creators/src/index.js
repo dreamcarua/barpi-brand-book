@@ -13,7 +13,7 @@
 import { accessUser } from './access.js';
 import { normalise, score, alertText, digestText, kyivParts, couponsIn, STATUSES, esc } from './logic.js';
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0'; // 27.11.2026: внутрішній https://internal/notify для інших воркерів Barpi (service binding), тим самим ботом у ті самі чати
 const DASH = 'https://brand.barpi.ua/dashboard/creators/';
 const ALLOWED_ORIGINS = ['https://barpi.com.ua', 'https://www.barpi.com.ua'];
 const EDITABLE = ['status', 'owner', 'offer', 'promo_code', 'fee_uah', 'ship_cost_uah', 'ship_doc', 'ship_ttn', 'content_url', 'notes',
@@ -174,6 +174,14 @@ export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url); const path = url.pathname;
     try {
+      // Лише через service binding: публічні маршрути воркера (brand.barpi.ua/creators-api/*, /dashboard/api/creators/*) цей хост і шлях не покривають.
+      // Текст уже підготовлений і екранований відправником (Telegram HTML). Токен бота лишається тільки тут.
+      if (url.hostname === 'internal' && path === '/notify' && req.method === 'POST') {
+        let b; try { b = await req.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const text = String((b && b.text) || '').slice(0, 3900);
+        if (!text) return json({ ok: false, error: 'empty' }, 400);
+        return json({ ok: true, sent: await tgSend(env, text), chats: listOf(env.CREATORS_TG_CHATS).length });
+      }
       if (path === '/creators-api/healthz') return json({ ok: true, service: 'barpi-creators', version: VERSION });
       if (path === '/creators-api/public/apply') {
         if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(req) });

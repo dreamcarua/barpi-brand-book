@@ -18,6 +18,16 @@ binding = "DB"
 database_name = "barpi-bible"
 database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
 
+# Сповіщення в Telegram «Barpi_Marketing»: через воркер barpi-creators (той самий бот @barpi_tech_bot і ті самі чати).
+# Токен бота лишається секретом barpi-creators, сюди не копіюється.
+[[services]]
+binding = "NOTIFY"
+service = "barpi-creators"
+
+# Нагадування: кінець приймання коментарів, подарунки без відправки (о 10:xx за Києвом)
+[triggers]
+crons = ["*/15 * * * *"]
+
 [vars]
 ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
 ACCESS_AUD = "894a00188dfb611f1e958108e9e49e9bab86d8f1b0afee56d6c0106710182a63"
@@ -26,5 +36,4 @@ IG_USERNAME = "barpi.ua"
 GW_ADMIN_EMAILS = "vg@abrisart.com"
 # Секрети (wrangler secret put, значень у репо немає, репо публічне):
 #   IG_TOKEN       токен сторінки Barpi для Graph API (читання публікацій і коментарів); ставить власник: ./set-ig-secret.sh
-#   TG_TOKEN       (необов'язково) бот для повідомлення про проведений розіграш
-#   GW_TG_CHATS    (необов'язково) chat_id через кому
+#   TG_TOKEN, GW_TG_CHATS  (необов'язково) запасний прямий канал, якщо немає зв'язку NOTIFY

@@ -10,7 +10,7 @@
 import { accessUser } from './access.js';
 import * as L from '../../../../dashboard/giveaways/lib/logic.js';
 
-const VERSION = '1.4.0'; // 27.11.2026: відправка подарунка (статус, ТТН, нотатка), лічильник у списку; 1.3.0: // 27.11.2026: створення через /new (виправлено 405), режим ефіру на сторінці; 1.2.0: // 27.11.2026: гонка за лайки, спосіб вибору для кожного подарунка, статистика поста, проксі зображень; // 27.11.2026: джерело 'example' = навчальний приклад на реальному пості (не публікується, не йде в календар)
+const VERSION = '1.5.0'; // 27.11.2026: сповіщення в Barpi_Marketing (через barpi-creators), нагадування за кроном; 1.4.0: // 27.11.2026: відправка подарунка (статус, ТТН, нотатка), лічильник у списку; 1.3.0: // 27.11.2026: створення через /new (виправлено 405), режим ефіру на сторінці; 1.2.0: // 27.11.2026: гонка за лайки, спосіб вибору для кожного подарунка, статистика поста, проксі зображень; // 27.11.2026: джерело 'example' = навчальний приклад на реальному пості (не публікується, не йде в календар)
 const API = '/dashboard/api/giveaways';
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const PAGE = 'https://brand.barpi.ua/dashboard/giveaways/';
@@ -152,14 +152,44 @@ async function mediaImage(req, env, ctx, mediaId) {
   return res;
 }
 
-// ── Telegram (необов'язково) ──────────────────────────────────────────────
+// ── Telegram: Barpi_Marketing через barpi-creators (service binding NOTIFY) ──
+// Лише для справжніх розіграшів: тестові й навчальні приклади нікому не пишуть.
 async function tgSend(env, text) {
-  if (!env.TG_TOKEN) return 0; let sent = 0;
-  for (const chat of listOf(env.GW_TG_CHATS)) {
-    try { const r = await fetch(`https://api.telegram.org/bot${env.TG_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: chat, text, parse_mode: 'HTML', disable_web_page_preview: true }) }); if (r.ok) sent++; } catch (e) { console.error('[giveaways] telegram', e.message); }
-  }
-  return sent;
+  try {
+    if (env.NOTIFY) { const r = await env.NOTIFY.fetch('https://internal/notify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) }); const j = await r.json().catch(() => ({})); if (!r.ok) console.error('[giveaways] notify', r.status, JSON.stringify(j)); return j.sent || 0; }
+    if (!env.TG_TOKEN) return 0; let sent = 0;
+    for (const chat of listOf(env.GW_TG_CHATS)) { const r = await fetch(`https://api.telegram.org/bot${env.TG_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: chat, text, parse_mode: 'HTML', disable_web_page_preview: true }) }); if (r.ok) sent++; }
+    return sent;
+  } catch (e) { console.error('[giveaways] telegram', e.message); return 0; }
 }
+const real = (g) => g && g.source === 'instagram';
+const link = (g) => `${PAGE}#/g/${g.id}`;
+async function notifyOnce(env, key, text) {
+  const ins = await env.DB.prepare('INSERT OR IGNORE INTO gw_notify (key, at) VALUES (?, ?)').bind(key, now()).run();
+  if (!ins.meta.changes) return { skipped: key };
+  const sent = await tgSend(env, text);
+  // не дійшло: знімаємо позначку, наступний крон спробує ще раз
+  if (!sent) await env.DB.prepare('DELETE FROM gw_notify WHERE key = ?').bind(key).run();
+  else await env.DB.prepare('UPDATE gw_notify SET sent = ? WHERE key = ?').bind(sent, key).run();
+  return { key, sent };
+}
+const kyiv = () => { const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map((x) => [x.type, x.value])); return { date: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour) }; };
+// Крон кожні 15 хв: 1) розіграш, у якого скінчився прийом коментарів, а пул не зафіксовано; 2) щодня о 10:xx за Києвом подарунки без відправки понад 2 доби
+async function cron(env) {
+  const out = [];
+  out.push(await notifyOnce(env, 'hello', `🎁 <b>Розіграші Barpi</b> тепер пишуть у цей чат: проведені розіграші, переможці, заміни, відправка подарунків і нагадування.\n${PAGE}`));
+  const t = now();
+  for (const g of await all(env, "SELECT * FROM gw_giveaways WHERE deleted = 0 AND source = 'instagram' AND status = 'open' AND ends_at IS NOT NULL AND ends_at <= ? AND ends_at > ?", t, t - 7 * 86400)) {
+    out.push(await notifyOnce(env, 'ended:' + g.id, `⏰ <b>${esc(g.title)}</b>: приймання коментарів завершилось.\nНатисніть «Оновити коментарі», перевірте учасників, зафіксуйте список і розіграйте.\n${link(g)}`));
+  }
+  const k = kyiv();
+  if (k.hour === 10) {
+    const rows = await all(env, "SELECT g.id, g.title, w.username, w.prize, w.verdict_at, w.ship_status FROM gw_winners w JOIN gw_giveaways g ON g.id = w.giveaway_id AND g.gen = w.gen WHERE w.void = 0 AND w.role = 'winner' AND w.verdict = 'ok' AND g.deleted = 0 AND g.source = 'instagram' AND COALESCE(w.ship_status, '') NOT IN ('sent', 'received', 'refused') AND COALESCE(w.verdict_at, 0) < ? ORDER BY w.verdict_at", t - 2 * 86400);
+    if (rows.length) out.push(await notifyOnce(env, 'ship:' + k.date, `📦 <b>Подарунки чекають відправки понад 2 доби: ${rows.length}</b>\n${rows.slice(0, 15).map((r) => `• ${esc(r.title)}: @${esc(r.username)}${r.prize ? ' · ' + esc(r.prize) : ''}${r.ship_status ? ' · ' + esc(SHIP[r.ship_status] || r.ship_status) : ''}`).join('\n')}\n${PAGE}`));
+  }
+  return out;
+}
+
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
 // ── жеребкування ──────────────────────────────────────────────────────────
@@ -193,10 +223,13 @@ async function doDraw(env, g, by, ctx) {
   if (g.calendar_id) stmts.push(env.DB.prepare("UPDATE mkt_activities SET status = 'done', kpi_fact = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ? AND source = 'giveaways'").bind(pool.length, by, g.calendar_id));
   try { await env.DB.batch(stmts); } // UNIQUE(giveaway_id, gen, round): друге одночасне натискання відкотиться цілком
   catch (e) { if (/UNIQUE/i.test(String(e.message))) return { repeated: true }; throw e; }
-  if (g.source === 'instagram') ctx.waitUntil(tgSend(env, `🎁 <b>Розіграш проведено:</b> ${esc(g.title)}\nУчасників у пулі: ${pool.length}, переможців: ${W}\n${PAGE}#/g/${g.id}`));
+  if (real(g)) {
+    const ws = rows.filter((r) => r.role === 'winner').sort((a, c) => a.pos - c.pos), rs = rows.filter((r) => r.role === 'reserve');
+    ctx.waitUntil(tgSend(env, `🎁 <b>Розіграш проведено: ${esc(g.title)}</b>\nУчасників у пулі: ${pool.length}\n${ws.map((r) => `${r.pos}. @${esc(r.p.username)}${r.prize ? ' · ' + esc(r.prize) : ''}${r.method === 'top_likes' ? ` (найбільше лайків, ${r.likes})` : ''}`).join('\n')}${rs.length ? `\nРезервні: ${rs.map((r) => '@' + esc(r.p.username)).join(', ')}` : ''}\n\nПеревірте умови в кожного переможця (підписка, лайк, репост) і поставте ✓ або ✗.\n${link(g)}`));
+  }
   return { ok: true };
 }
-async function doExtra(env, g, by, b) {
+async function doExtra(env, g, by, b, ctx) {
   if (g.status !== 'drawn') throw new E('not_drawn', 409);
   const cur = (await winnersOf(env, g)).filter((w) => !w.void && w.gen === g.gen);
   const pool = await all(env, 'SELECT n, username, ig_id, like_count FROM gw_pool WHERE giveaway_id = ? ORDER BY n', g.id);
@@ -220,9 +253,10 @@ async function doExtra(env, g, by, b) {
       .bind(g.id, g.gen, round, 'winner', position, n, p.username, p.ig_id, prize, from),
     logStmt(env, g.id, by, 'extra_draw', { round, n, replace: from, prize }),
   ]);
+  if (real(g)) ctx.waitUntil(tgSend(env, `🎲 <b>${esc(g.title)}</b>: додатковий вибір, новий переможець @${esc(p.username)} (№ ${n})${prize ? ' · ' + esc(prize) : ''}. Перевірте умови.\n${link(g)}`));
   return { ok: true };
 }
-async function doVerdict(env, g, by, b) {
+async function doVerdict(env, g, by, b, ctx) {
   if (g.status !== 'drawn') throw new E('not_drawn', 409);
   const cur = (await winnersOf(env, g)).filter((w) => !w.void && w.gen === g.gen);
   const w = cur.find((x) => x.id === Number(b.winner_id));
@@ -246,11 +280,13 @@ async function doVerdict(env, g, by, b) {
   }
   stmts.push(logStmt(env, g.id, by, 'verdict', { username: w.username, verdict: v, reason, promoted: promoted ? promoted.username : null }));
   await env.DB.batch(stmts);
+  if (real(g) && v === 'ok' && w.role === 'winner') ctx.waitUntil(tgSend(env, `✅ <b>${esc(g.title)}</b>: @${esc(w.username)} виконав умови.${w.prize ? `\nПодарунок: ${esc(w.prize)}.` : ''} Можна зв'язатись і відправляти.\n${link(g)}`));
+  if (real(g) && v === 'failed' && w.role === 'winner') ctx.waitUntil(tgSend(env, `🔁 <b>${esc(g.title)}</b>: @${esc(w.username)} не виконав умови (${esc(reason)}).\n${promoted ? `Новий переможець з резерву: @${esc(promoted.username)}. Перевірте його умови.` : w.method === 'top_likes' ? 'Наступного за лайками немає.' : 'Резервних немає: оберіть наступного на сторінці розіграшу.'}\n${link(g)}`));
   return { ok: true, promoted: promoted ? promoted.username : null, need_extra: v === 'failed' && w.role === 'winner' && !promoted && w.method !== 'top_likes' };
 }
 
 const SHIP = { contact: 'зв\'язались', address: 'адресу отримано', sent: 'відправлено', received: 'отримано', refused: 'відмовився' };
-async function doShip(env, g, by, b) {
+async function doShip(env, g, by, b, ctx) {
   if (g.status !== 'drawn') throw new E('not_drawn', 409);
   const w = (await winnersOf(env, g)).find((x) => !x.void && x.gen === g.gen && x.id === Number(b.winner_id));
   if (!w || w.role !== 'winner' || w.verdict !== 'ok') throw new E('ship_not_confirmed', 409);
@@ -261,6 +297,7 @@ async function doShip(env, g, by, b) {
   const note = str(b.note, 300).trim() || null;
   await env.DB.batch([env.DB.prepare('UPDATE gw_winners SET ship_status = ?, ship_ttn = ?, ship_note = ?, ship_by = ?, ship_at = ? WHERE id = ?').bind(st, ttn, note, by, now(), w.id),
     logStmt(env, g.id, by, 'ship', { username: w.username, status: st ? SHIP[st] : null, ttn })]);
+  if (real(g) && st === 'sent' && w.ship_status !== 'sent') ctx.waitUntil(tgSend(env, `📦 <b>${esc(g.title)}</b>: подарунок для @${esc(w.username)} відправлено${ttn ? ', ТТН ' + esc(ttn) : ''}.\n${link(g)}`));
   return { ok: true };
 }
 
@@ -399,9 +436,9 @@ async function dashboard(req, env, ctx, path, email) {
     return json({ ok: true });
   }
   if (act === 'draw') return json(await doDraw(env, g, email, ctx));
-  if (act === 'extra') return json(await doExtra(env, g, email, b));
-  if (act === 'verdict') return json(await doVerdict(env, g, email, b));
-  if (act === 'ship') return json(await doShip(env, g, email, b));
+  if (act === 'extra') return json(await doExtra(env, g, email, b, ctx));
+  if (act === 'verdict') return json(await doVerdict(env, g, email, b, ctx));
+  if (act === 'ship') return json(await doShip(env, g, email, b, ctx));
   if (act === 'void') {
     if (!isAdmin) throw new E('admin_only', 403);
     if (g.status !== 'drawn') throw new E('not_drawn', 409);
@@ -440,10 +477,11 @@ async function dashboard(req, env, ctx, path, email) {
 }
 
 export default {
+  async scheduled(ev, env, ctx) { ctx.waitUntil(cron(env).then((r) => console.log('[giveaways] cron', JSON.stringify(r.filter((x) => x && !x.skipped))), (e) => console.error('[giveaways] cron', e && e.stack || e))); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url); const p = url.pathname;
     try {
-      if (p === '/giveaways-api/healthz') return json({ ok: true, version: VERSION, ig: !!env.IG_TOKEN });
+      if (p === '/giveaways-api/healthz') return json({ ok: true, version: VERSION, ig: !!env.IG_TOKEN, notify: !!env.NOTIFY });
       if (p.startsWith('/giveaways-api/protocol/')) return await protocol(env, p.slice('/giveaways-api/protocol/'.length));
       if (p === API || p.startsWith(API + '/')) {
         const email = await accessUser(req, env);
