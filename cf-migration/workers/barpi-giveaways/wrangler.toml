@@ -1,0 +1,30 @@
+name = "barpi-giveaways"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+account_id = "ab63a85bdfbf5894c28efe7076acbd82"
+workers_dev = false
+
+# Розіграші Barpi в Instagram (рішення Вадима 27.11.2026). Сторінка: /dashboard/giveaways/
+#   /dashboard/api/giveaways/*   за Cloudflare Access (той самий застосунок /dashboard/*), JWT перевіряється в коді
+#   /giveaways-api/*             публічно: healthz і протокол опублікованого розіграшу за токеном
+# Логіка умов і жеребкування: dashboard/giveaways/lib/logic.js (спільна для воркера, сторінки і тестів).
+routes = [
+  { pattern = "brand.barpi.ua/dashboard/api/giveaways/*", zone_name = "barpi.ua" },
+  { pattern = "brand.barpi.ua/giveaways-api/*", zone_name = "barpi.ua" },
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "barpi-bible"
+database_id = "45c93052-c82c-4d0c-901b-2999187643b9"
+
+[vars]
+ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
+ACCESS_AUD = "894a00188dfb611f1e958108e9e49e9bab86d8f1b0afee56d6c0106710182a63"
+IG_USER_ID = "17841466435649004"   # Instagram-акаунт @barpi.ua (ідентифікатор, не секрет)
+IG_USERNAME = "barpi.ua"
+GW_ADMIN_EMAILS = "vg@abrisart.com"
+# Секрети (wrangler secret put, значень у репо немає, репо публічне):
+#   IG_TOKEN       токен сторінки Barpi для Graph API (читання публікацій і коментарів); ставить власник: ./set-ig-secret.sh
+#   TG_TOKEN       (необов'язково) бот для повідомлення про проведений розіграш
+#   GW_TG_CHATS    (необов'язково) chat_id через кому

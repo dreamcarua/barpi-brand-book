@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Протокол розіграшу · Barpi</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Barpi · публічний протокол розіграшу (27.11.2026). Дані: /giveaways-api/protocol/<token> воркера barpi-giveaways.
+     Показує лише переможців і контрольний хеш пулу; повний список учасників не публікується. Двомовна (UK + EN). -->
+<style>
+:root{--navy:#001154;--blue:#BAD9F4;--sky:#EEF4FC;--paper:#FAF7F7;--ink:#333;--muted:#5b6475;--line:#DFE6F1}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Rubik,system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.55;font-size:16px}
+body.lang-uk [data-lang=en],body.lang-en [data-lang=uk]{display:none!important}
+.top{background:var(--navy);color:#fff;padding:18px 20px}
+.top .in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.top b{font-weight:800;letter-spacing:.28em;font-size:20px}.top .sp{flex:1}
+.lang button{background:none;border:1px solid rgba(255,255,255,.35);color:#fff;font:700 11px Rubik;letter-spacing:.1em;padding:8px 12px;border-radius:99px;cursor:pointer;min-height:36px}
+.lang button.on{background:var(--blue);color:var(--navy);border-color:var(--blue)}
+main{max-width:760px;margin:0 auto;padding:28px 20px 60px}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:30px;line-height:1.15;color:var(--navy);font-weight:800;margin:6px 0 14px;overflow-wrap:anywhere}
+h2{font-size:18px;color:var(--navy);font-weight:800;margin:26px 0 10px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px}
+.w{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.w .p{width:44px;height:44px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800}
+.w b{font-size:19px;color:var(--navy);overflow-wrap:anywhere}.w small{display:block;color:var(--muted)}
+dl{display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:6px 16px;font-size:15px}
+dt{color:var(--muted)}dd{overflow-wrap:anywhere}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all}
+.note{color:var(--muted);font-size:14px}
+a{color:var(--navy)}
+</style>
+</head>
+<body class="lang-uk">
+<div class="top"><div class="in"><b>BARPI</b><div class="sp"></div><div class="lang"><button data-l="uk" class="on">UK</button> <button data-l="en">EN</button></div></div></div>
+<main id="m"><p class="note"><span data-lang="uk">Завантажую…</span><span data-lang="en">Loading…</span></p></main>
+<script>
+(async () => {
+  const m = document.getElementById('m');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const T = (uk, en) => `<span data-lang="uk">${uk}</span><span data-lang="en">${en}</span>`;
+  const p2 = (n) => String(n).padStart(2, '0');
+  const fmt = (ts) => { if (!ts) return T('не задано', 'not set'); const d = new Date(ts * 1000); return `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}`; };
+  document.querySelectorAll('.lang button').forEach((b) => b.onclick = () => { document.body.className = 'lang-' + b.dataset.l; document.documentElement.lang = b.dataset.l; document.querySelectorAll('.lang button').forEach((x) => x.classList.toggle('on', x === b)); });
+  const t = new URLSearchParams(location.search).get('t') || '';
+  let d = null;
+  try { const r = await fetch('/giveaways-api/protocol/' + encodeURIComponent(t), { credentials: 'omit' }); if (r.ok) d = await r.json(); } catch (e) { /* нижче */ }
+  if (!d) { m.innerHTML = `<h1>${T('Протокол не знайдено', 'Protocol not found')}</h1><p class="note">${T('Посилання неправильне або результати ще не опубліковано.', 'The link is wrong or the results are not published yet.')}</p>`; return; }
+  const c = d.conditions, cond = [T(c.one_per_account ? 'один акаунт, один шанс' : 'кожен коментар дає окремий шанс', c.one_per_account ? 'one account, one chance' : 'every comment is a separate chance')];
+  if (c.answer) cond.push(T('правильна відповідь у коментарі', 'correct answer in the comment'));
+  if (c.mention) cond.push(T(`відмітка друзів: ${c.mention}`, `friends tagged: ${c.mention}`));
+  if (c.manual) cond.push(T('ручне підтвердження учасників', 'participants confirmed manually'));
+  document.title = d.title + ' · Barpi';
+  m.innerHTML = `<div class="eyebrow">${T('Протокол розіграшу', 'Giveaway protocol')}</div><h1>${esc(d.title)}</h1>
+    <h2>${T('Переможці', 'Winners')}</h2>
+    ${d.winners.map((w) => `<div class="card w"><div class="p">${w.position}</div><div><b>@${esc(w.username)}</b><small>${w.prize ? esc(w.prize) + ' · ' : ''}${T('№ ' + w.n + ' у списку', 'No. ' + w.n + ' in the list')}${w.confirmed ? '' : ' · ' + T('очікує підтвердження умов', 'conditions being checked')}${w.replaced ? ' · ' + T('замінив попереднього переможця', 'replaced a previous winner') : ''}</small></div></div>`).join('')}
+    ${d.replaced ? `<p class="note">${T(`Переможців, які не виконали умови і були замінені: ${d.replaced}.`, `Winners who did not meet the conditions and were replaced: ${d.replaced}.`)}</p>` : ''}
+    <h2>${T('Умови', 'Conditions')}</h2><div class="card"><dl>
+      <dt>${T('Публікація', 'Post')}</dt><dd>${d.post ? `<a href="${esc(d.post)}" rel="noopener noreferrer" target="_blank">${esc(d.post)}</a>` : ''}</dd>
+      <dt>${T('Коментарі приймались', 'Comments accepted')}</dt><dd>${fmt(d.starts_at)} … ${fmt(d.ends_at)}</dd>
+      <dt>${T('Механіка', 'Mechanics')}</dt><dd>${cond.join('; ')}</dd>
+      ${d.rules ? `<dt>${T('Додаткові умови', 'Additional terms')}</dt><dd>${esc(d.rules)}</dd>` : ''}
+      <dt>${T('Жеребкування', 'Draw')}</dt><dd>${fmt(d.drawn_at)}</dd></dl></div>
+    <h2>${T('Як обрано переможців', 'How the winners were chosen')}</h2><div class="card"><dl>
+      <dt>${T('Коментарів', 'Comments')}</dt><dd>${d.counts.comments}</dd>
+      <dt>${T('Акаунтів', 'Accounts')}</dt><dd>${d.counts.accounts}</dd>
+      <dt>${T('Допущено', 'Eligible')}</dt><dd>${d.counts.pool}</dd>
+      <dt>${T('Хеш списку', 'List hash')}</dt><dd class="mono">${esc(d.pool_hash)}</dd>
+      ${d.draws.map((x) => `<dt>${T('Коло', 'Round')} ${x.round}</dt><dd>${x.void ? T('анульовано', 'voided') + (x.void_reason ? ': ' + esc(x.void_reason) : '') : `${fmt(x.at)}<div class="mono">${T('зерно', 'seed')}: ${esc(x.seed)}</div><div class="mono">${T('номери', 'numbers')}: ${esc(x.picks.join(', '))}</div>`}</dd>`).join('')}</dl></div>
+    <p class="note">${T('Список допущених учасників зафіксовано до жеребкування, його контрольний хеш наведено вище. Сервер узяв криптографічно випадкове зерно і обчислив номери алгоритмом ' + esc(d.algo) + ': SHA-256 від зерна, хешу списку і лічильника, без зсуву за модулем. Маючи список, будь-хто відтворить ті самі номери. Повний список учасників не публікуємо, щоб не розкривати акаунти.', 'The list of eligible participants was frozen before the draw; its control hash is shown above. The server took a cryptographically random seed and computed the numbers with ' + esc(d.algo) + ': SHA-256 of the seed, the list hash and a counter, with no modulo bias. Anyone holding the list can reproduce the same numbers. The full list is not published to keep accounts private.')}</p>`;
+})();
+</script>
+</body>
+</html>
