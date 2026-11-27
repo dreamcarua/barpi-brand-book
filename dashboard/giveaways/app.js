@@ -1,8 +1,9 @@
-// Barpi · Розіграші · сторінка /dashboard/giveaways/ (v1.2.0, 27.11.2026). Дані лише з воркера barpi-giveaways.
+// Barpi · Розіграші · сторінка /dashboard/giveaways/ (v1.3.0, 27.11.2026). Дані лише з воркера barpi-giveaways.
 // v1.1.0: джерело 'example'. v1.2.0: гонка за лайки, спосіб вибору для кожного подарунка, аналітика, перегляд «як у застосунку»,
 // сортування і фільтри таблиці, відлік і барабан номера в презентації (перенесено з дашборду DreamCar).
-import * as L from './lib/logic.js?v=1.2.0';
-import * as X from './extra.js?v=1.2.0';
+import * as L from './lib/logic.js?v=1.3.0';
+import * as X from './extra.js?v=1.3.0';
+import { openLive } from './live.js?v=1.3.0';
 
 const API = '/dashboard/api/giveaways';
 const $ = (s, r = document) => r.querySelector(s);
@@ -225,6 +226,7 @@ function stepDraw() {
       ${pz.length ? `<ol class="small" style="margin:0 0 12px 18px">${pz.map((p) => `<li><b>${esc(p.label)}</b>: ${p.method === 'top_likes' ? 'найбільше лайків' + (lead ? ` (зараз лідирує @${esc(lead.username)}, ${lead.like_count || 0} ♥)` : '') : 'випадковий номер'}</li>`).join('')}</ol>` : ''}
       <p class="muted small" style="margin-bottom:14px">У випадковому виборі кожен учасник має однаковий шанс. Сервер бере криптографічно випадкове зерно, обирає номери і записує результат. Повторне натискання результат не змінює. Один акаунт двічі не виграє.</p>
       <button class="btn big" data-act="draw-ask">🎁 РОЗІГРАТИ ПОДАРУНКИ</button>
+      <p style="margin-top:12px"><button class="btn sec" data-act="live" style="width:100%;justify-content:center">▶ Провести в режимі ефіру (на весь екран, з барабанами)</button></p>
       <p style="margin-top:14px"><button class="btn sm sec" data-act="unfreeze">Зняти фіксацію і повернутись до списку</button></p></div>`;
   }
   const ws = cur(), win = ws.filter((w) => w.role === 'winner').sort((a, b) => a.position - b.position || a.id - b.id), res = ws.filter((w) => w.role === 'reserve').sort((a, b) => a.position - b.position);
@@ -239,7 +241,7 @@ function stepDraw() {
     <div class="va row">${w.role === 'winner' ? (w.verdict === 'ok' ? '<span class="chip ok">Умови виконано</span>' : w.verdict === 'failed' ? (replaced.has(w.id) ? '<span class="chip bad">Замінено</span>' : w.method === 'top_likes' ? '<span class="chip bad">Наступного за лайками немає</span>' : `<button class="btn sm" data-act="extra" data-id="${w.id}">Обрати наступного</button>`)
       : `<button class="btn sm" data-act="verdict" data-id="${w.id}" data-v="ok">✓ Умови виконано</button><button class="btn sm danger" data-act="ask-reason" data-u="w${w.id}">✗ Не виконав</button>`) : '<span class="chip">Резерв</span>'}</div></div>`;
   const link = g.public_token ? `${location.origin}/giveaway/?t=${g.public_token}` : '';
-  return `<div class="row" style="margin-bottom:14px"><button class="btn" data-act="show">▶ Презентація 9:16</button><button class="btn sec" data-act="copy-win">Скопіювати переможців</button><button class="btn sec" data-act="csv">Завантажити результати</button><button class="btn sec" data-act="verify">Перевірити жеребкування</button></div>
+  return `<div class="row" style="margin-bottom:14px"><button class="btn" data-act="live">▶ Режим ефіру</button><button class="btn sec" data-act="show">Stories 9:16</button><button class="btn sec" data-act="copy-win">Скопіювати переможців</button><button class="btn sec" data-act="csv">Завантажити результати</button><button class="btn sec" data-act="verify">Перевірити жеребкування</button></div>
     ${S.verify ? `<div class="banner ${S.verify.ok ? 'ok' : 'bad'}">${esc(S.verify.text)}</div>` : ''}
     <h2>Переможці</h2>${win.map(wcard).join('')}
     ${res.length ? `<h2 style="margin-top:18px">Резервні</h2>${res.map(wcard).join('')}` : ''}
@@ -381,7 +383,7 @@ const ACT = {
     if (!n.title.trim()) return toast(ERR.title_required, true);
     if (n.source === 'instagram' && !n.media) return toast(ERR.no_media, true);
     const tpl = S.templates.find((t) => String(t.id) === String(n.tpl));
-    const j = await api('', 'POST', { title: n.title, source: n.source, media: n.media, starts_at: fromInput(n.starts), ends_at: fromInput(n.ends), cfg: tpl ? tpl.config : {} });
+    const j = await api('/new', 'POST', { title: n.title, source: n.source, media: n.media, starts_at: fromInput(n.starts), ends_at: fromInput(n.ends), cfg: tpl ? tpl.config : {} });
     S.next = 'rules'; S.nd = null; location.hash = '#/g/' + j.id;
   },
   step: (b) => { S.step = b.dataset.step; S.reasonFor = null; renderG(); window.scrollTo(0, 0); },
@@ -408,6 +410,7 @@ const ACT = {
   'draw-ask': () => { const g = S.d.g; const m = modal(`<h2>Розіграти подарунки?</h2><p class="muted">У пулі ${g.pool_count} учасників. Результат запишеться в протокол і не зміниться після повторного натискання.</p><div class="row" style="margin-top:14px"><button class="btn" id="draw_ok">Розіграти</button><button class="btn sec" data-close>Ще ні</button></div>`);
     $('#draw_ok', m).onclick = async () => { $('#draw_ok', m).disabled = true; try { await api('/' + g.id + '/draw', 'POST', {}); m.remove(); await reload(); startShow(); } catch (e) { m.remove(); say(e); } }; },
   show: () => startShow(),
+  live: () => openLive({ get d() { return S.d; }, API, api, reload, toast, errText, onClose: () => renderG() }),
   verify: () => verify(),
   verdict: async (b) => { const v = b.dataset.v, reason = v === 'failed' ? ($('#reason_in') ? $('#reason_in').value.trim() : '') : ''; if (v === 'failed' && !reason) return toast(ERR.reason_required, true);
     const j = await api('/' + S.d.g.id + '/verdict', 'POST', { winner_id: Number(b.dataset.id), verdict: v, reason }); S.reasonFor = null;

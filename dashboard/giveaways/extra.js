@@ -1,6 +1,6 @@
 // Barpi · Розіграші · аналітика поста, перегляд «як у застосунку», факти для презентації (v1.2.0, 27.11.2026).
 // Перенесено з дашборду DreamCar «Учасники з коментарів»; дані ті самі, що бачить воркер, нових запитів немає.
-import * as L from './lib/logic.js?v=1.2.0';
+import * as L from './lib/logic.js?v=1.3.0';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nf = (n) => (n == null || n === '' ? 'н/д' : Number(n).toLocaleString('uk-UA'));
@@ -87,7 +87,7 @@ export function phoneView(d, state, API) {
   if (q) rows = rows.filter((r) => (/^\d+$/.test(q) ? String(num.get(String(r.ig_id))) === q : String(r.username || '').toLowerCase().includes(q) || String(r.text || '').toLowerCase().includes(q)));
   const shown = rows.slice(0, 600);
   const img = g.media_id ? `<img src="${API}/img/m/${esc(g.media_id)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
-  const list = shown.map((r) => { const n = num.get(String(r.ig_id)); return `<div class="igc${r.parent_ig_id ? ' rep' : ''}${n ? '' : ' off'}"><span class="a" style="background:${avc(r.username)}">${esc(String(r.username || '?').slice(0, 1).toUpperCase())}</span>
+  const list = shown.map((r) => { const n = num.get(String(r.ig_id)); return `<div class="igc${r.parent_ig_id ? ' rep' : ''}${n ? '' : ' off'}" data-id="${esc(r.ig_id)}"><span class="a" style="background:${avc(r.username)}">${esc(String(r.username || '?').slice(0, 1).toUpperCase())}</span>
     <div><div class="t"><b>${esc(r.username)}</b> ${hl(r.text, kws)}</div><div class="m"><span>${esc(ago(r.ts, d.now))}</span>${r.like_count ? `<span>${nf(r.like_count)} позначок «Подобається»</span>` : ''}${n ? `<span class="no">№ ${n}</span>` : ''}${g.media_permalink ? `<a href="${esc(commentUrl(g, r.ig_id, r.parent_ig_id))}" target="_blank" rel="noopener noreferrer">відкрити ↗</a>` : ''}</div></div>
     <span class="h">♡${r.like_count ? '<br>' + nf(r.like_count) : ''}</span></div>`; }).join('');
   return `<div class="phonewrap"><div class="phone"><div class="scr">

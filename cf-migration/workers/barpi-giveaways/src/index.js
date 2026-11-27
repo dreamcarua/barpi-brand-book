@@ -10,7 +10,7 @@
 import { accessUser } from './access.js';
 import * as L from '../../../../dashboard/giveaways/lib/logic.js';
 
-const VERSION = '1.2.0'; // 27.11.2026: гонка за лайки, спосіб вибору для кожного подарунка, статистика поста, проксі зображень; // 27.11.2026: джерело 'example' = навчальний приклад на реальному пості (не публікується, не йде в календар)
+const VERSION = '1.3.0'; // 27.11.2026: створення через /new (виправлено 405), режим ефіру на сторінці; 1.2.0: // 27.11.2026: гонка за лайки, спосіб вибору для кожного подарунка, статистика поста, проксі зображень; // 27.11.2026: джерело 'example' = навчальний приклад на реальному пості (не публікується, не йде в календар)
 const API = '/dashboard/api/giveaways';
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const PAGE = 'https://brand.barpi.ua/dashboard/giveaways/';
@@ -291,7 +291,8 @@ async function dashboard(req, env, ctx, path, email) {
   }
   const tm = path.match(/^\/templates\/(\d+)$/);
   if (tm && m === 'DELETE') { await run(env, 'UPDATE gw_templates SET deleted = 1 WHERE id = ?', Number(tm[1])); return json({ ok: true }); }
-  if (path === '' || path === '/') {
+  // Створення: /new. Шлях без кінцевої «/» не потрапляє під маршрут воркера (…/giveaways/*) і йде на статичний сайт (405).
+  if (path === '/new' || path === '' || path === '/') {
     if (m !== 'POST') throw new E('method', 405);
     const b = await body(); const title = str(b.title, 160).trim(); if (!title) throw new E('title_required');
     const demo = b.source === 'demo'; const t = now();
