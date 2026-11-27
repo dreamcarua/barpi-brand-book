@@ -10,7 +10,7 @@
 import { accessUser } from './access.js';
 import * as L from '../../../../dashboard/giveaways/lib/logic.js';
 
-const VERSION = '1.3.0'; // 27.11.2026: створення через /new (виправлено 405), режим ефіру на сторінці; 1.2.0: // 27.11.2026: гонка за лайки, спосіб вибору для кожного подарунка, статистика поста, проксі зображень; // 27.11.2026: джерело 'example' = навчальний приклад на реальному пості (не публікується, не йде в календар)
+const VERSION = '1.4.0'; // 27.11.2026: відправка подарунка (статус, ТТН, нотатка), лічильник у списку; 1.3.0: // 27.11.2026: створення через /new (виправлено 405), режим ефіру на сторінці; 1.2.0: // 27.11.2026: гонка за лайки, спосіб вибору для кожного подарунка, статистика поста, проксі зображень; // 27.11.2026: джерело 'example' = навчальний приклад на реальному пості (не публікується, не йде в календар)
 const API = '/dashboard/api/giveaways';
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const PAGE = 'https://brand.barpi.ua/dashboard/giveaways/';
@@ -249,6 +249,21 @@ async function doVerdict(env, g, by, b) {
   return { ok: true, promoted: promoted ? promoted.username : null, need_extra: v === 'failed' && w.role === 'winner' && !promoted && w.method !== 'top_likes' };
 }
 
+const SHIP = { contact: 'зв\'язались', address: 'адресу отримано', sent: 'відправлено', received: 'отримано', refused: 'відмовився' };
+async function doShip(env, g, by, b) {
+  if (g.status !== 'drawn') throw new E('not_drawn', 409);
+  const w = (await winnersOf(env, g)).find((x) => !x.void && x.gen === g.gen && x.id === Number(b.winner_id));
+  if (!w || w.role !== 'winner' || w.verdict !== 'ok') throw new E('ship_not_confirmed', 409);
+  const st = b.status === '' || b.status == null ? null : SHIP[b.status] ? b.status : null;
+  if (b.status && !st) throw new E('bad_status', 400);
+  // ТТН: лише цифри (Нова пошта 14 цифр), інакше до 30 символів латиниці й цифр
+  const ttn = str(b.ttn, 30).replace(/\s+/g, '').replace(/[^0-9A-Za-z-]/g, '') || null;
+  const note = str(b.note, 300).trim() || null;
+  await env.DB.batch([env.DB.prepare('UPDATE gw_winners SET ship_status = ?, ship_ttn = ?, ship_note = ?, ship_by = ?, ship_at = ? WHERE id = ?').bind(st, ttn, note, by, now(), w.id),
+    logStmt(env, g.id, by, 'ship', { username: w.username, status: st ? SHIP[st] : null, ttn })]);
+  return { ok: true };
+}
+
 // ── публічний протокол ────────────────────────────────────────────────────
 async function protocol(env, token) {
   if (!/^[a-f0-9]{32}$/.test(token)) return json({ error: 'not_found' }, 404);
@@ -280,6 +295,8 @@ async function dashboard(req, env, ctx, path, email) {
   if (im && m === 'GET') return await mediaImage(req, env, ctx, im[1]);
   if (path === '/list' && m === 'GET') {
     const rows = (await all(env, 'SELECT * FROM gw_giveaways WHERE deleted = 0 ORDER BY id DESC LIMIT 500')).map(pub);
+    const ship = await all(env, "SELECT w.giveaway_id gid, SUM(CASE WHEN w.verdict = 'ok' AND COALESCE(w.ship_status, '') NOT IN ('sent', 'received', 'refused') THEN 1 ELSE 0 END) todo, SUM(CASE WHEN w.verdict = 'pending' THEN 1 ELSE 0 END) unchecked FROM gw_winners w JOIN gw_giveaways g ON g.id = w.giveaway_id AND g.gen = w.gen WHERE w.void = 0 AND w.role = 'winner' GROUP BY w.giveaway_id");
+    const sm = new Map(ship.map((x) => [x.gid, x])); for (const r of rows) { const x = sm.get(r.id); r.ship_todo = x ? x.todo : 0; r.unchecked = x ? x.unchecked : 0; }
     const templates = (await all(env, 'SELECT id, name, config, created_by, created_at FROM gw_templates WHERE deleted = 0 ORDER BY id DESC')).map((t) => ({ ...t, config: JSON.parse(t.config) }));
     return json({ rows, templates, now: now() });
   }
@@ -384,6 +401,7 @@ async function dashboard(req, env, ctx, path, email) {
   if (act === 'draw') return json(await doDraw(env, g, email, ctx));
   if (act === 'extra') return json(await doExtra(env, g, email, b));
   if (act === 'verdict') return json(await doVerdict(env, g, email, b));
+  if (act === 'ship') return json(await doShip(env, g, email, b));
   if (act === 'void') {
     if (!isAdmin) throw new E('admin_only', 403);
     if (g.status !== 'drawn') throw new E('not_drawn', 409);

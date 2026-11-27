@@ -103,6 +103,15 @@ test('аналітика: години, пік, розподіли, топ ла�
   assert.equal(a.pool, 3); assert.equal(a.peak[1], 2); assert.equal(a.series[0][1], 2);
   assert.equal(a.topLikes[0].username, 'b'); assert.equal(a.topLikes[0].n, 2);
   assert.deepEqual(a.dist.map((x) => x[1]), [4, 1, 0, 0]);
-  assert.deepEqual(a.otherTop[0], ['качка', 2]);
+  assert.deepEqual(a.otherTop[0], ['Качка', 2]);
   assert.equal(a.firstDay, 67);
+});
+test('інші версії: довідник продуктів, правильні не рахуються', () => {
+  const cs = [c('1', 'a', 'курка', 1), c('2', 'b', 'Мабуть індичка?', 2), c('3', 'd', 'індичка або качка', 3), c('4', 'e', 'Печінка!', 4), c('5', 'f', 'хочу виграти', 5)];
+  const ev = L.evaluate(cs, { answer: { on: true, groups: [['курка']] } });
+  const a = L.analyze(cs, ev.entries, { answers: ['курка'] });
+  assert.equal(a.byProduct, true);
+  assert.deepEqual(a.otherTop, [['Індичка', 2], ['Качка', 1], ['Печінка', 1]]);
+  assert.deepEqual(L.productsIn('Сердечка для хвостика, вим’я'), ['Сердечка', "Вим'я"]);
+  assert.deepEqual(L.productsIn('сирий'), []);
 });

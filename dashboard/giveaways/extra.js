@@ -1,6 +1,6 @@
 // Barpi · Розіграші · аналітика поста, перегляд «як у застосунку», факти для презентації (v1.2.0, 27.11.2026).
 // Перенесено з дашборду DreamCar «Учасники з коментарів»; дані ті самі, що бачить воркер, нових запитів немає.
-import * as L from './lib/logic.js?v=1.3.0';
+import * as L from './lib/logic.js?v=1.4.0';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nf = (n) => (n == null || n === '' ? 'н/д' : Number(n).toLocaleString('uk-UA'));
@@ -23,7 +23,7 @@ export function hl(text, kws) {
   if (!k.length) return t;
   return t.replace(new RegExp('(' + k.join('|') + ')', 'giu'), '<mark>$1</mark>');
 }
-export function analysis(d) { return L.analyze(d.comments || [], d.entries || [], { include_replies: !!d.g.cfg.include_replies }); }
+export function analysis(d) { return L.analyze(d.comments || [], d.entries || [], { include_replies: !!d.g.cfg.include_replies, answers: answerWords(d.g.cfg) }); }
 
 // Факти для панелі й презентації: [назва, текст]
 export function facts(d, A) {
@@ -32,7 +32,7 @@ export function facts(d, A) {
   if (g.cfg.answer && g.cfg.answer.on) f.push(['Точність', `${A.share}% учасників дали правильну відповідь: ${nf(A.pool)} з ${nf(A.entries)}`]);
   if (A.peak[1]) f.push(['Пік', `${hm(A.peak[0])}: ${pl(A.peak[1], 'учасник', 'учасники', 'учасників')} за годину`]);
   if (A.firstHour) f.push(['Швидкість', `за першу годину: ${pl(A.firstHour, 'учасник', 'учасники', 'учасників')}`]);
-  if (A.otherTop[0]) f.push(['Інші версії', `«${A.otherTop[0][0]}»: це слово є в коментарях ${pl(A.otherTop[0][1], 'учасника', 'учасників', 'учасників')} без правильної відповіді`]);
+  if (A.otherTop[0]) f.push(['Інші версії', A.byProduct ? `${A.otherTop[0][0]}: так подумали ${pl(A.otherTop[0][1], 'учасник', 'учасники', 'учасників')}` : `«${A.otherTop[0][0]}»: це слово є в коментарях ${pl(A.otherTop[0][1], 'учасника', 'учасників', 'учасників')} без правильної відповіді`]);
   if (A.authors[0] && A.authors[0][1] > 1) f.push(['Найактивніший', `@${A.authors[0][0]}: ${pl(A.authors[0][1], 'коментар', 'коментарі', 'коментарів')}`]);
   if (A.longest && String(A.longest.text).length > 60) f.push(['Найдетальніша відповідь', `@${A.longest.username}: «${String(A.longest.text).slice(0, 90)}${String(A.longest.text).length > 90 ? '…' : ''}»`]);
   if (A.first && A.last && A.last.ts > A.first.ts) f.push(['Тривалість', `учасники писали ${span(A.last.ts - A.first.ts)}`]);
@@ -53,7 +53,7 @@ export function stepStats(d) {
     <div class="tlx">${A.series.filter((_, i) => i % step === 0).map((x) => `<span>${esc(hm(x[0]))}</span>`).join('')}</div>
     <p class="small muted" style="margin-top:8px">Пік: <b>${esc(hm(A.peak[0]))}</b>, ${nf(A.peak[1])} за годину. Перша доба дала <b>${A.firstDay}%</b> учасників.${A.series.length >= 24 * 60 ? ' Показано перші 60 діб.' : ''}</p>` : '<p class="muted">Немає даних.</p>';
   const lb = (rows, fmt) => (rows.length ? `<ol class="lb">${rows.map(fmt).join('')}</ol>` : '<p class="muted small">Немає даних.</p>');
-  const gap = st.comments != null && s.comments_total < st.comments * 0.98 ? `<div class="banner">Зібрано <b>${nf(s.comments_total)}</b> з <b>${nf(st.comments)}</b>: Instagram у лічильнику поста показує на ${nf(st.comments - s.comments_total)} більше. Можливі причини: коментарі видалено автором або приховано фільтром Instagram. У розіграші беруть участь лише коментарі, які віддав API.</div>` : '';
+  const gap = st.comments != null && s.comments_total < st.comments ? `<div class="banner${s.comments_total < st.comments * 0.98 ? '' : ' soft'}">Зібрано <b>${nf(s.comments_total)}</b> з <b>${nf(st.comments)}</b>: Instagram у лічильнику поста показує на ${nf(st.comments - s.comments_total)} більше. Можливі причини: коментарі видалено автором або приховано фільтром Instagram. У розіграші беруть участь лише коментарі, які віддав API.</div>` : '';
   return `${gap}
   <div class="kpis">${kpi('лайків поста', st.likes)}${kpi('коментарів зібрано', s.comments_total, st.comments != null ? 'Instagram рахує ' + nf(st.comments) : '')}${kpi(g.status === 'open' ? 'допущено зараз' : 'номерів у пулі', g.pool_count ?? s.ok, c.answer && c.answer.on ? `точність ${A.share}%` : '')}${kpi('унікальних акаунтів', s.accounts, s.accounts ? 'у середньому ' + (A.comments / Math.max(1, A.authors.length)).toFixed(1).replace('.', ',') + ' коментаря на акаунт' : '')}${kpi('охоплення', st.reach, st.views != null ? 'перегляди ' + nf(st.views) : '')}${kpi('репости', st.shares, st.saved != null ? 'збереження ' + nf(st.saved) : '')}</div>
   ${st.at ? '' : '<p class="small muted" style="margin:-8px 0 14px">Лайки поста, охоплення і репости з\'являться після наступного оновлення коментарів.</p>'}
@@ -67,7 +67,7 @@ export function stepStats(d) {
     <div class="panel"><h2>Скільки пишуть</h2><p class="small muted" style="margin-bottom:10px">розподіл акаунтів</p>${bars(A.dist)}${A.authors.length ? `<p class="small muted" style="margin-top:8px"><b>${Math.round((A.dist[0][1] / A.authors.length) * 100)}%</b> акаунтів залишили один коментар.</p>` : ''}</div>
     <div class="panel"><h2>${c.answer && c.answer.on ? 'Відповіді' : 'Лайки на коментарях'}</h2><p class="small muted" style="margin-bottom:10px">${c.answer && c.answer.on ? 'правильні слова: ' + esc(answerWords(c).join(', ')) : 'розподіл учасників'}</p>
       ${c.answer && c.answer.on ? bars([['допущено', s.ok], ['на перевірці', s.review], ['відхилено', s.fail]]) : bars(A.likeDist)}
-      ${A.otherTop.length ? `<p class="small muted" style="margin-top:8px">Часті слова в коментарях без правильної відповіді: ${A.otherTop.map(([w, n]) => `«${esc(w)}» ${n}`).join(', ')}.</p>` : ''}</div>
+      ${A.otherTop.length ? `<p class="small muted" style="margin-top:8px">${A.byProduct ? 'Інші версії учасників: ' + A.otherTop.map(([w, n]) => `${esc(w)} ${n}`).join(', ') : 'Часті слова в коментарях без правильної відповіді: ' + A.otherTop.map(([w, n]) => `«${esc(w)}» ${n}`).join(', ')}.</p>` : ''}</div>
   </div>
   <div class="panel"><h2>Факти</h2><dl class="facts">${facts(d, A).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></div>
   <p class="small muted">Підписку, лайк поста і репост у сторіс Instagram через API не показує: колонка «Акаунт» веде на профіль, перевіряйте переможця вручну перед оголошенням.</p>`;

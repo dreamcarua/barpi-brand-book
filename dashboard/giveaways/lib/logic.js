@@ -184,6 +184,20 @@ export function likesRank(pool, used = new Set()) {
 // Усі номери перелічених акаунтів (для виключення з випадкового вибору).
 export function numbersOf(pool, users) { const s = new Set(users); return pool.filter((p) => s.has(p.username)).map((p) => p.n); }
 
+// Довідник смаків і продуктів Barpi для «інших версій» (аналог довідника марок у DreamCar): префікси слів → назва.
+export const PRODUCTS = [
+  ['Яловичина', ['яловичин', 'яловичен', 'говядин', 'beef']], ['Курка', ['курк', 'курят', 'курин', 'chicken']], ['Качка', ['качк', 'качин', 'утк', 'duck']],
+  ['Індичка', ['індич', 'индей', 'индюш', 'turkey']], ['Кролик', ['кролик', 'кроля', 'rabbit']], ['Печінка', ['печін', 'печен', 'liver']],
+  ['Сердечка', ['сердеч', 'серця', 'сердц', 'heart']], ['Шлунки', ['шлунк', 'желуд', 'пупк', 'пупоч']], ['Вим\'я', ['вим\'я', 'вимя', 'вим’я', 'вымя']],
+  ['Легені', ['легені', 'легеня', 'легкие', 'легких']], ['Трахея', ['трахе']], ['Рубець', ['рубець', 'рубц', 'рубец']], ['Вушка', ['вушк', 'ушки', 'ушко']],
+  ['Сир', ['сир ', 'сирн', 'сирні', 'сырн', 'cheese']], ['Риба', ['риб', 'рыб', 'лосос', 'тріск', 'fish']], ['Баранина', ['баран', 'ягня', 'lamb']],
+];
+export function productsIn(text) {
+  const t = ' ' + normText(text) + ' ', out = new Set();
+  for (const [label, keys] of PRODUCTS) if (keys.some((k) => t.includes(' ' + k))) out.add(label);
+  return [...out];
+}
+
 // Аналітика поста: лише підрахунки, без мережі. comments як у evaluate, entries з evaluate.
 const STOP = new Set('дуже який яка яке які коли тому того цього цьому щоб якщо також тільки лише буде були було може можна треба наша наші наш ваша ваші ваш мене тебе нього неї них його їхні собі дякую привіт хочу хочемо беремо участь нашого нашої нашому виграти вашого вашої будь ласка this that with from have what your'.split(' '));
 export function analyze(comments, entries, opt = {}) {
@@ -208,11 +222,18 @@ export function analyze(comments, entries, opt = {}) {
   for (const e of base) { const l = e.like_count || 0; likeDist[l === 0 ? 0 : l < 5 ? 1 : l < 20 ? 2 : 3][1]++; }
   let n = 0; const num = new Map(); for (const e of ok) num.set(String(e.ig_id), ++n);
   const topLikes = base.slice().sort((a, b) => (b.like_count || 0) - (a.like_count || 0) || a.ts - b.ts).slice(0, 10).map((e) => ({ username: e.username, text: e.text, like_count: e.like_count || 0, ig_id: e.ig_id, n: num.get(String(e.ig_id)) || null }));
-  const other = new Map();
-  for (const e of entries) { if (e.final === 'ok' || !e.reasons.includes('немає правильної відповіді')) continue; for (const w of new Set(words(e.text).filter((w) => w.length >= 4 && !STOP.has(w) && !w.startsWith('@') && !/^\d+$/.test(w)))) other.set(w, (other.get(w) || 0) + 1); }
-  const otherTop = [...other.entries()].filter((x) => x[1] > 1).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 5);
+  // Інші версії: спершу продукти з довідника Barpi (крім правильних), якщо їх немає, то найчастіші слова
+  const right = new Set((opt.answers || []).flatMap((v) => productsIn(v)));
+  const prod = new Map(), other = new Map();
+  for (const e of entries) {
+    if (e.final === 'ok' || !e.reasons.includes('немає правильної відповіді')) continue;
+    for (const p of productsIn(e.text)) if (!right.has(p)) prod.set(p, (prod.get(p) || 0) + 1);
+    for (const w of new Set(words(e.text).filter((w) => w.length >= 4 && !STOP.has(w) && !w.startsWith('@') && !/^\d+$/.test(w)))) other.set(w, (other.get(w) || 0) + 1);
+  }
+  const byProduct = prod.size > 0;
+  const otherTop = [...(byProduct ? prod : other).entries()].filter((x) => byProduct || x[1] > 1).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 5);
   const longest = base.slice().sort((a, b) => String(b.text).length - String(a.text).length)[0] || null;
-  return { series, peak, first, last, firstDay, firstHour, authors, dist, likeDist, topLikes, otherTop, longest, pool: ok.length, entries: entries.length,
+  return { series, peak, first, last, firstDay, firstHour, authors, dist, likeDist, topLikes, otherTop, byProduct, longest, pool: ok.length, entries: entries.length,
     comments: live.length, share: entries.length ? Math.round((ok.length / entries.length) * 100) : 0, maxLikes: topLikes[0] ? topLikes[0].like_count : 0 };
 }
 // Тестові коментарі для репетиції (режим «Тест»): детерміновані, вигадані акаунти.

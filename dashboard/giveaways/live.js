@@ -2,8 +2,8 @@
 // Перенесено з режиму ефіру дашборду DreamCar: великі барабани номера, картки статистики, рядок фактів,
 // коментар переможця з фактами, телефон з постом, вердикт ✓/✗ прямо в ефірі.
 // Відмінність: номери обирає сервер (один запит «Розіграти»), ефір лише відкриває записаний результат по одному.
-import * as L from './lib/logic.js?v=1.3.0';
-import * as X from './extra.js?v=1.3.0';
+import * as L from './lib/logic.js?v=1.4.0';
+import * as X from './extra.js?v=1.4.0';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nf = (n) => Number(n || 0).toLocaleString('uk-UA');
@@ -141,11 +141,17 @@ export function openLive(ctx) {
         const lost = cur().find((x) => x.role === 'winner' && x.verdict === 'failed' && x.method !== 'top_likes' && !cur().some((y) => y.promoted_from === x.id));
         if (nx) h += `<button type="button" class="lb2 big primary" data-l="next">${revealed.size ? 'Наступний' : 'Відкрити переможця'} · пробіл</button>`;
         else if (lost) h += `<button type="button" class="lb2 big primary" data-l="extra" data-id="${lost.id}">Обрати наступного · пробіл</button>`;
-        else if (!shown) { $('#lvWin').innerHTML = '<div class="sub">Усіх переможців уже відкрито</div>'; }
+        else if (!shown) summary();
         if (!nx && !lost && q.length && q.every((x) => revealed.has(x.id))) h += '<span class="done">усіх переможців відкрито</span>';
       }
     }
     ctl.innerHTML = h; const r = $('#lvReason'); if (r) r.focus();
+  }
+  // Підсумок, коли всіх уже відкрито (наприклад, ефір відкрили повторно): список переможців замість порожнього барабана
+  function summary() {
+    const q = queue(); if (!q.length) { $('#lvWin').innerHTML = '<div class="sub">Переможців немає</div>'; return; }
+    $('#lvPrz').textContent = 'Переможці'; setReels(q[q.length - 1].n);
+    $('#lvWin').innerHTML = `<div class="sumlist">${q.map((w, k) => `<div class="ap" style="animation-delay:${k * 60}ms"><b>${w.position}</b><span><a href="https://www.instagram.com/${esc(w.username)}/" target="_blank" rel="noopener noreferrer">@${esc(w.username)}</a>${w.prize ? `<small>${esc(w.prize)}</small>` : ''}</span>${w.verdict === 'ok' ? '<i>✓</i>' : '<i class="p">…</i>'}</div>`).join('')}</div>`;
   }
   async function refresh() { await ctx.reload(); d = ctx.d; g = d.g; }
   async function reveal(w) {
