@@ -67,3 +67,42 @@ test('хеш пулу залежить від складу і порядку', a
   assert.notEqual(await L.poolHash(a), await L.poolHash([a[0]]));
   assert.equal((await L.poolHash(a)).length, 64);
 });
+test('відповіді на коментарі беруть участь лише за увімкненої опції', () => {
+  const cs = [c('1', 'a', 'x', 1), c('2', 'b', 'y', 2, '1')];
+  assert.deepEqual(L.poolOf(L.evaluate(cs, {}).entries).map((p) => p.username), ['a']);
+  assert.deepEqual(L.poolOf(L.evaluate(cs, { include_replies: true }).entries).map((p) => p.username), ['a', 'b']);
+});
+test('одна правильна відповідь: кілька варіантів або питання йдуть на перевірку', () => {
+  const cfg = { answer: { on: true, groups: [['курка']] } };
+  const r = L.evaluate([c('1', 'a', 'курка або качка', 1), c('2', 'b', 'курка?', 2), c('3', 'd', 'Курка!', 3)], cfg);
+  assert.deepEqual(r.entries.map((e) => e.final), ['review', 'review', 'ok']);
+});
+test('подарунки: рядки і обʼєкти, гонка за лайки', () => {
+  assert.deepEqual(L.normPrizes(['A', { label: 'B', method: 'top_likes' }, { label: ' ' }, { label: 'C', method: 'x' }]), [{ label: 'A', method: 'random' }, { label: 'B', method: 'top_likes' }, { label: 'C', method: 'random' }]);
+  const pool = [{ n: 1, username: 'a', like_count: 3 }, { n: 2, username: 'b', like_count: 9 }, { n: 3, username: 'c', like_count: 9 }, { n: 4, username: 'b', like_count: 20 }];
+  assert.deepEqual(L.likesRank(pool).map((p) => p.n), [4, 2, 3, 1]);
+  assert.deepEqual(L.likesRank(pool, new Set(['b'])).map((p) => p.n), [3, 1]);
+  assert.deepEqual(L.numbersOf(pool, ['b']), [2, 4]);
+});
+test('жеребкування v2: один акаунт не виграє двічі, v1 лишається відтворюваним', async () => {
+  const owners = ['a', 'a', 'a', 'b', 'b', 'c', 'd', 'd'];
+  for (let i = 0; i < 200; i++) {
+    const p = await L.draw('seed' + i, 'h', owners.length, 4, [], owners);
+    assert.equal(new Set(p.map((n) => owners[n - 1])).size, p.length);
+    assert.equal(p.length, 4);
+    assert.deepEqual(p, await L.draw('seed' + i, 'h', owners.length, 4, [], owners));
+  }
+  assert.equal((await L.draw('s', 'h', owners.length, 9, [], owners)).length, 4);
+  assert.notDeepEqual(await L.draw('same', 'h', 50, 10), await L.draw('same', 'h', 50, 10, [], Array.from({ length: 50 }, (_, i) => 'u' + i)));
+});
+test('аналітика: години, пік, розподіли, топ лайків', () => {
+  const cs = [c('1', 'a', 'курка', 3600), c('2', 'a', 'ще', 3700), c('3', 'b', 'курка', 3800), c('4', 'd', 'качка смачна', 7300), c('5', 'e', 'качка', 7400), c('6', 'f', 'курка', 90000)];
+  cs[2].like_count = 7;
+  const ev = L.evaluate(cs, { answer: { on: true, groups: [['курка']] } });
+  const a = L.analyze(cs, ev.entries);
+  assert.equal(a.pool, 3); assert.equal(a.peak[1], 2); assert.equal(a.series[0][1], 2);
+  assert.equal(a.topLikes[0].username, 'b'); assert.equal(a.topLikes[0].n, 2);
+  assert.deepEqual(a.dist.map((x) => x[1]), [4, 1, 0, 0]);
+  assert.deepEqual(a.otherTop[0], ['качка', 2]);
+  assert.equal(a.firstDay, 67);
+});

@@ -10,7 +10,7 @@
 import { accessUser } from './access.js';
 import * as L from '../../../../dashboard/giveaways/lib/logic.js';
 
-const VERSION = '1.1.0'; // 27.11.2026: джерело 'example' = навчальний приклад на реальному пості (не публікується, не йде в календар)
+const VERSION = '1.2.0'; // 27.11.2026: гонка за лайки, спосіб вибору для кожного подарунка, статистика поста, проксі зображень; // 27.11.2026: джерело 'example' = навчальний приклад на реальному пості (не публікується, не йде в календар)
 const API = '/dashboard/api/giveaways';
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const PAGE = 'https://brand.barpi.ua/dashboard/giveaways/';
@@ -36,6 +36,7 @@ const kyivDate = (ts) => new Date(ts * 1000).toLocaleDateString('sv-SE', { timeZ
 function cleanCfg(b, prev = {}) {
   const c = { ...prev };
   if ('one_per_account' in b) c.one_per_account = !!b.one_per_account;
+  if ('include_replies' in b) c.include_replies = !!b.include_replies;
   if ('exclude' in b) c.exclude = [...new Set(arr(b.exclude).map(L.cleanUser).filter(Boolean))].slice(0, 100);
   if ('answer' in b) {
     const groups = arr(b.answer && b.answer.groups).map((g) => arr(g).map((s) => str(s, 80).trim()).filter(Boolean).slice(0, 20)).filter((g) => g.length).slice(0, 30);
@@ -45,7 +46,7 @@ function cleanCfg(b, prev = {}) {
   if ('manual' in b) c.manual = { on: !!(b.manual && b.manual.on) };
   if ('winners' in b) c.winners = clamp(b.winners, 1, 100, 1);
   if ('reserves' in b) c.reserves = clamp(b.reserves, 0, 100, 0);
-  if ('prizes' in b) c.prizes = arr(b.prizes).map((s) => str(s, 200).trim()).filter(Boolean).slice(0, 100);
+  if ('prizes' in b) c.prizes = L.normPrizes(arr(b.prizes)).map((p) => ({ label: str(p.label, 200).trim(), method: p.method })).slice(0, 100);
   if ('rules' in b) c.rules = str(b.rules, 4000);
   if ('festive' in b) c.festive = !!b.festive;
   return c;
@@ -56,7 +57,7 @@ async function compute(env, g) {
   const comments = await all(env, 'SELECT ig_id, parent_ig_id, username, text, ts, like_count, gone FROM gw_comments WHERE giveaway_id = ?', g.id);
   const dec = {};
   for (const d of await all(env, 'SELECT username, decision, reason FROM gw_decisions WHERE giveaway_id = ?', g.id)) dec[d.username] = d;
-  return L.evaluate(comments, evalCfg(g, env), dec);
+  return { ...L.evaluate(comments, evalCfg(g, env), dec), comments };
 }
 async function recount(env, g, res) {
   const s = res.stats;
@@ -64,7 +65,7 @@ async function recount(env, g, res) {
     await run(env, 'UPDATE gw_giveaways SET comments_total = ?, accounts_count = ?, ok_count = ? WHERE id = ?', s.comments_total, s.accounts, s.ok, g.id);
 }
 const getG = async (env, id) => { const g = await one(env, 'SELECT * FROM gw_giveaways WHERE id = ? AND deleted = 0', id); if (!g) throw new E('not_found', 404); return g; };
-const pub = (g) => { const { config, ...r } = g; return { ...r, cfg: cfgOf(g) }; };
+const pub = (g) => { const { config, media_stats, ...r } = g; let st = null; try { st = JSON.parse(media_stats || 'null'); } catch (e) { /* пусто */ } return { ...r, cfg: cfgOf(g), stats: st }; };
 
 // ── Instagram Graph API ───────────────────────────────────────────────────
 async function ig(env, path, params = {}) {
@@ -90,10 +91,14 @@ async function fetchComments(env, g, by) {
   if (g.status !== 'open') throw new E('frozen', 409);
   if (g.source === 'demo') return { done: true, added: 0, demo: true };
   if (!g.media_id) throw new E('no_media', 400);
-  const have = new Set((await all(env, 'SELECT ig_id FROM gw_comments WHERE giveaway_id = ?', g.id)).map((r) => r.ig_id));
+  const have = new Map((await all(env, 'SELECT ig_id, like_count FROM gw_comments WHERE giveaway_id = ?', g.id)).map((r) => [r.ig_id, r.like_count]));
+  const upLike = env.DB.prepare('UPDATE gw_comments SET like_count = ? WHERE giveaway_id = ? AND ig_id = ?'); let liked = 0;
   const seen = new Set(); const stmts = [];
   const ins = env.DB.prepare('INSERT OR IGNORE INTO gw_comments (giveaway_id, ig_id, parent_ig_id, username, text, ts, like_count) VALUES (?,?,?,?,?,?,?)');
-  const add = (c, parent) => { const id = String(c.id); seen.add(id); if (!have.has(id)) { have.add(id); stmts.push(ins.bind(g.id, id, parent, str(c.username, 60), str(c.text, 2200), igTs(c.timestamp), c.like_count || 0)); } };
+  let added = 0;
+  const add = (c, parent) => { const id = String(c.id), lk = c.like_count || 0; seen.add(id);
+    if (!have.has(id)) { have.set(id, lk); added++; stmts.push(ins.bind(g.id, id, parent, str(c.username, 60), str(c.text, 2200), igTs(c.timestamp), lk)); }
+    else if (have.get(id) !== lk) { have.set(id, lk); liked++; stmts.push(upLike.bind(lk, g.id, id)); } };
   let after = null, pages = 0, complete = false, err = null;
   try {
     while (pages < 40) {
@@ -103,21 +108,48 @@ async function fetchComments(env, g, by) {
       if (j.paging && j.paging.next && j.paging.cursors && j.paging.cursors.after) after = j.paging.cursors.after; else { complete = true; break; }
     }
   } catch (e) { if (!(e instanceof E)) throw e; err = e; }
-  const added = stmts.length;
   let gone = 0;
   if (complete) {
-    const missing = [...have].filter((id) => !seen.has(id));
+    const missing = [...have.keys()].filter((id) => !seen.has(id));
     const back = await all(env, 'SELECT ig_id FROM gw_comments WHERE giveaway_id = ? AND gone = 1', g.id);
     for (const id of missing) stmts.push(env.DB.prepare('UPDATE gw_comments SET gone = 1 WHERE giveaway_id = ? AND ig_id = ? AND gone = 0').bind(g.id, id));
     for (const r of back) if (seen.has(r.ig_id)) stmts.push(env.DB.prepare('UPDATE gw_comments SET gone = 0 WHERE giveaway_id = ? AND ig_id = ?').bind(g.id, r.ig_id));
     gone = missing.length;
   }
-  stmts.push(env.DB.prepare('UPDATE gw_giveaways SET fetched_at = ?, fetch_error = ?, fetch_partial = ?, updated_at = ? WHERE id = ?')
-    .bind(now(), err ? JSON.stringify({ code: err.code, ...err.extra }) : null, complete ? 0 : 1, now(), g.id));
-  stmts.push(logStmt(env, g.id, by, 'fetch', { added, pages, complete, gone, error: err ? err.code : null }));
+  const mstats = err ? null : await mediaStats(env, g.media_id);
+  stmts.push(env.DB.prepare('UPDATE gw_giveaways SET fetched_at = ?, fetch_error = ?, fetch_partial = ?, media_stats = COALESCE(?, media_stats), updated_at = ? WHERE id = ?')
+    .bind(now(), err ? JSON.stringify({ code: err.code, ...err.extra }) : null, complete ? 0 : 1, mstats ? JSON.stringify(mstats) : null, now(), g.id));
+  stmts.push(logStmt(env, g.id, by, 'fetch', { added, likes_updated: liked, pages, complete, gone, error: err ? err.code : null }));
   await batch(env, stmts);
   if (err && !added) throw err;
-  return { done: true, added, pages, complete, gone, error: err ? { code: err.code, ...err.extra } : null };
+  return { done: true, added, liked, pages, complete, gone, error: err ? { code: err.code, ...err.extra } : null };
+}
+
+// Статистика поста: лічильники і охоплення. Набір метрик залежить від типу публікації, тому пробуємо від повного до короткого.
+async function mediaStats(env, mediaId) {
+  try {
+    const m = await ig(env, `/${mediaId}`, { fields: 'like_count,comments_count' });
+    const out = { likes: m.like_count ?? null, comments: m.comments_count ?? null, at: now() };
+    for (const metric of ['reach,saved,shares,total_interactions,views', 'reach,saved,shares,total_interactions', 'reach,saved']) {
+      try { const j = await ig(env, `/${mediaId}/insights`, { metric }); for (const d of arr(j.data)) out[d.name] = d.values && d.values[0] ? d.values[0].value : null; break; } catch (e) { if (!(e instanceof E)) throw e; }
+    }
+    return out;
+  } catch (e) { if (e instanceof E) return null; throw e; }
+}
+// Зображення публікації через воркер: адреси Instagram CDN тимчасові, а політика безпеки сайту дозволяє картинки лише зі свого домену.
+async function mediaImage(req, env, ctx, mediaId) {
+  if (!/^\d{5,25}$/.test(mediaId)) throw new E('not_found', 404);
+  const key = new Request('https://brand.barpi.ua/dashboard/api/giveaways/img/m/' + mediaId);
+  const hit = await caches.default.match(key);
+  if (hit) return hit;
+  const m = await ig(env, `/${mediaId}`, { fields: 'media_type,media_url,thumbnail_url' });
+  const u = m.thumbnail_url || (m.media_type === 'VIDEO' ? null : m.media_url);
+  if (!u || !/^https:\/\/[a-z0-9.-]+\.(cdninstagram\.com|fbcdn\.net)\//.test(u)) throw new E('not_found', 404);
+  const r = await fetch(u);
+  if (!r.ok || !String(r.headers.get('content-type') || '').startsWith('image/')) throw new E('not_found', 404);
+  const res = new Response(r.body, { headers: { 'Content-Type': r.headers.get('content-type'), 'Cache-Control': 'private, max-age=3600', 'X-Content-Type-Options': 'nosniff' } });
+  ctx.waitUntil(caches.default.put(key, res.clone()));
+  return res;
 }
 
 // ── Telegram (необов'язково) ──────────────────────────────────────────────
@@ -137,21 +169,25 @@ async function doDraw(env, g, by, ctx) {
   if (g.status === 'drawn') return { repeated: true };
   if (g.status !== 'frozen') throw new E('not_frozen', 409);
   const cfg = cfgOf(g);
-  const pool = await all(env, 'SELECT n, username, ig_id FROM gw_pool WHERE giveaway_id = ? ORDER BY n', g.id);
+  const pool = await all(env, 'SELECT n, username, ig_id, like_count FROM gw_pool WHERE giveaway_id = ? ORDER BY n', g.id);
   const hash = await L.poolHash(pool);
   if (hash !== g.pool_hash || pool.length !== g.pool_count) throw new E('pool_mismatch', 500);
-  const W = Math.min(cfg.winners || 1, pool.length), R = Math.min(cfg.reserves || 0, pool.length - W);
+  // Місця: рядок подарунка = місце. Спершу «найбільше лайків» (однозначно з пулу), потім випадкові номери без акаунтів, що вже виграли.
+  const prizes = L.normPrizes(cfg.prizes);
+  const slots = (prizes.length ? prizes : Array.from({ length: cfg.winners || 1 }, () => ({ label: '', method: 'random' }))).slice(0, new Set(pool.map((p) => p.username)).size);
+  const used = new Set(); const rows = [];
+  slots.forEach((sl, i) => { if (sl.method !== 'top_likes') return; const p = L.likesRank(pool, used)[0]; if (!p) return; used.add(p.username); rows.push({ role: 'winner', pos: i + 1, method: 'top_likes', p, prize: sl.label, likes: p.like_count || 0 }); });
+  const rnd = slots.map((sl, i) => ({ ...sl, i })).filter((sl) => sl.method !== 'top_likes');
+  const taken = L.numbersOf(pool, [...used]);
   const seed = L.randomSeed();
-  const picks = await L.draw(seed, hash, pool.length, W + R);
+  const picks = await L.draw(seed, hash, pool.length, rnd.length + (cfg.reserves || 0), taken, pool.map((p) => p.username));
   const t = now(); const byN = new Map(pool.map((p) => [p.n, p]));
-  const prizes = arr(cfg.prizes);
+  picks.forEach((n, k) => { const p = byN.get(n); if (k < rnd.length) rows.push({ role: 'winner', pos: rnd[k].i + 1, method: 'random', p, prize: rnd[k].label, likes: null }); else rows.push({ role: 'reserve', pos: k - rnd.length + 1, method: 'random', p, prize: null, likes: null }); });
+  const W = rows.filter((r) => r.role === 'winner').length, R = rows.length - W;
   const stmts = [env.DB.prepare('INSERT INTO gw_draws (giveaway_id, gen, round, kind, algo, seed, pool_hash, pool_count, picks, taken, by, at) VALUES (?,?,1,?,?,?,?,?,?,?,?,?)')
-    .bind(g.id, g.gen, 'main', L.ALGO, seed, hash, pool.length, JSON.stringify(picks), '[]', by, t)];
-  picks.forEach((n, i) => {
-    const p = byN.get(n); const win = i < W;
-    stmts.push(env.DB.prepare('INSERT INTO gw_winners (giveaway_id, gen, round, role, position, n, username, ig_id, prize) VALUES (?,?,1,?,?,?,?,?,?)')
-      .bind(g.id, g.gen, win ? 'winner' : 'reserve', win ? i + 1 : i - W + 1, n, p.username, p.ig_id, win ? prizes[i] || prizes[prizes.length - 1] || '' : null));
-  });
+    .bind(g.id, g.gen, 'main', L.ALGO2, seed, hash, pool.length, JSON.stringify(picks), JSON.stringify(taken), by, t)];
+  for (const r of rows) stmts.push(env.DB.prepare('INSERT INTO gw_winners (giveaway_id, gen, round, role, position, n, username, ig_id, prize, method, likes) VALUES (?,?,1,?,?,?,?,?,?,?,?)')
+    .bind(g.id, g.gen, r.role, r.pos, r.p.n, r.p.username, r.p.ig_id, r.prize, r.method, r.likes));
   stmts.push(env.DB.prepare("UPDATE gw_giveaways SET status = 'drawn', drawn_at = ?, updated_at = ? WHERE id = ?").bind(t, t, g.id));
   stmts.push(logStmt(env, g.id, by, 'draw', { round: 1, winners: W, reserves: R, pool: pool.length, pool_hash: hash }));
   if (g.calendar_id) stmts.push(env.DB.prepare("UPDATE mkt_activities SET status = 'done', kpi_fact = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ? AND source = 'giveaways'").bind(pool.length, by, g.calendar_id));
@@ -163,23 +199,23 @@ async function doDraw(env, g, by, ctx) {
 async function doExtra(env, g, by, b) {
   if (g.status !== 'drawn') throw new E('not_drawn', 409);
   const cur = (await winnersOf(env, g)).filter((w) => !w.void && w.gen === g.gen);
-  const pool = await all(env, 'SELECT n, username, ig_id FROM gw_pool WHERE giveaway_id = ? ORDER BY n', g.id);
-  const taken = cur.map((w) => w.n);
+  const pool = await all(env, 'SELECT n, username, ig_id, like_count FROM gw_pool WHERE giveaway_id = ? ORDER BY n', g.id);
+  const taken = L.numbersOf(pool, cur.map((w) => w.username));
   let prize = str(b.prize, 200), position = Math.max(0, ...cur.filter((w) => w.role === 'winner').map((w) => w.position)) + 1, from = null;
   if (b.replace_id) {
     const x = cur.find((w) => w.id === Number(b.replace_id));
-    if (!x || x.verdict !== 'failed') throw new E('bad_replace', 400);
+    if (!x || x.verdict !== 'failed' || x.method === 'top_likes') throw new E('bad_replace', 400);
     if (cur.some((w) => w.promoted_from === x.id)) throw new E('already_replaced', 409);
     prize = x.prize || ''; position = x.position; from = x.id;
   }
   if (pool.length - taken.length < 1) throw new E('pool_exhausted', 409);
   const round = Math.max(0, ...(await drawsOf(env, g)).filter((d) => d.gen === g.gen).map((d) => d.round)) + 1;
   const seed = L.randomSeed();
-  const [n] = await L.draw(seed, g.pool_hash, pool.length, 1, taken);
+  const [n] = await L.draw(seed, g.pool_hash, pool.length, 1, taken, pool.map((q) => q.username));
   const p = pool.find((q) => q.n === n); const t = now();
   await env.DB.batch([
     env.DB.prepare('INSERT INTO gw_draws (giveaway_id, gen, round, kind, algo, seed, pool_hash, pool_count, picks, taken, by, at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)')
-      .bind(g.id, g.gen, round, 'extra', L.ALGO, seed, g.pool_hash, pool.length, JSON.stringify([n]), JSON.stringify(taken.slice().sort((a, c) => a - c)), by, t),
+      .bind(g.id, g.gen, round, 'extra', L.ALGO2, seed, g.pool_hash, pool.length, JSON.stringify([n]), JSON.stringify(taken.slice().sort((a, c) => a - c)), by, t),
     env.DB.prepare('INSERT INTO gw_winners (giveaway_id, gen, round, role, position, n, username, ig_id, prize, promoted_from) VALUES (?,?,?,?,?,?,?,?,?,?)')
       .bind(g.id, g.gen, round, 'winner', position, n, p.username, p.ig_id, prize, from),
     logStmt(env, g.id, by, 'extra_draw', { round, n, replace: from, prize }),
@@ -199,13 +235,18 @@ async function doVerdict(env, g, by, b) {
   const t = now();
   const stmts = [env.DB.prepare('UPDATE gw_winners SET verdict = ?, verdict_reason = ?, verdict_by = ?, verdict_at = ? WHERE id = ?').bind(v, v === 'failed' ? reason : null, by, t, w.id)];
   let promoted = null;
-  if (v === 'failed' && w.role === 'winner') {
+  if (v === 'failed' && w.role === 'winner' && w.method === 'top_likes') {
+    // наступний за лайками серед акаунтів, які ще не обрані
+    const pool = await all(env, 'SELECT n, username, ig_id, like_count FROM gw_pool WHERE giveaway_id = ? ORDER BY n', g.id);
+    const nx = L.likesRank(pool, new Set(cur.map((x) => x.username)))[0] || null;
+    if (nx) { promoted = { username: nx.username }; stmts.push(env.DB.prepare("INSERT INTO gw_winners (giveaway_id, gen, round, role, position, n, username, ig_id, prize, method, likes, promoted_from) VALUES (?,?,?,'winner',?,?,?,?,?,'top_likes',?,?)").bind(g.id, g.gen, w.round, w.position, nx.n, nx.username, nx.ig_id, w.prize, nx.like_count || 0, w.id)); }
+  } else if (v === 'failed' && w.role === 'winner') {
     promoted = cur.filter((x) => x.role === 'reserve' && x.verdict !== 'failed').sort((a, c) => a.position - c.position)[0] || null;
     if (promoted) stmts.push(env.DB.prepare("UPDATE gw_winners SET role = 'winner', prize = ?, position = ?, promoted_from = ?, verdict = 'pending' WHERE id = ?").bind(w.prize, w.position, w.id, promoted.id));
   }
   stmts.push(logStmt(env, g.id, by, 'verdict', { username: w.username, verdict: v, reason, promoted: promoted ? promoted.username : null }));
   await env.DB.batch(stmts);
-  return { ok: true, promoted: promoted ? promoted.username : null, need_extra: v === 'failed' && w.role === 'winner' && !promoted };
+  return { ok: true, promoted: promoted ? promoted.username : null, need_extra: v === 'failed' && w.role === 'winner' && !promoted && w.method !== 'top_likes' };
 }
 
 // ── публічний протокол ────────────────────────────────────────────────────
@@ -220,9 +261,9 @@ async function protocol(env, token) {
     title: g.title, post: g.media_permalink, rules: cfg.rules || '', starts_at: g.starts_at, ends_at: g.ends_at, drawn_at: g.drawn_at,
     conditions: { one_per_account: cfg.one_per_account !== false, answer: !!(cfg.answer && cfg.answer.on), mention: cfg.mention && cfg.mention.on ? cfg.mention.min : 0, manual: !!(cfg.manual && cfg.manual.on) },
     counts: { comments: g.comments_total, accounts: g.accounts_count, pool: g.pool_count },
-    pool_hash: g.pool_hash, algo: L.ALGO,
-    draws: draws.map((d) => ({ round: d.round, kind: d.kind, at: d.at, seed: d.void || d.gen !== g.gen ? null : d.seed, picks: d.void || d.gen !== g.gen ? null : JSON.parse(d.picks), taken: d.void || d.gen !== g.gen ? null : JSON.parse(d.taken || '[]'), void: !!d.void || d.gen !== g.gen, void_reason: d.void_reason || null })),
-    winners: ws.sort((a, c) => a.position - c.position).filter((w) => w.verdict !== 'failed').map((w) => ({ position: w.position, username: w.username, n: w.n, prize: w.prize || '', confirmed: w.verdict === 'ok', replaced: !!w.promoted_from })),
+    pool_hash: g.pool_hash, algo: (draws.find((d) => !d.void && d.gen === g.gen) || {}).algo || L.ALGO2,
+    draws: draws.map((d) => ({ round: d.round, kind: d.kind, algo: d.algo, at: d.at, seed: d.void || d.gen !== g.gen ? null : d.seed, picks: d.void || d.gen !== g.gen ? null : JSON.parse(d.picks), taken: d.void || d.gen !== g.gen ? null : JSON.parse(d.taken || '[]'), void: !!d.void || d.gen !== g.gen, void_reason: d.void_reason || null })),
+    winners: ws.sort((a, c) => a.position - c.position).filter((w) => w.verdict !== 'failed').map((w) => ({ position: w.position, username: w.username, n: w.n, prize: w.prize || '', method: w.method || 'random', likes: w.likes, confirmed: w.verdict === 'ok', replaced: !!w.promoted_from })),
     replaced: ws.filter((w) => w.verdict === 'failed').length,
   });
 }
@@ -235,6 +276,8 @@ async function dashboard(req, env, ctx, path, email) {
   if (path === '/me') return json({ email, isAdmin, version: VERSION, ig: { connected: !!env.IG_TOKEN, username: env.IG_USERNAME || 'barpi.ua' }, now: now() });
   if (path === '/ig/check') { const j = await ig(env, `/${env.IG_USER_ID}`, { fields: 'username,media_count' }); return json({ ok: true, username: j.username, media_count: j.media_count }); }
   if (path === '/media' && m === 'GET') return json(await mediaList(env, new URL(req.url).searchParams.get('after')));
+  const im = path.match(/^\/img\/m\/(\d+)$/);
+  if (im && m === 'GET') return await mediaImage(req, env, ctx, im[1]);
   if (path === '/list' && m === 'GET') {
     const rows = (await all(env, 'SELECT * FROM gw_giveaways WHERE deleted = 0 ORDER BY id DESC LIMIT 500')).map(pub);
     const templates = (await all(env, 'SELECT id, name, config, created_by, created_at FROM gw_templates WHERE deleted = 0 ORDER BY id DESC')).map((t) => ({ ...t, config: JSON.parse(t.config) }));
@@ -252,7 +295,7 @@ async function dashboard(req, env, ctx, path, email) {
     if (m !== 'POST') throw new E('method', 405);
     const b = await body(); const title = str(b.title, 160).trim(); if (!title) throw new E('title_required');
     const demo = b.source === 'demo'; const t = now();
-    const cfg = cleanCfg({ one_per_account: true, winners: 1, reserves: 2, ...(b.cfg || {}) });
+    const cfg = cleanCfg({ one_per_account: true, include_replies: false, winners: 1, reserves: 2, ...(b.cfg || {}) });
     const med = b.media || {};
     const r = await run(env, 'INSERT INTO gw_giveaways (title, source, media_id, media_permalink, media_caption, media_thumb, media_ts, starts_at, ends_at, config, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
       title, demo ? 'demo' : 'instagram', demo ? null : str(med.id, 40) || null, demo ? null : str(med.permalink, 300) || null, demo ? 'Тестова публікація для репетиції' : str(med.caption, 300) || null, demo ? null : str(med.thumb, 1000) || null, demo ? null : tsOf(med.ts),
@@ -270,9 +313,9 @@ async function dashboard(req, env, ctx, path, email) {
     const res = await compute(env, g);
     if (g.status === 'open') await recount(env, g, res);
     const [pool, draws, winners, log] = await Promise.all([
-      g.status === 'open' ? [] : all(env, 'SELECT n, username, ig_id FROM gw_pool WHERE giveaway_id = ? ORDER BY n', g.id),
+      g.status === 'open' ? [] : all(env, 'SELECT n, username, ig_id, like_count FROM gw_pool WHERE giveaway_id = ? ORDER BY n', g.id),
       drawsOf(env, g), winnersOf(env, g), all(env, 'SELECT * FROM gw_log WHERE giveaway_id = ? ORDER BY id DESC LIMIT 200', g.id)]);
-    return json({ g: pub(g), entries: res.entries, stats: res.stats, pool, draws, winners, log, now: now() });
+    return json({ g: pub(g), entries: res.entries, stats: res.stats, comments: res.comments, pool, draws, winners, log, now: now() });
   }
   if (!act && m === 'PATCH') {
     const b = await body(); const set = {}; const cfg = cfgOf(g);
@@ -324,7 +367,7 @@ async function dashboard(req, env, ctx, path, email) {
     if (!pool.length) throw new E('empty_pool', 409);
     const hash = await L.poolHash(pool); const t = now();
     const stmts = [env.DB.prepare('DELETE FROM gw_pool WHERE giveaway_id = ?').bind(g.id)];
-    for (const p of pool) stmts.push(env.DB.prepare('INSERT INTO gw_pool (giveaway_id, n, username, ig_id) VALUES (?,?,?,?)').bind(g.id, p.n, p.username, p.ig_id));
+    for (const p of pool) stmts.push(env.DB.prepare('INSERT INTO gw_pool (giveaway_id, n, username, ig_id, like_count) VALUES (?,?,?,?,?)').bind(g.id, p.n, p.username, p.ig_id, p.like_count || 0));
     await batch(env, stmts);
     await env.DB.batch([env.DB.prepare("UPDATE gw_giveaways SET status = 'frozen', frozen_at = ?, frozen_by = ?, pool_hash = ?, pool_count = ?, comments_total = ?, accounts_count = ?, ok_count = ?, updated_at = ? WHERE id = ? AND status = 'open'")
       .bind(t, email, hash, pool.length, res.stats.comments_total, res.stats.accounts, res.stats.ok, t, g.id), logStmt(env, g.id, email, 'freeze', { pool: pool.length, pool_hash: hash })]);

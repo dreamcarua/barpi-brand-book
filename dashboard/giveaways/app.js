@@ -1,12 +1,14 @@
-// Barpi · Розіграші · сторінка /dashboard/giveaways/ (v1.0.0, 27.11.2026). Дані лише з воркера barpi-giveaways.
-import * as L from './lib/logic.js?v=1.0.0';
-// v1.1.0: джерело 'example' (навчальний приклад на реальному пості)
+// Barpi · Розіграші · сторінка /dashboard/giveaways/ (v1.2.0, 27.11.2026). Дані лише з воркера barpi-giveaways.
+// v1.1.0: джерело 'example'. v1.2.0: гонка за лайки, спосіб вибору для кожного подарунка, аналітика, перегляд «як у застосунку»,
+// сортування і фільтри таблиці, відлік і барабан номера в презентації (перенесено з дашборду DreamCar).
+import * as L from './lib/logic.js?v=1.2.0';
+import * as X from './extra.js?v=1.2.0';
 
 const API = '/dashboard/api/giveaways';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
-const S = { me: null, rows: [], templates: [], now: 0, tab: 'active', d: null, step: 'rules', filter: 'all', q: '', limit: 300, reasonFor: null, nd: null, media: [], mediaAfter: null, mediaErr: null, verify: null, log: null };
+const S = { me: null, rows: [], templates: [], now: 0, tab: 'active', d: null, step: 'rules', filter: 'all', q: '', limit: 300, reasonFor: null, sort: { k: 't', dir: 1 }, fLikes: 0, fType: '', view: 'table', phone: { tab: 'cm', q: '' }, nd: null, media: [], mediaAfter: null, mediaErr: null, verify: null, log: null };
 
 const ERR = {
   unauthorized: 'Сесія завершилась. Оновіть сторінку і увійдіть знову.', ig_not_connected: 'Instagram ще не підключено: бракує доступу до сторінки Barpi.',
@@ -39,13 +41,15 @@ const fromInput = (v) => (v ? Math.floor(new Date(v).getTime() / 1000) : null);
 const lines = (v) => String(v || '').split(/\n+/).map((s) => s.trim()).filter(Boolean);
 const copy = async (text, ok = 'Скопійовано') => { try { await navigator.clipboard.writeText(text); toast(ok); } catch (e) { toast('Не вдалося скопіювати', true); } };
 function download(name, text, type = 'text/plain') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type + ';charset=utf-8' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
-const thumb = (g) => `<div class="thumb">${g.media_thumb ? `<img src="${esc(g.media_thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${g.source === 'demo' ? 'ТЕСТ' : g.media_thumb ? '' : 'ПОСТ'}</div>`;
+const imgUrl = (id) => `${API}/img/m/${encodeURIComponent(id)}`;
+const thumb = (g) => `<div class="thumb"><span>${g.source === 'demo' ? 'ТЕСТ' : 'ПОСТ'}</span>${g.media_id ? `<img src="${imgUrl(g.media_id)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</div>`;
 const srcChip = (g) => (g.source === 'demo' ? '<span class="chip test">Тест</span>' : g.source === 'example' ? '<span class="chip test">Приклад</span>' : '');
 function mech(cfg) {
   const m = [];
   if (cfg.answer && cfg.answer.on) m.push('Правильна відповідь');
   if (cfg.mention && cfg.mention.on) m.push('Відмітка друга ×' + cfg.mention.min);
   if (cfg.manual && cfg.manual.on) m.push('Ручне підтвердження');
+  if (L.normPrizes(cfg.prizes).some((p) => p.method === 'top_likes')) m.push('Гонка за лайки');
   return m.length ? m : ['Випадковий коментар'];
 }
 const kind = (g, now) => (g.status === 'drawn' ? 'done' : g.starts_at && g.starts_at > now ? 'planned' : 'active');
@@ -70,7 +74,7 @@ function renderHome() {
   const real = S.rows.filter((g) => g.source === 'instagram');
   const tab = (id, name, n) => `<button data-act="tab" data-tab="${id}" class="${S.tab === id ? 'on' : ''}">${name}${n == null ? '' : `<i>${n}</i>`}</button>`;
   const card = (g) => `<a class="gcard" href="#/g/${g.id}">${thumb(g)}<div><div class="t">${esc(g.title)} ${srcChip(g)}</div>
-    <div class="m"><span>${mech(g.cfg).map(esc).join(' + ')}</span><span>${g.ends_at ? 'до <b>' + esc(fmt(g.ends_at)) + '</b>' : 'без дати завершення'}</span><span>коментарів <b>${g.comments_total}</b></span><span>допущено <b>${g.pool_count ?? g.ok_count}</b></span><span>переможців <b>${g.cfg.winners || 1}</b></span></div></div>
+    <div class="m"><span>${mech(g.cfg).map(esc).join(' + ')}</span><span>${g.ends_at ? 'до <b>' + esc(fmt(g.ends_at)) + '</b>' : 'без дати завершення'}</span><span>коментарів <b>${g.comments_total}</b></span><span>допущено <b>${g.pool_count ?? g.ok_count}</b></span><span>переможців <b>${L.normPrizes(g.cfg.prizes).length || g.cfg.winners || 1}</b></span></div></div>
     <div class="st">${statusChip(g, S.now)}</div></a>`;
   let body = '';
   if (S.tab === 'templates') body = S.templates.length ? `<div class="cards">${S.templates.map((t) => `<div class="gcard" style="cursor:default;grid-template-columns:1fr auto"><div><div class="t">${esc(t.name)}</div><div class="m"><span>${mech(t.config).map(esc).join(' + ')}</span><span>переможців <b>${t.config.winners || 1}</b></span><span>резервних <b>${t.config.reserves || 0}</b></span></div></div>
@@ -97,7 +101,7 @@ function mediaGrid(sel) {
   if (!S.me.ig.connected) return '';
   if (S.mediaErr) return `<div class="banner bad">${esc(S.mediaErr)}</div>`;
   if (!S.media.length) return '<p class="muted small">Завантажую публікації…</p>';
-  return `<div class="media">${S.media.map((m) => `<button type="button" class="mi ${sel && sel.id === m.id ? 'on' : ''}" data-act="pick" data-id="${esc(m.id)}"><div class="ph">${m.thumb ? `<img src="${esc(m.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : esc(m.type || 'ПОСТ')}</div><div class="cp"><b>${esc(fmt(m.ts))} · 💬 ${m.comments}</b>${esc(m.caption || 'без підпису')}</div></button>`).join('')}</div>${S.mediaAfter ? '<p style="margin-top:10px"><button class="btn sm soft" data-act="media-more">Показати старіші</button></p>' : ''}`;
+  return `<div class="media">${S.media.map((m) => `<button type="button" class="mi ${sel && sel.id === m.id ? 'on' : ''}" data-act="pick" data-id="${esc(m.id)}"><div class="ph"><span>${esc(m.type || 'ПОСТ')}</span><img src="${imgUrl(m.id)}" alt="" loading="lazy" onerror="this.remove()"></div><div class="cp"><b>${esc(fmt(m.ts))} · 💬 ${m.comments}</b>${esc(m.caption || 'без підпису')}</div></button>`).join('')}</div>${S.mediaAfter ? '<p style="margin-top:10px"><button class="btn sm soft" data-act="media-more">Показати старіші</button></p>' : ''}`;
 }
 function renderNew() {
   const n = S.nd;
@@ -119,7 +123,7 @@ const keepNew = () => { if (!$('#n_title')) return; Object.assign(S.nd, { title:
 async function openG(id, keep) {
   const y = window.scrollY;
   S.d = await api('/' + id);
-  if (!keep) { const g = S.d.g; S.step = g.status !== 'open' ? 'draw' : S.d.stats.comments_total ? 'people' : 'rules'; S.filter = 'all'; S.q = ''; S.limit = 300; S.reasonFor = null; S.verify = null; if (S.next) { S.step = S.next; S.next = null; } }
+  if (!keep) { const g = S.d.g; S.step = g.status !== 'open' ? 'draw' : S.d.stats.comments_total ? 'people' : 'rules'; S.filter = 'all'; S.q = ''; S.limit = 300; S.sort = { k: 't', dir: 1 }; S.fLikes = 0; S.fType = ''; S.view = 'table'; S.phone = { tab: 'cm', q: '' }; S.reasonFor = null; S.verify = null; if (S.next) { S.step = S.next; S.next = null; } }
   renderG();
   if (keep) window.scrollTo(0, y);
 }
@@ -130,8 +134,8 @@ function renderG() {
   const step = (id, n, t, s) => `<button data-act="step" data-step="${id}" class="${S.step === id ? 'on' : ''}">${n}. ${t}<small>${s}</small></button>`;
   app.innerHTML = `<p><a href="#/">← Усі розіграші</a></p>
   <div class="head">${thumb(g)}<div style="flex:1;min-width:220px"><h1>${esc(g.title)}</h1><p class="lead" style="margin-bottom:0">${statusChip(g, d.now)} ${srcChip(g)} ${mech(g.cfg).map((m) => `<span class="chip">${esc(m)}</span>`).join(' ')} ${g.media_permalink ? `<a href="${esc(g.media_permalink)}" target="_blank" rel="noopener noreferrer">Відкрити пост ↗</a>` : ''}</p></div></div>
-  <div class="steps">${step('rules', 1, 'Умови', g.ends_at ? 'до ' + esc(fmt(g.ends_at)) : 'без дати завершення')}${step('people', 2, 'Учасники', `допущено ${d.stats.ok} з ${d.stats.accounts}`)}${step('draw', 3, 'Жеребкування', g.status === 'drawn' ? 'проведено ' + esc(fmt(g.drawn_at)) : open ? 'пул не зафіксовано' : 'пул зафіксовано')}${step('proto', 4, 'Протокол', `${d.log.length} записів`)}</div>
-  <div id="stepbox">${{ rules: stepRules, people: stepPeople, draw: stepDraw, proto: stepProto }[S.step]()}</div>`;
+  <div class="steps">${step('rules', 1, 'Умови', g.ends_at ? 'до ' + esc(fmt(g.ends_at)) : 'без дати завершення')}${step('people', 2, 'Учасники', `допущено ${d.stats.ok} з ${d.stats.accounts}`)}${step('stats', 3, 'Аналітика', `коментарів ${d.stats.comments_total}`)}${step('draw', 4, 'Жеребкування', g.status === 'drawn' ? 'проведено ' + esc(fmt(g.drawn_at)) : open ? 'пул не зафіксовано' : 'пул зафіксовано')}${step('proto', 5, 'Протокол', `${d.log.length} записів`)}</div>
+  <div id="stepbox">${{ rules: stepRules, people: stepPeople, stats: () => X.stepStats(S.d), draw: stepDraw, proto: stepProto }[S.step]()}</div>`;
 }
 function stepRules() {
   const g = S.d.g, c = g.cfg, open = g.status === 'open', dis = open ? '' : 'disabled';
@@ -142,7 +146,7 @@ function stepRules() {
     <label class="f">Instagram-акаунт<input type="text" value="@${esc(S.me.ig.username)}" disabled></label>
     <label class="f">Початок приймання коментарів<small>порожньо = з моменту публікації</small><input type="datetime-local" id="f_start" value="${toInput(g.starts_at)}" ${dis}></label>
     <label class="f">Завершення приймання коментарів<input type="datetime-local" id="f_end" value="${toInput(g.ends_at)}" ${dis}></label>
-    <label class="f">Кількість переможців<input type="number" id="f_win" min="1" max="100" value="${c.winners || 1}" ${dis}></label>
+    <label class="f">Кількість переможців<small>діє, якщо подарунки нижче не перелічено; інакше переможців стільки, скільки рядків подарунків</small><input type="number" id="f_win" min="1" max="100" value="${c.winners || 1}" ${dis}></label>
     <label class="f">Кількість резервних<small>стають переможцями по черзі, якщо хтось не виконав умови</small><input type="number" id="f_res" min="0" max="100" value="${c.reserves ?? 2}" ${dis}></label>
   </div></div>
   <div class="panel"><h2>Механіка</h2><p class="muted small" style="margin-bottom:10px">Без позначок = випадковий коментар. Умови можна поєднувати.</p><div style="display:grid;gap:10px">
@@ -152,57 +156,74 @@ function stepRules() {
     ${chk('f_men', M.on, 'Відмітка друга', 'У коментарі має бути @акаунт. Себе й @' + esc(S.me.ig.username) + ' не рахуємо. Чи існує такий акаунт, Instagram не повідомляє.')}
     <div class="sub-f" id="men_box" ${M.on ? '' : 'hidden'}><label class="f" style="max-width:260px">Скільки різних відміток потрібно<input type="number" id="f_min" min="1" max="10" value="${M.min || 1}" ${dis}></label></div>
     ${chk('f_man', c.manual && c.manual.on, 'Ручне підтвердження учасників', 'Для творчих конкурсів: кожного учасника допускаєте ви.')}
-    ${chk('f_one', c.one_per_account !== false, 'Один акаунт, один шанс', 'Якщо вимкнути, кожен коментар, що відповідає умовам, дає окремий шанс.')}
+    ${chk('f_one', c.one_per_account !== false, 'Один акаунт, один шанс', 'Якщо вимкнути, кожен коментар, що відповідає умовам, дає окремий шанс. Двічі один акаунт не виграє в будь-якому разі.')}
+    ${chk('f_rep', c.include_replies, 'Відповіді на коментарі теж беруть участь', 'Типово участь беруть лише основні коментарі під постом.')}
   </div></div>
   <div class="panel"><h2>Подарунки і правила</h2><div class="grid2">
-    <label class="f">Подарунки<small>рядок на кожне місце: перший рядок для першого переможця</small><textarea id="f_prizes" ${dis} placeholder="Набір Barpi «Яловичина»&#10;Набір Barpi «Курка»">${esc((c.prizes || []).join('\n'))}</textarea></label>
+    <div class="f" style="grid-column:1/-1"><label class="f" for="prize_rows">Подарунки і спосіб вибору<small>рядок на кожне місце. «Випадковий номер»: сервер обирає серед допущених. «Найбільше лайків»: перемагає допущений коментар з найбільшою кількістю лайків на момент фіксації пулу.</small></label>
+      <div id="prize_rows">${(L.normPrizes(c.prizes).length ? L.normPrizes(c.prizes) : [{ label: '', method: 'random' }]).map((p) => prizeRow(p, dis)).join('')}</div>
+      ${open ? '<button type="button" class="btn sm soft" data-act="prize-add">+ Подарунок</button>' : ''}</div>
     <label class="f">Виключити акаунти<small>через кому або з нового рядка; @${esc(S.me.ig.username)} виключено завжди</small><textarea id="f_excl" ${dis} placeholder="alona.smm, partner_shop">${esc((c.exclude || []).join(', '))}</textarea></label>
     <label class="f" style="grid-column:1/-1">Додаткові умови участі<small>Потраплять у протокол. Підписку, лайк і репост у сторіс Instagram API не показує: їх перевіряють вручну в обраного переможця.</small><textarea id="f_rules" ${dis} placeholder="Бути підписаним на @barpi.ua, поставити лайк, доставка лише по Україні">${esc(c.rules || '')}</textarea></label>
   </div><div style="margin-top:12px">${chk('f_fest', c.festive, 'Святкове оформлення презентації', 'Сніг, зірки й подарунки в режимі 9:16. Панель керування лишається звичайною.', ' ')}</div></div>
   <div class="row"><button class="btn" data-act="save">Зберегти</button><button class="btn sec" data-act="tpl-save">Зберегти як шаблон</button>${g.source === 'instagram' ? `<button class="btn sec" data-act="calendar">${g.calendar_id ? 'Оновити в маркетинговому календарі' : 'Додати в маркетинговий календар'}</button>` : ''}<span style="flex:1"></span>${g.status !== 'drawn' || (S.me.isAdmin && g.source !== 'instagram') ? '<button class="btn danger" data-act="del">Видалити розіграш</button>' : ''}</div>`;
 }
+const prizeRow = (p, dis = '') => `<div class="prow"><input type="text" class="pl" maxlength="200" placeholder="Напр.: Набір Barpi «Яловичина»" value="${esc(p.label || '')}" ${dis} aria-label="Назва подарунка"><select class="pm" ${dis} aria-label="Спосіб вибору"><option value="random" ${p.method !== 'top_likes' ? 'selected' : ''}>Випадковий номер</option><option value="top_likes" ${p.method === 'top_likes' ? 'selected' : ''}>Найбільше лайків</option></select>${dis ? '' : '<button type="button" class="btn sm sec" data-act="prize-del" title="Прибрати" aria-label="Прибрати подарунок">✕</button>'}</div>`;
 function readRules() {
   const v = (id) => ($('#' + id) ? $('#' + id).value : ''), on = (id) => !!($('#' + id) && $('#' + id).checked);
   const groups = L.parseGroups(v('f_groups'));
   if (on('f_ans') && !groups.length) throw new Error('Додайте хоча б одне правильне слово.');
   return { title: v('f_title'), starts_at: fromInput(v('f_start')), ends_at: fromInput(v('f_end')), cfg: {
-    one_per_account: on('f_one'), exclude: v('f_excl').split(/[\s,]+/).filter(Boolean), answer: { on: on('f_ans'), groups, need: Number(v('f_need')) || groups.length },
-    mention: { on: on('f_men'), min: Number(v('f_min')) || 1 }, manual: { on: on('f_man') }, winners: Number(v('f_win')) || 1, reserves: Number(v('f_res')) || 0, prizes: lines(v('f_prizes')), rules: v('f_rules'), festive: on('f_fest') } };
+    one_per_account: on('f_one'), include_replies: on('f_rep'), exclude: v('f_excl').split(/[\s,]+/).filter(Boolean), answer: { on: on('f_ans'), groups, need: Number(v('f_need')) || groups.length },
+    mention: { on: on('f_men'), min: Number(v('f_min')) || 1 }, manual: { on: on('f_man') }, winners: Number(v('f_win')) || 1, reserves: Number(v('f_res')) || 0, prizes: [...document.querySelectorAll('#prize_rows .prow')].map((r) => ({ label: r.querySelector('.pl').value.trim(), method: r.querySelector('.pm').value })).filter((p) => p.label), rules: v('f_rules'), festive: on('f_fest') } };
 }
 const LBL = { ok: ['ok', 'Допущено'], fail: ['bad', 'Відхилено'], review: ['warn', 'Перевірити'] };
 function stepPeople() {
-  const d = S.d, g = d.g, open = g.status === 'open', s = d.stats;
-  const poolN = new Map(d.pool.map((p) => [p.ig_id, p.n]));
+  const d = S.d, g = d.g, open = g.status === 'open', s = d.stats, kws = X.answerWords(g.cfg);
+  const poolN = new Map(d.pool.map((p) => [String(p.ig_id), p.n]));
   let okN = 0; const rows = [];
-  const q = S.q.trim().toLowerCase();
+  const q = S.q.trim().toLowerCase().replace(/^@/, '').replace(/^[№#]\s*/, '');
   for (const e of d.entries) {
     const n = e.final === 'ok' ? (open ? ++okN : poolN.get(String(e.ig_id))) : null;
     if (S.filter !== 'all' && e.final !== S.filter) continue;
-    if (q && !(e.username.includes(q.replace(/^@/, '')) || String(e.text || '').toLowerCase().includes(q) || String(n) === q)) continue;
+    if (S.fLikes && (e.like_count || 0) < S.fLikes) continue;
+    if ((S.fType === 'c' && e.reply) || (S.fType === 'r' && !e.reply)) continue;
+    if (q && !(/^\d+$/.test(q) ? String(n) === q || e.username.includes(q) : e.username.includes(q) || String(e.text || '').toLowerCase().includes(q))) continue;
     rows.push({ e, n });
   }
+  const k = S.sort.k, dir = S.sort.dir;
+  rows.sort((a, b) => dir * (k === 'n' ? (a.n ?? 1e9) - (b.n ?? 1e9) : k === 'u' ? a.e.username.localeCompare(b.e.username) : k === 'likes' ? (a.e.like_count || 0) - (b.e.like_count || 0) : a.e.ts - b.e.ts) || a.e.ts - b.e.ts);
   const f = (id, t, n) => `<button data-act="filter" data-f="${id}" class="${S.filter === id ? 'on' : ''}">${t}<i>${n}</i></button>`;
-  const tr = ({ e, n }) => `<tr><td class="num">${n ?? ''}</td><td><a href="https://www.instagram.com/${esc(e.username)}/" target="_blank" rel="noopener noreferrer"><b>@${esc(e.username)}</b></a>${e.comments > 1 ? `<div class="small muted">коментарів: ${e.comments}</div>` : ''}</td>
-    <td><div class="cm">${esc(e.text)}</div><div class="small muted">${esc(fmt(e.ts))}${e.like_count ? ' · ♥ ' + e.like_count : ''}</div></td>
+  const th = (key, t, al = '') => `<th ${al} aria-sort="${k === key ? (dir > 0 ? 'ascending' : 'descending') : 'none'}"><button type="button" class="sortb" data-act="sort" data-k="${key}">${t} <span>${k === key ? (dir > 0 ? '↑' : '↓') : '↕'}</span></button></th>`;
+  const tr = ({ e, n }) => `<tr><td class="num">${n ?? ''}</td><td class="small" style="white-space:nowrap">${esc(fmt(e.ts))}</td><td><a href="https://www.instagram.com/${esc(e.username)}/" target="_blank" rel="noopener noreferrer" title="Профіль: перевірити підписку"><b>@${esc(e.username)}</b></a>${e.comments > 1 ? `<div class="small muted">коментарів: ${e.comments}</div>` : ''}</td>
+    <td><div class="cm">${X.hl(e.text, kws)}</div><div class="small muted">${e.reply ? 'відповідь · ' : ''}${g.media_permalink ? `<a href="${esc(X.commentUrl(g, e.ig_id))}" target="_blank" rel="noopener noreferrer">коментар ↗</a>` : ''}</div></td>
+    <td class="num" style="text-align:right">${e.like_count || ''}</td>
     <td><span class="chip ${LBL[e.final][0]}">${LBL[e.final][1]}</span><div class="small muted" style="margin-top:4px">${esc(e.decided ? 'рішення оператора' + (e.reason ? ': ' + e.reason : '') : e.reasons.join('; '))}</div>
       ${S.reasonFor === e.username ? `<div class="reason"><input type="text" id="reason_in" placeholder="Причина відхилення" maxlength="300"><button class="btn sm danger" data-act="dec" data-u="${esc(e.username)}" data-d="fail">Відхилити</button></div>` : ''}</td>
     <td>${open ? `<div class="acts"><button class="y ${e.decided && e.final === 'ok' ? 'on' : ''}" title="Допустити" aria-label="Допустити" data-act="dec" data-u="${esc(e.username)}" data-d="ok">✓</button><button class="n ${e.decided && e.final === 'fail' ? 'on' : ''}" title="Не відповідає умовам" aria-label="Не відповідає умовам" data-act="ask-reason" data-u="${esc(e.username)}">✗</button><button class="q ${e.decided && e.final === 'review' ? 'on' : ''}" title="Потребує перевірки" aria-label="Потребує перевірки" data-act="dec" data-u="${esc(e.username)}" data-d="review">?</button>${e.decided ? `<button title="Повернути автоматичне рішення" aria-label="Повернути автоматичне рішення" data-act="dec" data-u="${esc(e.username)}" data-d="auto">↺</button>` : ''}</div>` : ''}</td></tr>`;
   let err = ''; try { const fe = g.fetch_error ? JSON.parse(g.fetch_error) : null; if (fe) err = `<div class="banner bad">Останній збір завершився помилкою: ${esc(ERR[fe.code] || fe.code)} ${esc(fe.ig_message || '')}</div>`; } catch (e) { /* пусто */ }
+  const table = `<div class="row" style="margin-bottom:12px"><div class="tabs" style="margin:0">${f('all', 'Усі', s.entries)}${f('ok', 'Допущені', s.ok)}${f('review', 'Перевірити', s.review)}${f('fail', 'Відхилені', s.fail)}</div><span style="flex:1"></span>
+      ${g.cfg.include_replies ? `<select id="f_type" aria-label="Тип коментаря" style="width:auto;margin:0"><option value="">Основні і відповіді</option><option value="c" ${S.fType === 'c' ? 'selected' : ''}>Лише основні</option><option value="r" ${S.fType === 'r' ? 'selected' : ''}>Лише відповіді</option></select>` : ''}
+      <select id="f_likes" aria-label="Лайки" style="width:auto;margin:0">${[[0, 'Будь-які лайки'], [1, '1+ лайк'], [5, '5+'], [20, '20+']].map(([v, t]) => `<option value="${v}" ${S.fLikes === v ? 'selected' : ''}>${t}</option>`).join('')}</select>
+      <input type="search" id="q" placeholder="Пошук: @акаунт, слово або №" value="${esc(S.q)}" style="max-width:280px;margin:0"></div>
+    ${rows.length ? `<div class="tablewrap"><table><tr>${th('n', '№')}${th('t', 'Дата і час')}${th('u', 'Акаунт')}<th>Коментар</th>${th('likes', 'Лайки', 'style="text-align:right"')}<th>Статус</th><th></th></tr>${rows.slice(0, S.limit).map(tr).join('')}</table></div>${rows.length > S.limit ? `<p style="margin-top:10px"><button class="btn sm soft" data-act="more">Показати ще (${rows.length - S.limit})</button></p>` : ''}` : '<div class="empty">Нічого не знайдено. Спробуйте номер, частину акаунта або слово з коментаря.</div>'}`;
   return `${err}${g.fetch_partial ? '<div class="banner">Коментарів дуже багато: зібрано не всі. Натисніть «Оновити коментарі» ще раз.</div>' : ''}
   <div class="panel"><div class="row">${open && g.source === 'instagram' ? '<button class="btn" data-act="fetch">Оновити коментарі</button>' : ''}<span class="muted small">${g.source === 'demo' ? 'Тестові коментарі, вигадані акаунти' : g.source === 'example' ? 'Навчальний приклад: справжні коментарі з поста, зібрані ' + esc(fmt(g.fetched_at)) : g.fetched_at ? 'Зібрано ' + esc(fmt(g.fetched_at)) + ' через Instagram Graph API' : 'Коментарі ще не збирали'}</span><span style="flex:1"></span>
-    <span class="small muted">коментарів ${s.comments_total} · відповідей ${s.replies} (не беруть участі)${s.gone ? ' · зникло з Instagram ' + s.gone : ''} · у періоді ${s.in_window}</span></div></div>
-  <div class="row" style="margin-bottom:12px"><div class="tabs" style="margin:0">${f('all', 'Усі', s.entries)}${f('ok', 'Допущені', s.ok)}${f('review', 'Перевірити', s.review)}${f('fail', 'Відхилені', s.fail)}</div><span style="flex:1"></span><input type="search" id="q" placeholder="Пошук: @акаунт, слово або №" value="${esc(S.q)}" style="max-width:300px;margin:0"></div>
-  ${rows.length ? `<div class="tablewrap"><table><tr><th>№</th><th>Акаунт</th><th>Коментар</th><th>Статус</th><th></th></tr>${rows.slice(0, S.limit).map(tr).join('')}</table></div>${rows.length > S.limit ? `<p style="margin-top:10px"><button class="btn sm soft" data-act="more">Показати ще (${rows.length - S.limit})</button></p>` : ''}` : '<div class="empty">Нікого не знайдено.</div>'}
-  <div class="panel" style="margin-top:14px"><div class="row">${open ? `<div style="flex:1;min-width:240px"><b>Допущено ${s.ok}</b>${s.review ? `, ще перевірити <b style="color:var(--amber)">${s.review}</b>` : ''}<div class="small muted">Після фіксації список і номери не змінюються. Номери йдуть за часом коментаря.</div></div><button class="btn" data-act="freeze" ${s.review || !s.ok ? 'disabled' : ''}>🔒 Підтвердити фінальний список (${s.ok})</button>`
+    <span class="small muted">коментарів ${s.comments_total} · відповідей ${s.replies}${g.cfg.include_replies ? '' : ' (не беруть участі)'}${s.gone ? ' · зникло з Instagram ' + s.gone : ''} · у періоді ${s.in_window}</span>
+    <div class="tabs" style="margin:0"><button data-act="view" data-v="table" class="${S.view === 'table' ? 'on' : ''}">Таблиця</button><button data-act="view" data-v="phone" class="${S.view === 'phone' ? 'on' : ''}">Як у застосунку</button></div></div></div>
+  ${S.view === 'phone' ? X.phoneView(d, S.phone, API) : table}
+  <div class="panel" style="margin-top:14px"><div class="row">${open ? `<div style="flex:1;min-width:240px"><b>Допущено ${s.ok}</b>${s.review ? `, ще перевірити <b style="color:var(--amber)">${s.review}</b>` : ''}<div class="small muted">Після фіксації список, номери і лайки не змінюються. Номери йдуть за часом коментаря.</div></div><button class="btn" data-act="freeze" ${s.review || !s.ok ? 'disabled' : ''}>🔒 Підтвердити фінальний список (${s.ok})</button>`
     : `<div style="flex:1"><b>Пул зафіксовано: ${g.pool_count}</b> · ${esc(fmt(g.frozen_at))} · ${esc(g.frozen_by || '')}<div class="mono muted">SHA-256: ${esc(g.pool_hash)}</div></div>${g.status === 'frozen' ? '<button class="btn sec" data-act="unfreeze">Зняти фіксацію</button>' : ''}`}</div></div>`;
 }
 function stepDraw() {
   const d = S.d, g = d.g, c = g.cfg;
   if (g.status === 'open') return `<div class="empty"><p style="margin-bottom:12px">Спершу перевірте учасників і підтвердьте фінальний список.</p><button class="btn" data-act="step" data-step="people">Перейти до учасників</button></div>`;
   if (g.status === 'frozen') {
-    const W = Math.min(c.winners || 1, g.pool_count), R = Math.min(c.reserves || 0, g.pool_count - W);
+    const pz = L.normPrizes(c.prizes), W = Math.min(pz.length || c.winners || 1, g.pool_count), R = Math.min(c.reserves || 0, Math.max(0, g.pool_count - W));
+    const lead = pz.some((p) => p.method === 'top_likes') ? L.likesRank(d.pool)[0] : null;
     return `${g.gen ? '<div class="banner bad">Попереднє жеребкування анульовано. Запис про це лишається в протоколі.</div>' : ''}<div class="panel"><div class="kpis" style="margin-bottom:14px"><div class="kpi"><b>${g.pool_count}</b><span>учасників у пулі</span></div><div class="kpi"><b>${W}</b><span>переможців</span></div><div class="kpi"><b>${R}</b><span>резервних</span></div></div>
-      <p class="muted small" style="margin-bottom:14px">Кожен учасник має однаковий шанс. Сервер бере криптографічно випадкове зерно, обирає номери і записує результат. Повторне натискання результат не змінює.</p>
+      ${pz.length ? `<ol class="small" style="margin:0 0 12px 18px">${pz.map((p) => `<li><b>${esc(p.label)}</b>: ${p.method === 'top_likes' ? 'найбільше лайків' + (lead ? ` (зараз лідирує @${esc(lead.username)}, ${lead.like_count || 0} ♥)` : '') : 'випадковий номер'}</li>`).join('')}</ol>` : ''}
+      <p class="muted small" style="margin-bottom:14px">У випадковому виборі кожен учасник має однаковий шанс. Сервер бере криптографічно випадкове зерно, обирає номери і записує результат. Повторне натискання результат не змінює. Один акаунт двічі не виграє.</p>
       <button class="btn big" data-act="draw-ask">🎁 РОЗІГРАТИ ПОДАРУНКИ</button>
       <p style="margin-top:14px"><button class="btn sm sec" data-act="unfreeze">Зняти фіксацію і повернутись до списку</button></p></div>`;
   }
@@ -211,11 +232,11 @@ function stepDraw() {
   const replaced = new Set(ws.map((w) => w.promoted_from).filter(Boolean));
   const wcard = (w) => `<div class="winner ${w.role === 'reserve' ? 'reserve' : ''} ${w.verdict === 'failed' ? 'failed' : ''}"><div class="pos">${w.role === 'reserve' ? 'Р' + w.position : w.position}</div>
     <div><div class="nm"><a href="https://www.instagram.com/${esc(w.username)}/" target="_blank" rel="noopener noreferrer">@${esc(w.username)}</a></div>
-      <div class="small muted">№ ${w.n} у пулі${w.prize ? ' · <b>' + esc(w.prize) + '</b>' : ''}${w.promoted_from ? ' · заміна попереднього переможця' : ''}</div>
+      <div class="small muted">№ ${w.n} у пулі${w.prize ? ' · <b>' + esc(w.prize) + '</b>' : ''}${w.method === 'top_likes' ? ` · найбільше лайків: ${w.likes ?? 0} ♥` : w.role === 'winner' ? ' · випадковий номер' : ''}${w.promoted_from ? ' · заміна попереднього переможця' : ''}</div>
       <div class="small" style="margin-top:4px;overflow-wrap:anywhere">${esc(text.get(String(w.ig_id)) || '')}</div>
       ${w.verdict === 'failed' ? `<div class="small" style="color:var(--red)">Не виконав умови: ${esc(w.verdict_reason || '')}</div>` : ''}
       ${S.reasonFor === 'w' + w.id ? `<div class="reason"><input type="text" id="reason_in" placeholder="Що саме не виконано" maxlength="300"><button class="btn sm danger" data-act="verdict" data-id="${w.id}" data-v="failed">Підтвердити</button></div>` : ''}</div>
-    <div class="va row">${w.role === 'winner' ? (w.verdict === 'ok' ? '<span class="chip ok">Умови виконано</span>' : w.verdict === 'failed' ? (replaced.has(w.id) ? '<span class="chip bad">Замінено</span>' : `<button class="btn sm" data-act="extra" data-id="${w.id}">Обрати наступного</button>`)
+    <div class="va row">${w.role === 'winner' ? (w.verdict === 'ok' ? '<span class="chip ok">Умови виконано</span>' : w.verdict === 'failed' ? (replaced.has(w.id) ? '<span class="chip bad">Замінено</span>' : w.method === 'top_likes' ? '<span class="chip bad">Наступного за лайками немає</span>' : `<button class="btn sm" data-act="extra" data-id="${w.id}">Обрати наступного</button>`)
       : `<button class="btn sm" data-act="verdict" data-id="${w.id}" data-v="ok">✓ Умови виконано</button><button class="btn sm danger" data-act="ask-reason" data-u="w${w.id}">✗ Не виконав</button>`) : '<span class="chip">Резерв</span>'}</div></div>`;
   const link = g.public_token ? `${location.origin}/giveaway/?t=${g.public_token}` : '';
   return `<div class="row" style="margin-bottom:14px"><button class="btn" data-act="show">▶ Презентація 9:16</button><button class="btn sec" data-act="copy-win">Скопіювати переможців</button><button class="btn sec" data-act="csv">Завантажити результати</button><button class="btn sec" data-act="verify">Перевірити жеребкування</button></div>
@@ -228,17 +249,17 @@ function stepDraw() {
 }
 function stepProto() {
   const d = S.d, g = d.g, c = g.cfg;
-  const draws = d.draws.map((x) => `<tr><td>${x.round}${x.gen !== g.gen || x.void ? ' <span class="chip bad">анульовано</span>' : ''}</td><td>${x.kind === 'main' ? 'основне' : 'додатковий вибір'}</td><td class="small">${esc(fmt(x.at))}<br>${esc(x.by || '')}</td><td class="mono">${esc(x.seed)}</td><td class="mono">${esc(JSON.parse(x.picks).join(', '))}</td><td class="small">${esc(x.void_reason || '')}</td></tr>`).join('');
+  const draws = d.draws.map((x) => `<tr><td>${x.round}${x.gen !== g.gen || x.void ? ' <span class="chip bad">анульовано</span>' : ''}</td><td>${x.kind === 'main' ? 'основне' : 'додатковий вибір'}<br><span class="small muted">${esc(x.algo)}</span></td><td class="small">${esc(fmt(x.at))}<br>${esc(x.by || '')}</td><td class="mono">${esc(x.seed)}</td><td class="mono">${esc(JSON.parse(x.picks).join(', '))}</td><td class="small">${esc(x.void_reason || '')}</td></tr>`).join('');
   return `<div class="panel"><h2>Умови і підсумок</h2><div class="grid2 small">
       <div><b>Публікація:</b> ${g.media_permalink ? `<a href="${esc(g.media_permalink)}" target="_blank" rel="noopener noreferrer">${esc(g.media_permalink)}</a>` : g.source === 'demo' ? 'тест' : 'не вибрано'}</div>
       <div><b>Період:</b> ${esc(fmt(g.starts_at))} … ${esc(fmt(g.ends_at))}</div>
       <div><b>Механіка:</b> ${mech(c).map(esc).join(' + ')}; ${c.one_per_account !== false ? 'один акаунт, один шанс' : 'кожен коментар окремий шанс'}</div>
       <div><b>Правильні слова:</b> ${c.answer && c.answer.on ? esc(c.answer.groups.map((x) => x.join(' / ')).join('; ')) + ` (потрібно ${c.answer.need})` : 'не застосовується'}</div>
       <div><b>Коментарів:</b> ${d.stats.comments_total}, акаунтів ${d.stats.accounts}, допущено ${g.pool_count ?? d.stats.ok}</div>
-      <div><b>Подарунки:</b> ${esc((c.prizes || []).join('; ') || 'не вказано')}</div>
+      <div><b>Подарунки:</b> ${esc(L.normPrizes(c.prizes).map((p) => p.label + (p.method === 'top_likes' ? ' (найбільше лайків)' : ' (випадковий номер)')).join('; ') || 'не вказано')}</div>
       <div style="grid-column:1/-1"><b>Додаткові умови:</b> ${esc(c.rules || 'немає')}</div>
       <div style="grid-column:1/-1"><b>Контрольний хеш пулу (SHA-256):</b> <span class="mono">${esc(g.pool_hash || 'пул ще не зафіксовано')}</span></div>
-      <div style="grid-column:1/-1"><b>Алгоритм:</b> ${esc(L.ALGO)}: номер = SHA-256(алгоритм | зерно | хеш пулу | лічильник), перші 64 біти, значення поза рівним діапазоном відкидаються; обраний номер вилучається з подальшого вибору.</div></div>
+      <div style="grid-column:1/-1"><b>Алгоритм:</b> ${esc((d.draws.find((x) => !x.void && x.gen === g.gen) || {}).algo || L.ALGO2)}: номер = SHA-256(алгоритм | зерно | хеш пулу | лічильник), перші 64 біти, значення поза рівним діапазоном відкидаються; обраний номер вилучається з подальшого вибору (у v2 разом з усіма номерами того самого акаунта). «Найбільше лайків» визначається за лайками, записаними під час фіксації пулу; за рівності перемагає раніший коментар.</div></div>
     <p style="margin-top:12px"><button class="btn sm sec" data-act="json">Завантажити протокол (JSON)</button></p></div>
     ${draws ? `<h2>Жеребкування</h2><div class="tablewrap" style="margin-bottom:14px"><table><tr><th>Коло</th><th>Тип</th><th>Коли і хто</th><th>Зерно</th><th>Номери</th><th>Причина анулювання</th></tr>${draws}</table></div>` : ''}
     <h2>Історія змін і перевірок</h2><div class="tablewrap"><table><tr><th>Коли</th><th>Дія</th><th>Хто</th><th>Деталі</th></tr>${d.log.map(logRow(false)).join('')}</table></div>`;
@@ -248,12 +269,17 @@ async function verify() {
   const d = S.d, g = d.g; const bad = [];
   if ((await L.poolHash(d.pool)) !== g.pool_hash) bad.push('хеш списку учасників не збігається');
   for (const x of d.draws.filter((x) => !x.void && x.gen === g.gen)) {
-    const picks = await L.draw(x.seed, x.pool_hash, x.pool_count, JSON.parse(x.picks).length, JSON.parse(x.taken || '[]'));
+    const picks = await L.draw(x.seed, x.pool_hash, x.pool_count, JSON.parse(x.picks).length, JSON.parse(x.taken || '[]'), x.algo === L.ALGO2 ? d.pool.map((p) => p.username) : null);
     if (JSON.stringify(picks) !== x.picks.replace(/\s/g, '')) bad.push(`коло ${x.round}: номери не збігаються`);
+  }
+  const chosen = new Set(cur().map((w) => w.username));
+  for (const w of cur().filter((w) => w.method === 'top_likes' && w.verdict !== 'failed')) {
+    const better = d.pool.find((p) => !chosen.has(p.username) && ((p.like_count || 0) > (w.likes || 0) || ((p.like_count || 0) === (w.likes || 0) && p.n < w.n)));
+    if (better) bad.push(`гонка за лайки: у № ${better.n} лайків не менше, ніж у переможця № ${w.n}`);
   }
   const map = new Map(d.pool.map((p) => [p.n, p.username]));
   for (const w of cur()) if (map.get(w.n) !== w.username) bad.push(`№ ${w.n}: акаунт не збігається зі списком`);
-  S.verify = bad.length ? { ok: false, text: 'Перевірка не пройшла: ' + bad.join('; ') } : { ok: true, text: `Перевірено у вашому браузері: хеш списку з ${d.pool.length} учасників збігається, номери з кожного кола відтворено із зерна, акаунти відповідають номерам.` };
+  S.verify = bad.length ? { ok: false, text: 'Перевірка не пройшла: ' + bad.join('; ') } : { ok: true, text: `Перевірено у вашому браузері: хеш списку з ${d.pool.length} учасників збігається, номери з кожного кола відтворено із зерна, акаунти відповідають номерам${cur().some((w) => w.method === 'top_likes') ? ', переможець за лайками має найбільше лайків у зафіксованому пулі' : ''}.` };
   renderG();
 }
 
@@ -262,7 +288,8 @@ function startShow() {
   const d = S.d, g = d.g, fest = !!g.cfg.festive;
   const ws = cur().filter((w) => w.role === 'winner' && w.verdict !== 'failed').sort((a, b) => a.position - b.position);
   if (!ws.length) return toast('Немає переможців для показу', true);
-  const names = d.pool.map((p) => p.username), calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const FACTS = X.facts(d, X.analysis(d));
   const el = document.createElement('div'); el.className = 'show' + (fest ? ' festive' : '');
   el.innerHTML = `<div class="stage"><div class="paws" aria-hidden="true">${'🐾'.repeat(120)}</div><canvas></canvas><div class="lay"><div class="brand">BARPI<small>${fest ? 'СВЯТКОВИЙ РОЗІГРАШ' : 'РОЗІГРАШ'}</small></div><div class="ttl"></div><div class="mid"></div><div class="foot"></div></div></div>
     <div class="ctl"><button data-s="next">Далі · пробіл</button><button data-s="full">На весь екран · F</button><button data-s="clean">Сховати кнопки · H</button><button data-s="close">Закрити · Esc</button><div class="hint">Запишіть екран у межах вертикального кадру. Анімація показує вже записаний результат.</div></div>`;
@@ -270,7 +297,8 @@ function startShow() {
   const stage = $('.stage', el), mid = $('.mid', el), cv = $('canvas', el), ctx = cv.getContext('2d');
   $('.ttl', el).textContent = g.title;
   $('.foot', el).textContent = `@${S.me.ig.username} · ${fmt(g.drawn_at).slice(0, 10)} · учасників: ${g.pool_count}${g.source === 'demo' ? ' · ТЕСТ' : g.source === 'example' ? ' · ПРИКЛАД' : ''}`;
-  let i = -1, busy = false, timer = null, raf = 0, parts = [], alive = true;
+  let i = -1, busy = false, raf = 0, parts = [], alive = true, factT = null; const timers = new Set();
+  const later = (fn, ms) => { const t = setTimeout(() => { timers.delete(t); if (alive) fn(); }, ms); timers.add(t); return t; };
   const fit = () => { const r = stage.getBoundingClientRect(), k = Math.min(2, devicePixelRatio || 1); cv.width = r.width * k; cv.height = r.height * k; };
   fit(); addEventListener('resize', fit);
   const GL = fest ? ['🎁', '⭐', '❄️', '🐾', '✨'] : ['🐾'];
@@ -295,29 +323,50 @@ function startShow() {
     raf = requestAnimationFrame(step);
   }
   const size = (t) => `${Math.max(3.2, Math.min(13, 86 / (t.length * 0.66)))}cqw`;
-  function intro() { mid.innerHTML = `<div class="lbl">Учасників у розіграші</div><div class="big">${g.pool_count}</div><div class="lbl" style="margin-top:2cqh">${ws.length === 1 ? 'Один переможець' : 'Переможців: ' + ws.length}</div>`; }
-  function reveal(w, k) {
-    busy = true;
-    mid.innerHTML = `<div class="lbl">${ws.length === 1 ? 'Переможець' : `Переможець ${k + 1} / ${ws.length}`}</div>${w.prize ? '<div class="prize"></div>' : ''}<div class="name spin"></div>`;
-    if (w.prize) $('.prize', mid).textContent = '🎁 ' + w.prize;
-    const nm = $('.name', mid), win = '@' + w.username;
-    const land = () => { nm.textContent = win; nm.style.fontSize = size(win); nm.className = 'name hit'; burst(); busy = false; };
-    if (calm || names.length < 2) return land();
-    let delay = 45, total = 0;
-    const tick = () => { const t = '@' + names[Math.floor(Math.random() * names.length)]; nm.textContent = t; nm.style.fontSize = size(t); total += delay; delay *= 1.085; if (total > 2600) timer = setTimeout(land, delay); else timer = setTimeout(tick, delay); };
-    tick();
+  const stopFacts = () => { clearInterval(factT); factT = null; };
+  function intro() {
+    mid.innerHTML = `<div class="lbl">Учасників у розіграші</div><div class="big">${g.pool_count}</div><div class="lbl" style="margin-top:1cqh">${ws.length === 1 ? 'Один переможець' : 'Переможців: ' + ws.length}</div><div class="fact"><b></b><span></span></div>`;
+    const fb = $('.fact', mid); let k = 0;
+    const put = () => { const [a, b] = FACTS[k % FACTS.length]; fb.classList.remove('on'); later(() => { $('b', fb).textContent = a; $('span', fb).textContent = b; fb.classList.add('on'); }, calm ? 0 : 260); k++; };
+    put(); if (!calm && FACTS.length > 1) factT = setInterval(put, 3600);
   }
-  function finale() { mid.innerHTML = `<div class="lbl">Вітаємо переможців</div><div class="all">${ws.map((w, k) => `<div style="animation-delay:${k * 60}ms"><b>@${esc(w.username)}</b>${w.prize ? `<span>${esc(w.prize)}</span>` : ''}</div>`).join('')}</div>`; burst(); }
+  // Барабан номера: цифри крутяться і зупиняються зліва направо; потім відкривається акаунт.
+  function reveal(w, k) {
+    busy = true; stopFacts();
+    const likes = w.method === 'top_likes', win = '@' + w.username, digits = String(g.pool_count).length, target = String(w.n).padStart(digits, '0');
+    const build = () => {
+      mid.innerHTML = `<div class="lbl">${ws.length === 1 ? 'Переможець' : `Переможець ${k + 1} / ${ws.length}`}</div>${w.prize ? '<div class="prize"></div>' : ''}
+        <div class="lbl2">${likes ? 'найбільше лайків' : 'випадковий номер'}</div>
+        <div class="reel" aria-hidden="true">${likes ? `<span class="likes">${w.likes ?? 0} ♥</span>` : '<span class="no">№</span>' + target.split('').map(() => '<span class="dg">0</span>').join('')}</div><div class="name wait">· · ·</div>`;
+      if (w.prize) $('.prize', mid).textContent = '🎁 ' + w.prize;
+    };
+    const land = () => { const nm = $('.name', mid); nm.textContent = win; nm.style.fontSize = size(win); nm.className = 'name hit'; burst(); busy = false; };
+    const spin = () => {
+      build();
+      const dg = [...mid.querySelectorAll('.dg')];
+      if (calm || likes || !dg.length) { dg.forEach((x, j) => { x.textContent = target[j]; x.classList.add('set'); }); return later(land, calm ? 0 : 900); }
+      const t0 = performance.now(), base = 1500, gap = 520;
+      const tick = () => { const t = performance.now() - t0; let done = true;
+        dg.forEach((x, j) => { if (t >= base + j * gap) { if (!x.classList.contains('set')) { x.textContent = target[j]; x.classList.add('set'); } } else { done = false; x.textContent = Math.floor(Math.random() * 10); } });
+        if (done) later(land, 500); else later(tick, 55); };
+      tick();
+    };
+    if (calm) return spin();
+    let c = 3;
+    const cd = () => { if (c === 0) return spin(); mid.innerHTML = `<div class="lbl">${ws.length === 1 ? 'Переможець' : `Переможець ${k + 1} / ${ws.length}`}</div><div class="cd">${c}</div>`; c--; later(cd, 720); };
+    cd();
+  }
+  function finale() { stopFacts(); mid.innerHTML = `<div class="lbl">Вітаємо переможців</div><div class="all">${ws.map((w, k) => `<div style="animation-delay:${k * 60}ms"><b>@${esc(w.username)}</b>${w.prize ? `<span>${esc(w.prize)}</span>` : ''}</div>`).join('')}</div>`; burst(); }
   function next() { if (busy) return; i++; if (i < ws.length) reveal(ws[i], i); else if (i === ws.length && ws.length > 1) finale(); else { i = Math.min(i, ws.length); el.classList.remove('clean'); } }
-  function close() { alive = false; clearTimeout(timer); cancelAnimationFrame(raf); removeEventListener('keydown', key, true); removeEventListener('resize', fit); if (document.fullscreenElement) document.exitFullscreen(); el.remove(); }
+  function close() { alive = false; stopFacts(); timers.forEach(clearTimeout); cancelAnimationFrame(raf); removeEventListener('keydown', key, true); removeEventListener('resize', fit); if (document.fullscreenElement) document.exitFullscreen(); el.remove(); }
+  const full = () => (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen && el.requestFullscreen().then(fit, () => {}));
   function key(e) {
+    const kk = e.key.toLowerCase();
     if (e.key === 'Escape') { e.preventDefault(); close(); } else if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); next(); }
-    else if (e.key.toLowerCase() === 'f' || e.key.toLowerCase() === 'а') { if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen().then(fit, () => {}); }
-    else if (e.key.toLowerCase() === 'h' || e.key.toLowerCase() === 'р') el.classList.toggle('clean');
+    else if (kk === 'f' || kk === 'а') full(); else if (kk === 'h' || kk === 'р') el.classList.toggle('clean');
   }
   addEventListener('keydown', key, true);
-  el.addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (!b) { if (e.target.closest('.stage')) next(); return; }
-    ({ next, close, full: () => (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen && el.requestFullscreen().then(fit, () => {})), clean: () => el.classList.toggle('clean') })[b.dataset.s](); });
+  el.addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (!b) { if (e.target.closest('.stage')) next(); return; } ({ next, close, full, clean: () => el.classList.toggle('clean') })[b.dataset.s](); });
   intro(); snow();
 }
 
@@ -345,6 +394,11 @@ const ACT = {
     $('#del_ok', m).onclick = async () => { try { await api('/' + S.d.g.id, 'DELETE'); m.remove(); location.hash = '#/'; } catch (e) { say(e); } }; },
   fetch: async (b) => { b.disabled = true; b.textContent = 'Збираю коментарі…'; try { const j = await api('/' + S.d.g.id + '/fetch', 'POST', {}); toast(`Нових коментарів: ${j.added}${j.gone ? ', зникло: ' + j.gone : ''}`); } finally { await reload(); } },
   filter: (b) => { S.filter = b.dataset.f; S.limit = 300; renderG(); },
+  sort: (b) => { const k = b.dataset.k; S.sort = S.sort.k === k ? { k, dir: -S.sort.dir } : { k, dir: k === 'likes' ? -1 : 1 }; renderG(); },
+  view: (b) => { S.view = b.dataset.v; renderG(); },
+  'phone-tab': (b) => { S.phone.tab = b.dataset.t; renderG(); },
+  'prize-add': () => { $('#prize_rows').insertAdjacentHTML('beforeend', prizeRow({ method: 'random' })); const r = $('#prize_rows').lastElementChild; r.querySelector('.pl').focus(); },
+  'prize-del': (b) => { const rows = document.querySelectorAll('#prize_rows .prow'); if (rows.length > 1) b.closest('.prow').remove(); else { b.closest('.prow').querySelector('.pl').value = ''; } },
   more: () => { S.limit += 300; renderG(); },
   'ask-reason': (b) => { S.reasonFor = S.reasonFor === b.dataset.u ? null : b.dataset.u; renderG(); const i = $('#reason_in'); if (i) i.focus(); },
   dec: async (b) => { const d = b.dataset.d, reason = d === 'fail' ? ($('#reason_in') ? $('#reason_in').value.trim() : '') : ''; if (d === 'fail' && !reason) return toast(ERR.reason_required, true);
@@ -359,10 +413,10 @@ const ACT = {
     const j = await api('/' + S.d.g.id + '/verdict', 'POST', { winner_id: Number(b.dataset.id), verdict: v, reason }); S.reasonFor = null;
     toast(j.promoted ? `Переможцем став резервний @${j.promoted}` : j.need_extra ? 'Резервних не лишилось: натисніть «Обрати наступного»' : 'Збережено'); await reload(); },
   extra: async (b) => { await api('/' + S.d.g.id + '/extra', 'POST', { replace_id: Number(b.dataset.id) }); toast('Обрано нового переможця'); await reload(); },
-  'copy-win': () => copy(cur().filter((w) => w.role === 'winner' && w.verdict !== 'failed').sort((a, b) => a.position - b.position).map((w) => `${w.position}. @${w.username}${w.prize ? ': ' + w.prize : ''}`).join('\n'), 'Переможців скопійовано'),
+  'copy-win': () => copy(cur().filter((w) => w.role === 'winner' && w.verdict !== 'failed').sort((a, b) => a.position - b.position).map((w) => `${w.position}. @${w.username}${w.prize ? ': ' + w.prize : ''}${w.method === 'top_likes' ? ` (найбільше лайків, ${w.likes ?? 0})` : ''}`).join('\n'), 'Переможців скопійовано'),
   'copy-link': (b) => copy(b.dataset.link),
   csv: () => { const q = (s) => '"' + String(s ?? '').replace(/"/g, '""') + '"'; const g = S.d.g;
-    download(`barpi-giveaway-${g.id}.csv`, '﻿' + [['Роль', 'Місце', 'Акаунт', 'Номер у пулі', 'Подарунок', 'Статус', 'Причина', 'Коло'].join(';')].concat(cur().map((w) => [w.role === 'winner' ? 'переможець' : 'резерв', w.position, '@' + w.username, w.n, w.prize || '', { ok: 'умови виконано', failed: 'не виконав умови', pending: 'очікує перевірки' }[w.verdict], w.verdict_reason || '', w.round].map(q).join(';'))).join('\r\n'), 'text/csv'); },
+    download(`barpi-giveaway-${g.id}.csv`, '﻿' + [['Роль', 'Місце', 'Акаунт', 'Номер у пулі', 'Подарунок', 'Спосіб вибору', 'Лайків', 'Статус', 'Причина', 'Коло'].join(';')].concat(cur().map((w) => [w.role === 'winner' ? 'переможець' : 'резерв', w.position, '@' + w.username, w.n, w.prize || '', w.role === 'reserve' ? '' : w.method === 'top_likes' ? 'найбільше лайків' : 'випадковий номер', w.likes ?? '', { ok: 'умови виконано', failed: 'не виконав умови', pending: 'очікує перевірки' }[w.verdict], w.verdict_reason || '', w.round].map(q).join(';'))).join('\r\n'), 'text/csv'); },
   json: () => { const d = S.d; download(`barpi-giveaway-${d.g.id}-protocol.json`, JSON.stringify({ exported_at: new Date().toISOString(), giveaway: d.g, stats: d.stats, algo: L.ALGO, pool: d.pool, draws: d.draws, winners: d.winners, log: d.log }, null, 2), 'application/json'); },
   publish: async (b) => { const j = await api('/' + S.d.g.id + '/publish', 'POST', { on: b.dataset.on === '1' }); toast(j.published ? 'Протокол опубліковано' : 'Протокол приховано'); await reload(); },
   void: async () => { const reason = $('#void_in').value.trim(); if (!reason) return toast(ERR.reason_required, true); await api('/' + S.d.g.id + '/void', 'POST', { reason }); toast('Жеребкування анульовано'); await reload(); },
@@ -375,12 +429,14 @@ app.addEventListener('click', async (e) => {
 app.addEventListener('change', (e) => {
   const t = e.target;
   if (t.name === 'n_src') { keepNew(); S.nd.source = t.value; renderNew(); }
+  if (t.id === 'f_likes') { S.fLikes = Number(t.value) || 0; S.limit = 300; renderG(); }
+  if (t.id === 'f_type') { S.fType = t.value; S.limit = 300; renderG(); }
   if (t.id === 'f_ans') $('#ans_box').hidden = !t.checked;
   if (t.id === 'f_men') $('#men_box').hidden = !t.checked;
   if (t.type === 'checkbox' && t.closest('.check')) t.closest('.check').classList.toggle('on', t.checked);
 });
 let qT;
-app.addEventListener('input', (e) => { if (e.target.id !== 'q') return; clearTimeout(qT); qT = setTimeout(() => { S.q = e.target.value; S.limit = 300; renderG(); const i = $('#q'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 220); });
+app.addEventListener('input', (e) => { const id = e.target.id; if (id !== 'q' && id !== 'igq') return; clearTimeout(qT); qT = setTimeout(() => { if (id === 'q') { S.q = e.target.value; S.limit = 300; } else S.phone.q = e.target.value; renderG(); const i = $('#' + id); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 220); });
 app.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'reason_in') { const b = e.target.parentElement.querySelector('button'); if (b) b.click(); } });
 
 async function route() {
