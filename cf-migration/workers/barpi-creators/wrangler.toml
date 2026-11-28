@@ -14,7 +14,7 @@ routes = [
 ]
 
 [triggers]
-crons = ["17 * * * *"]   # дайджест о 10:17 за Києвом (година перевіряється в коді)
+crons = ["0 * * * *"]    # щоденний звіт о 10:00 за Києвом (година перевіряється в коді)
 
 [[d1_databases]]
 binding = "DB"
@@ -27,6 +27,7 @@ binding = "KV"
 id = "5d2685f414a14ff4ac050eea5b19bdcf"
 
 [vars]
+CREATORS_INSTANT = "off"   # "on": повідомлення в чат на кожну заявку одразу (крім щоденного звіту)
 ACCESS_TEAM_DOMAIN = "https://uabarpi.cloudflareaccess.com"
 ACCESS_AUD = "894a00188dfb611f1e958108e9e49e9bab86d8f1b0afee56d6c0106710182a63"
 AUTOREPLY = "off"        # лист автору після заявки: увімкнути лише після затвердження текстів Вадимом

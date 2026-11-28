@@ -116,18 +116,59 @@ export function alertText(r, id, dashUrl) {
   return lines.filter((l) => l !== null).join('\n');
 }
 
-export function digestText(rows, now, dashUrl) {
-  const old = rows.filter((r) => now - r.created_at >= 24 * 3600).sort((a, b) => (b.score || 0) - (a.score || 0));
-  if (!old.length) return null;
-  const h = (r) => Math.floor((now - r.created_at) / 3600);
-  const out = [`⏰ <b>Заявки блогерів без відповіді понад 24 год: ${old.length}</b>`, ''];
-  for (const r of old.slice(0, 15)) out.push(`#${r.id} ${esc(r.name)} · ⭐ ${r.score ?? '?'} · чекає ${h(r)} год`);
-  if (old.length > 15) out.push(`… і ще ${old.length - 15}`);
-  out.push('', `Поставте «В роботі» після першої відповіді: ${esc(dashUrl)}`);
-  return out.join('\n');
+// Щоденний звіт (v1.2.0, план T-281126-1): «Нові за добу» + «Без відповіді понад 24 год». Повертає масив повідомлень.
+const LIMIT = 3800;
+
+function freshBlock(r, dashUrl) {
+  const profile = String(r.profile_url || '');
+  const contact = [r.email, r.telegram, r.phone].filter(Boolean).map(esc).join(' · ');
+  const idea = String(r.idea || '');
+  const formats = String(r.formats || '').split(',').map((f) => FORMATS[f]).filter(Boolean).join(', ');
+  const link = `${esc(dashUrl)}#id=${r.id}`;
+  const block = [
+    `<b>#${r.id}</b> ${esc(r.name)}${r.city ? ', ' + esc(r.city) : ''}`,
+    profile ? `Профіль: ${esc(profile.slice(0, 200))}` : null,
+    r.audience ? `Аудиторія: ${esc(AUDIENCE[r.audience] || r.audience)}` : null,
+    formats ? `Формати: ${esc(formats)}` : null,
+    idea ? `Ідея: ${esc(idea.slice(0, 200))}${idea.length > 200 ? '…' : ''}` : null,
+    contact ? `Контакт: ${contact}` : null,
+    `⭐ ${r.score ?? '?'}/100${r.flags ? ' · ⚠️ ' + esc(r.flags) : ''}`,
+    link,
+  ].filter((l) => l !== null).join('\n');
+  return block.length <= LIMIT - 200 ? block : `<b>#${r.id}</b> ⭐ ${r.score ?? '?'}/100 · деталі на дашборді\n${link}`;
 }
 
-// Київський час для крону (дайджест о 10:17 за Києвом).
+// since: час попереднього звіту (без нього: остання доба).
+export function digestMessages(rows, now, dashUrl, since = now - 24 * 3600) {
+  const byScore = (a, b) => (b.score || 0) - (a.score || 0);
+  const fresh = rows.filter((r) => r.created_at >= since && r.status !== 'spam').sort(byScore);
+  const old = rows.filter((r) => r.created_at < since && r.status === 'new' && now - r.created_at >= 24 * 3600).sort(byScore);
+  if (!fresh.length && !old.length) return ['🐾 Заявок за добу не було'];
+  const blocks = [];
+  if (fresh.length) {
+    blocks.push(`🐾 <b>Нові за добу: ${fresh.length}</b>`);
+    for (const r of fresh) blocks.push(freshBlock(r, dashUrl));
+  }
+  if (old.length) {
+    const h = (r) => Math.floor((now - r.created_at) / 3600);
+    blocks.push(`⏰ <b>Без відповіді понад 24 год: ${old.length}</b>`);
+    const lines = old.slice(0, 15).map((r) => `#${r.id} ${esc(r.name)} · ⭐ ${r.score ?? '?'} · чекає ${h(r)} год`);
+    if (old.length > 15) lines.push(`… і ще ${old.length - 15}`);
+    blocks.push(...lines);
+  }
+  blocks.push(`Після першої відповіді поставте «В роботі»: ${esc(dashUrl)}`);
+  // ділимо лише між блоками, щоб не розірвати тег чи посилання
+  const out = [];
+  for (const block of blocks) {
+    const sep = block.startsWith('#') ? '\n' : '\n\n';
+    const last = out.length - 1;
+    if (last >= 0 && out[last].length + sep.length + block.length <= LIMIT) out[last] += sep + block;
+    else out.push(block);
+  }
+  return out;
+}
+
+// Київський час для крону (дайджест о 10:00 за Києвом).
 export function kyivParts(d = new Date()) {
   const f = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false });
   const p = Object.fromEntries(f.formatToParts(d).map((x) => [x.type, x.value]));

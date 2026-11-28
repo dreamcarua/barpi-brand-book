@@ -6,14 +6,15 @@
 //   brand.barpi.ua/creators-api/healthz
 //   brand.barpi.ua/creators-api/cron/digest        POST з X-Digest-Key (ручний запуск / тест)
 //   brand.barpi.ua/dashboard/api/creators/*        дашборд /dashboard/creators/ за Cloudflare Access (JWT перевіряється)
-// Крон щогодини о :17: дайджест заявок у статусі «Нова» понад 24 год о 10:17 за Києвом.
+// Крон щогодини о :00: о 10:00 за Києвом один звіт: нові за добу і «Нова» понад 24 год.
 // Секрети: TG_TOKEN (@barpi_tech_bot), CREATORS_TG_CHATS (chat_id через кому), DIGEST_KEY.
 // Змінна AUTOREPLY=off: лист автору вимкнено, доки Вадим не затвердить тексти.
 // ═══════════════════════════════════════════════════════════════════════════
 import { accessUser } from './access.js';
-import { normalise, score, alertText, digestText, kyivParts, couponsIn, STATUSES, esc } from './logic.js';
+import { normalise, score, alertText, digestMessages, kyivParts, couponsIn, STATUSES, esc } from './logic.js';
 
-const VERSION = '1.1.0'; // 27.11.2026: внутрішній https://internal/notify для інших воркерів Barpi (service binding), тим самим ботом у ті самі чати
+const VERSION = '1.2.0'; // 28.11.2026: один звіт о 10:00 замість повідомлення на кожну заявку (CREATORS_INSTANT=on повертає миттєві)
+// 1.1.0: внутрішній https://internal/notify для інших воркерів Barpi (service binding), тим самим ботом у ті самі чати
 const DASH = 'https://brand.barpi.ua/dashboard/creators/';
 const ALLOWED_ORIGINS = ['https://barpi.com.ua', 'https://www.barpi.com.ua'];
 const EDITABLE = ['status', 'owner', 'offer', 'promo_code', 'fee_uah', 'ship_cost_uah', 'ship_doc', 'ship_ttn', 'content_url', 'notes',
@@ -76,24 +77,35 @@ async function apply(req, env, ctx) {
   const r = await env.DB.prepare(`INSERT INTO creators_applications (${COLS.join(',')}) VALUES (${COLS.map(() => '?').join(',')})`)
     .bind(...COLS.map((c) => row[c] ?? null)).run();
   const id = r.meta.last_row_id;
-  ctx.waitUntil(tgSend(env, alertText(row, id, DASH)));
+  if (env.CREATORS_INSTANT === 'on') ctx.waitUntil(tgSend(env, alertText(row, id, DASH)));
   return json({ ok: true, id }, 200, h);
 }
 
-// ── дайджест «чекають понад 24 год» ───────────────────────────────────────
+// ── щоденний звіт: нові за добу + без відповіді понад 24 год ──────────────
 async function digest(env, { force = false, dry = false } = {}) {
   const k = kyivParts();
   if (!force && k.hour !== 10) return { skipped: 'not 10 Kyiv' };
-  if (!force && !dry) {
-    const ins = await env.DB.prepare('INSERT OR IGNORE INTO creators_digest_sent (day, at) VALUES (?, ?)').bind(k.date, Math.floor(Date.now() / 1000)).run();
+  const now = Math.floor(Date.now() / 1000);
+  const real = !force && !dry;
+  if (real) {
+    const ins = await env.DB.prepare('INSERT OR IGNORE INTO creators_digest_sent (day, at) VALUES (?, ?)').bind(k.date, now).run();
     if (ins.meta.changes === 0) return { skipped: 'already sent today' };
   }
-  const now = Math.floor(Date.now() / 1000);
-  const rows = (await env.DB.prepare("SELECT id, name, score, created_at FROM creators_applications WHERE status = 'new' AND kind = 'application' ORDER BY created_at").all()).results || [];
-  const text = digestText(rows, now, DASH);
-  if (!text) return { sent: 0, waiting: 0, fresh: rows.length };
-  if (dry) return { dry: true, text };
-  return { sent: await tgSend(env, text), waiting: rows.filter((r) => now - r.created_at >= 86400).length };
+  let sent = 0;
+  try {
+    // «нові» рахуються від попереднього звіту, щоб заявка біля 10:00 не випала і не повторилась
+    const prev = await env.DB.prepare('SELECT MAX(at) AS at FROM creators_digest_sent WHERE day < ?').bind(k.date).first();
+    const since = (prev && prev.at) || now - 86400;
+    const rows = (await env.DB.prepare(`SELECT id, status, name, city, profile_url, audience, formats, idea, email, telegram, phone, score, flags, created_at
+      FROM creators_applications WHERE kind = 'application' AND created_at < ? AND (created_at >= ? OR status = 'new') ORDER BY created_at`).bind(now, since).all()).results || [];
+    const messages = digestMessages(rows, now, DASH, since);
+    if (dry) return { dry: true, since, messages };
+    for (const text of messages) sent += await tgSend(env, text);
+    return { sent, messages: messages.length };
+  } finally {
+    // нічого не відправлено: знімаємо позначку, наступний звіт охопить і ці заявки
+    if (real && !sent) await env.DB.prepare('DELETE FROM creators_digest_sent WHERE day = ?').bind(k.date).run();
+  }
 }
 
 // ── API дашборда ──────────────────────────────────────────────────────────
